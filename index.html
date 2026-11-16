@@ -14,6 +14,7 @@
     <input id="buscador" type="search" autofocus autocomplete="off"
       placeholder="Buscar por nombre, principio activo o escanear código de barras..."
       class="flex-1 min-w-[220px] rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+    <button id="btnNuevo" class="bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold">＋ Producto</button>
     <button id="btnRecargar" class="bg-emerald-900 hover:bg-emerald-800 rounded-lg px-4 py-2 text-sm font-medium">↻ Actualizar</button>
   </div>
 </header>
@@ -53,6 +54,31 @@
     </div>
   </aside>
 </main>
+
+<div id="modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <form id="formProd" class="bg-white rounded-xl shadow-xl w-full max-w-md p-5 space-y-3 max-h-[95vh] overflow-y-auto">
+    <h2 id="mTitulo" class="text-lg font-bold">Producto</h2>
+    <input type="hidden" id="pID">
+    <label class="block text-sm font-medium">Nombre *
+      <input id="pNombre" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <label class="block text-sm font-medium">Principio activo
+      <input id="pPrincipio" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <label class="block text-sm font-medium">Código de barras
+      <input id="pCodigo" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="block text-sm font-medium">Precio (S/) *
+        <input id="pPrecio" type="number" step="0.01" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+      <label class="block text-sm font-medium">Stock *
+        <input id="pStock" type="number" step="1" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    </div>
+    <label class="block text-sm font-medium">Fecha de vencimiento
+      <input id="pVenc" type="date" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <div class="flex gap-2 pt-2">
+      <button type="button" id="btnCancelar" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Cancelar</button>
+      <button type="submit" id="btnGuardar" class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-lg py-2">Guardar</button>
+    </div>
+  </form>
+</div>
 
 <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-5 py-3 rounded-lg shadow-lg text-white font-medium z-30 max-w-[90vw]"></div>
 
@@ -94,7 +120,7 @@ const porId = id => productos.find(p => String(p.ID) === String(id));
 async function cargarProductos() {
   $('estado').textContent = 'Cargando productos...';
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(API_URL + '?todos=1'); // incluye agotados para poder reabastecerlos
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Error desconocido');
     productos = data.productos;
@@ -159,10 +185,11 @@ function renderProductos() {
         '<span class="text-lg font-bold">' + moneda(p.Precio) + '</span>' +
         '<span class="text-xs font-semibold px-2 py-1 rounded-full ' + stockCls + '">Stock: ' + stock + '</span>' +
       '</div>' +
-      '<div class="mt-1 mb-2">' + venc + '</div>' +
+      '<div class="mt-1 mb-2 flex items-center justify-between">' + venc +
+        '<button data-edit="' + esc(p.ID) + '" class="ml-auto text-xs text-blue-600 hover:underline">✏️ Editar</button></div>' +
       '<button data-add="' + esc(p.ID) + '" ' + (bloqueado ? 'disabled' : '') +
         ' class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg py-2 text-sm font-medium">' +
-        (vencido ? 'No vendible' : agotado ? 'Sin más stock' : 'Agregar') + '</button>' +
+        (vencido ? 'No vendible' : agotado ? (stock <= 0 ? 'Agotado' : 'Sin más stock') : 'Agregar') + '</button>' +
     '</div>';
   }).join('');
 }
@@ -236,7 +263,57 @@ async function cobrar() {
   }
 }
 
+// ===== Crear / editar producto (doPost con accion: guardar_producto) =====
+function abrirModal(id) {
+  const p = id ? porId(id) : null;
+  $('mTitulo').textContent = p ? 'Editar producto' : 'Nuevo producto';
+  $('pID').value = p ? p.ID : '';
+  $('pNombre').value = p ? p.Nombre : '';
+  $('pPrincipio').value = p ? p.Principio_Activo : '';
+  $('pCodigo').value = p ? p.Codigo_Barras : '';
+  $('pPrecio').value = p ? p.Precio : '';
+  $('pStock').value = p ? p.Stock : '';
+  $('pVenc').value = p && p.Fecha_Vencimiento ? String(p.Fecha_Vencimiento).slice(0, 10) : '';
+  $('modal').classList.remove('hidden');
+  $('pNombre').focus();
+}
+function cerrarModal() { $('modal').classList.add('hidden'); }
+
+async function guardarProducto(e) {
+  e.preventDefault();
+  const btn = $('btnGuardar');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const producto = {
+      ID: $('pID').value,
+      Nombre: $('pNombre').value,
+      Principio_Activo: $('pPrincipio').value,
+      Codigo_Barras: $('pCodigo').value,
+      Precio: Number($('pPrecio').value),
+      Stock: Number($('pStock').value),
+      Fecha_Vencimiento: $('pVenc').value
+    };
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ accion: 'guardar_producto', producto })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    toast('✅ Producto guardado (ID ' + data.id + ')');
+    cerrarModal();
+    await cargarProductos();
+  } catch (err) {
+    toast('No se pudo guardar: ' + err.message, false);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
+
 // ===== Eventos =====
+$('btnNuevo').addEventListener('click', () => abrirModal(null));
+$('btnCancelar').addEventListener('click', cerrarModal);
+$('formProd').addEventListener('submit', guardarProducto);
 $('buscador').addEventListener('input', renderProductos);
 $('buscador').addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
@@ -247,7 +324,8 @@ $('buscador').addEventListener('keydown', e => {
   if (exacto) { agregar(exacto.ID); e.target.value = ''; renderProductos(); }
 });
 $('productos').addEventListener('click', e => {
-  const b = e.target.closest('[data-add]'); if (b) agregar(b.dataset.add);
+  const b = e.target.closest('[data-add]'); if (b) return agregar(b.dataset.add);
+  const ed = e.target.closest('[data-edit]'); if (ed) abrirModal(ed.dataset.edit);
 });
 $('carrito').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
