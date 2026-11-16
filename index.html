@@ -8,19 +8,35 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
+<!-- ===== Login ===== -->
+<div id="login" class="fixed inset-0 z-50 bg-slate-100 flex items-center justify-center p-4">
+  <form id="formLogin" class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 space-y-4">
+    <h1 class="text-2xl font-bold text-center">💊 Farmacia</h1>
+    <p class="text-center text-sm text-slate-500">Ingresa con tu usuario</p>
+    <input id="lUsuario" required autocomplete="username" placeholder="Usuario" class="w-full border rounded-lg px-3 py-2">
+    <input id="lClave" type="password" required autocomplete="current-password" placeholder="Contraseña" class="w-full border rounded-lg px-3 py-2">
+    <p id="loginError" class="text-sm text-red-600 min-h-[1.25rem]"></p>
+    <button id="btnLogin" class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold py-2 rounded-lg">Ingresar</button>
+  </form>
+</div>
+
+<!-- ===== Aplicación ===== -->
+<div id="app" class="hidden">
 <header class="bg-emerald-700 text-white shadow sticky top-0 z-20">
   <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
     <h1 class="text-xl font-bold">💊 Punto de Venta</h1>
-    <input id="buscador" type="search" autofocus autocomplete="off"
+    <input id="buscador" type="search" autocomplete="off"
       placeholder="Buscar por nombre, principio activo o escanear código de barras..."
       class="flex-1 min-w-[220px] rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-    <button id="btnNuevo" class="bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold">＋ Producto</button>
+    <button id="btnNuevo" class="solo-admin hidden bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold">＋ Producto</button>
+    <button id="btnUsuarios" class="solo-admin hidden bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold">👥 Usuarios</button>
     <button id="btnRecargar" class="bg-emerald-900 hover:bg-emerald-800 rounded-lg px-4 py-2 text-sm font-medium">↻ Actualizar</button>
+    <span id="infoUsuario" class="text-sm opacity-90"></span>
+    <button id="btnSalir" class="bg-emerald-900 hover:bg-emerald-800 rounded-lg px-3 py-2 text-sm">Salir</button>
   </div>
 </header>
 
 <main class="max-w-7xl mx-auto px-4 py-4 grid lg:grid-cols-3 gap-4">
-
   <section class="lg:col-span-2">
     <div id="alertas" class="hidden mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm"></div>
     <div id="estado" class="text-slate-500 text-sm mb-2">Cargando productos...</div>
@@ -31,48 +47,34 @@
     <div class="bg-white rounded-xl shadow p-4 lg:sticky lg:top-20">
       <h2 class="text-lg font-bold mb-3">🛒 Carrito</h2>
       <div id="carrito" class="space-y-2 max-h-[45vh] overflow-y-auto"></div>
-
       <div class="border-t mt-4 pt-4 space-y-3">
-        <div class="flex justify-between text-lg font-bold">
-          <span>Total</span><span id="total">S/ 0.00</span>
-        </div>
+        <div class="flex justify-between text-lg font-bold"><span>Total</span><span id="total">S/ 0.00</span></div>
         <label class="block text-sm font-medium">Método de pago
           <select id="metodoPago" class="mt-1 w-full border rounded-lg px-3 py-2">
-            <option>Efectivo</option>
-            <option>Yape</option>
-            <option>Plin</option>
-            <option>Tarjeta</option>
-            <option>Transferencia</option>
+            <option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option>
           </select>
         </label>
-        <button id="btnCobrar" disabled
-          class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg text-lg">
-          Cobrar
-        </button>
+        <button id="btnCobrar" disabled class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg text-lg">Cobrar</button>
         <button id="btnVaciar" class="w-full text-sm text-slate-500 hover:text-red-600">Vaciar carrito</button>
       </div>
     </div>
   </aside>
 </main>
+</div>
 
+<!-- ===== Modal producto (Admin) ===== -->
 <div id="modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
   <form id="formProd" class="bg-white rounded-xl shadow-xl w-full max-w-md p-5 space-y-3 max-h-[95vh] overflow-y-auto">
     <h2 id="mTitulo" class="text-lg font-bold">Producto</h2>
     <input type="hidden" id="pID">
-    <label class="block text-sm font-medium">Nombre *
-      <input id="pNombre" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
-    <label class="block text-sm font-medium">Principio activo
-      <input id="pPrincipio" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
-    <label class="block text-sm font-medium">Código de barras
-      <input id="pCodigo" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <label class="block text-sm font-medium">Nombre *<input id="pNombre" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <label class="block text-sm font-medium">Principio activo<input id="pPrincipio" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <label class="block text-sm font-medium">Código de barras<input id="pCodigo" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
     <div class="grid grid-cols-2 gap-3">
-      <label class="block text-sm font-medium">Precio (S/) *
-        <input id="pPrecio" type="number" step="0.01" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
-      <label class="block text-sm font-medium">Stock *
-        <input id="pStock" type="number" step="1" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+      <label class="block text-sm font-medium">Precio (S/) *<input id="pPrecio" type="number" step="0.01" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+      <label class="block text-sm font-medium">Stock *<input id="pStock" type="number" step="1" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
     </div>
-    <label class="block text-sm font-medium">Fecha de vencimiento
-      <input id="pVenc" type="date" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <label class="block text-sm font-medium">Fecha de vencimiento<input id="pVenc" type="date" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
     <div class="flex gap-2 pt-2">
       <button type="button" id="btnCancelar" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Cancelar</button>
       <button type="submit" id="btnGuardar" class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-lg py-2">Guardar</button>
@@ -80,28 +82,59 @@
   </form>
 </div>
 
-<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-5 py-3 rounded-lg shadow-lg text-white font-medium z-30 max-w-[90vw]"></div>
+<!-- ===== Modal usuarios (Admin) ===== -->
+<div id="modalUsuarios" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-lg font-bold">👥 Usuarios</h2>
+      <button id="btnCerrarUsuarios" class="text-slate-500 hover:text-slate-800 text-xl">✕</button>
+    </div>
+    <div id="listaUsuarios" class="divide-y mb-4"></div>
+    <form id="formUsuario" class="space-y-2 border-t pt-3">
+      <h3 id="uTitulo" class="font-semibold">Nuevo usuario</h3>
+      <input id="uUsuario" required placeholder="Usuario (ej. maria)" autocomplete="off" class="w-full border rounded-lg px-3 py-2">
+      <input id="uNombre" required placeholder="Nombre completo" class="w-full border rounded-lg px-3 py-2">
+      <div class="grid grid-cols-2 gap-2">
+        <select id="uRol" class="border rounded-lg px-3 py-2"><option value="Cajero">Cajero</option><option value="Admin">Administrador</option></select>
+        <select id="uActivo" class="border rounded-lg px-3 py-2"><option value="SI">Activo</option><option value="NO">Desactivado</option></select>
+      </div>
+      <input id="uClave" type="password" placeholder="Contraseña (mínimo 6)" autocomplete="new-password" class="w-full border rounded-lg px-3 py-2">
+      <p id="uAyuda" class="text-xs text-slate-500"></p>
+      <div class="flex gap-2">
+        <button type="button" id="btnLimpiarUsuario" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Nuevo</button>
+        <button type="submit" id="btnGuardarUsuario" class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-lg py-2">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-5 py-3 rounded-lg shadow-lg text-white font-medium z-50 max-w-[90vw]"></div>
 
 <script>
 // ===== Configuración =====
-const API_URL = 'https://script.google.com/macros/s/AKfycbxqMjlyJD_6ZBJBxzIIog76oztReZH0Ow5R0iCHsOxDfO0s3SqgBnJzcehiV-GE0L1Zow/exec';
-const STOCK_BAJO = 5;          // Se alerta cuando Stock <= este valor
-const DIAS_POR_VENCER = 90;    // Se alerta cuando faltan <= estos días
+const API_URL = 'https://script.google.com/macros/s/AKfycbyOZDnRSivLqWs4tE0fAqw-iLo247Yb95kVZwU44rSg4GAExpdrZ7itDoT1PRVe9HAknQ/exec';
+const STOCK_BAJO = 5;
+const DIAS_POR_VENCER = 90;
 
 // ===== Estado =====
 let productos = [];
-let carrito = {};   // { idComoTexto: cantidad }
+let usuarios = [];
+let carrito = {};
 let cobrando = false;
+let sesion = null; // { token, usuario: { usuario, nombre, rol } }
+try { sesion = JSON.parse(sessionStorage.getItem('sesion')); } catch (e) { sesion = null; }
 
 const $ = id => document.getElementById(id);
 const moneda = n => 'S/ ' + Number(n || 0).toFixed(2);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const esAdmin = () => !!sesion && String(sesion.usuario.rol).toLowerCase() === 'admin';
+const porId = id => productos.find(p => String(p.ID) === String(id));
 
 function toast(msg, ok = true) {
   const t = $('toast');
   t.textContent = msg;
-  t.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 px-5 py-3 rounded-lg shadow-lg text-white font-medium z-30 max-w-[90vw] ' + (ok ? 'bg-emerald-600' : 'bg-red-600');
+  t.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 px-5 py-3 rounded-lg shadow-lg text-white font-medium z-50 max-w-[90vw] ' + (ok ? 'bg-emerald-600' : 'bg-red-600');
   clearTimeout(toast._t);
   toast._t = setTimeout(() => t.classList.add('hidden'), 4000);
 }
@@ -114,17 +147,83 @@ function diasParaVencer(fecha) {
   return Math.round((f - hoy) / 86400000);
 }
 
-const porId = id => productos.find(p => String(p.ID) === String(id));
+// ===== Comunicación con Apps Script =====
+// POST con text/plain evita el preflight CORS que Apps Script no soporta
+async function apiPost(payload) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({}, payload, { token: sesion && sesion.token }))
+  });
+  const data = await res.json();
+  if (!data.ok && data.error === 'SESION_INVALIDA') {
+    cerrarSesion('Tu sesión expiró. Ingresa de nuevo.');
+    throw new Error('Sesión expirada');
+  }
+  if (!data.ok) throw new Error(data.error || 'Error desconocido');
+  return data;
+}
+
+// ===== Sesión =====
+function mostrarApp() {
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('infoUsuario').textContent = sesion.usuario.nombre + ' · ' + sesion.usuario.rol;
+  document.querySelectorAll('.solo-admin').forEach(el => el.classList.toggle('hidden', !esAdmin()));
+  cargarProductos();
+}
+
+function cerrarSesion(msg) {
+  sesion = null; carrito = {}; productos = [];
+  try { sessionStorage.removeItem('sesion'); } catch (e) {}
+  ['modal', 'modalUsuarios'].forEach(id => $(id).classList.add('hidden'));
+  $('app').classList.add('hidden');
+  $('login').classList.remove('hidden');
+  $('lClave').value = '';
+  $('loginError').textContent = msg || '';
+  $('lUsuario').focus();
+}
+
+$('formLogin').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('btnLogin');
+  btn.disabled = true; btn.textContent = 'Ingresando...'; $('loginError').textContent = '';
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ accion: 'login', usuario: $('lUsuario').value, clave: $('lClave').value })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    sesion = { token: data.token, usuario: data.usuario };
+    try { sessionStorage.setItem('sesion', JSON.stringify(sesion)); } catch (e) {}
+    mostrarApp();
+  } catch (err) {
+    $('loginError').textContent = err.message === 'Failed to fetch' ? 'No se pudo conectar con el servidor' : err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ingresar'; $('lClave').value = '';
+  }
+});
+
+$('btnSalir').addEventListener('click', () => {
+  if (sesion) fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ accion: 'cerrar_sesion', token: sesion.token }) }).catch(() => {});
+  cerrarSesion('');
+});
 
 // ===== doGet: cargar productos =====
 async function cargarProductos() {
+  if (!sesion) return;
   $('estado').textContent = 'Cargando productos...';
   try {
-    const res = await fetch(API_URL + '?todos=1'); // incluye agotados para poder reabastecerlos
+    const res = await fetch(API_URL + '?todos=1&token=' + encodeURIComponent(sesion.token));
     const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    if (!data.ok) {
+      if (data.error === 'SESION_INVALIDA') return cerrarSesion('Tu sesión expiró. Ingresa de nuevo.');
+      throw new Error(data.error || 'Error desconocido');
+    }
     productos = data.productos;
-    // Ajusta el carrito si el stock cambió
     Object.keys(carrito).forEach(id => {
       const p = porId(id);
       if (!p) delete carrito[id];
@@ -176,6 +275,7 @@ function renderProductos() {
     if (vencido) venc = '<span class="text-xs font-semibold text-red-600">VENCIDO ' + esc(String(p.Fecha_Vencimiento).slice(0, 10)) + '</span>';
     else if (dias !== null && dias <= DIAS_POR_VENCER) venc = '<span class="text-xs font-semibold text-amber-600">Vence en ' + dias + ' días</span>';
     else if (p.Fecha_Vencimiento) venc = '<span class="text-xs text-slate-400">Vence ' + esc(String(p.Fecha_Vencimiento).slice(0, 10)) + '</span>';
+    const editar = esAdmin() ? '<button data-edit="' + esc(p.ID) + '" class="ml-auto text-xs text-blue-600 hover:underline">✏️ Editar</button>' : '';
 
     return '<div class="bg-white rounded-xl shadow-sm p-3 flex flex-col">' +
       '<div class="font-semibold leading-tight">' + esc(p.Nombre) + '</div>' +
@@ -185,8 +285,7 @@ function renderProductos() {
         '<span class="text-lg font-bold">' + moneda(p.Precio) + '</span>' +
         '<span class="text-xs font-semibold px-2 py-1 rounded-full ' + stockCls + '">Stock: ' + stock + '</span>' +
       '</div>' +
-      '<div class="mt-1 mb-2 flex items-center justify-between">' + venc +
-        '<button data-edit="' + esc(p.ID) + '" class="ml-auto text-xs text-blue-600 hover:underline">✏️ Editar</button></div>' +
+      '<div class="mt-1 mb-2 flex items-center justify-between min-h-[1rem]">' + venc + editar + '</div>' +
       '<button data-add="' + esc(p.ID) + '" ' + (bloqueado ? 'disabled' : '') +
         ' class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg py-2 text-sm font-medium">' +
         (vencido ? 'No vendible' : agotado ? (stock <= 0 ? 'Agotado' : 'Sin más stock') : 'Agregar') + '</button>' +
@@ -239,18 +338,10 @@ async function cobrar() {
   if (cobrando || !Object.keys(carrito).length) return;
   cobrando = true; renderCarrito();
   try {
-    const payload = {
+    const data = await apiPost({
       metodo_pago: $('metodoPago').value,
       productos: Object.keys(carrito).map(id => ({ id: porId(id).ID, cantidad: carrito[id] }))
-    };
-    // text/plain evita el preflight CORS que Apps Script no soporta
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
     });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Error desconocido');
     toast('✅ Venta ' + data.id_venta + ' registrada: ' + moneda(data.total));
     carrito = {};
     $('buscador').value = '';
@@ -258,12 +349,12 @@ async function cobrar() {
     toast('No se pudo cobrar: ' + err.message, false);
   } finally {
     cobrando = false;
-    await cargarProductos(); // refresca el stock real
-    $('buscador').focus();
+    await cargarProductos();
+    if (sesion) $('buscador').focus();
   }
 }
 
-// ===== Crear / editar producto (doPost con accion: guardar_producto) =====
+// ===== Producto (solo Admin) =====
 function abrirModal(id) {
   const p = id ? porId(id) : null;
   $('mTitulo').textContent = p ? 'Editar producto' : 'Nuevo producto';
@@ -284,25 +375,73 @@ async function guardarProducto(e) {
   const btn = $('btnGuardar');
   btn.disabled = true; btn.textContent = 'Guardando...';
   try {
-    const producto = {
-      ID: $('pID').value,
-      Nombre: $('pNombre').value,
-      Principio_Activo: $('pPrincipio').value,
-      Codigo_Barras: $('pCodigo').value,
-      Precio: Number($('pPrecio').value),
-      Stock: Number($('pStock').value),
-      Fecha_Vencimiento: $('pVenc').value
-    };
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ accion: 'guardar_producto', producto })
+    const data = await apiPost({
+      accion: 'guardar_producto',
+      producto: {
+        ID: $('pID').value, Nombre: $('pNombre').value, Principio_Activo: $('pPrincipio').value,
+        Codigo_Barras: $('pCodigo').value, Precio: Number($('pPrecio').value),
+        Stock: Number($('pStock').value), Fecha_Vencimiento: $('pVenc').value
+      }
     });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Error desconocido');
     toast('✅ Producto guardado (ID ' + data.id + ')');
     cerrarModal();
     await cargarProductos();
+  } catch (err) {
+    toast('No se pudo guardar: ' + err.message, false);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
+
+// ===== Usuarios (solo Admin) =====
+async function abrirUsuarios() {
+  limpiarFormUsuario();
+  $('modalUsuarios').classList.remove('hidden');
+  try {
+    const d = await apiPost({ accion: 'listar_usuarios' });
+    usuarios = d.usuarios; renderUsuarios();
+  } catch (err) { toast(err.message, false); }
+}
+
+function renderUsuarios() {
+  $('listaUsuarios').innerHTML = usuarios.length ? usuarios.map(u =>
+    '<div class="flex items-center justify-between py-2"><div>' +
+      '<div class="font-medium">' + esc(u.Nombre) + (u.Activo === 'NO' ? ' <span class="text-xs text-red-600">(desactivado)</span>' : '') + '</div>' +
+      '<div class="text-xs text-slate-500">' + esc(u.Usuario) + ' · ' + (u.Rol === 'Admin' ? 'Administrador' : 'Cajero') + '</div></div>' +
+      '<button data-uedit="' + esc(u.Usuario) + '" class="text-xs text-blue-600 hover:underline">✏️ Editar</button></div>'
+  ).join('') : '<p class="text-sm text-slate-400 py-2">No hay usuarios.</p>';
+}
+
+function limpiarFormUsuario() {
+  $('uTitulo').textContent = 'Nuevo usuario';
+  $('uUsuario').value = ''; $('uUsuario').readOnly = false;
+  $('uNombre').value = ''; $('uRol').value = 'Cajero'; $('uActivo').value = 'SI'; $('uClave').value = '';
+  $('uClave').required = true;
+  $('uAyuda').textContent = 'El usuario no se podrá cambiar después. Usa letras, números, punto, guion.';
+}
+
+function editarUsuario(nombreUsuario) {
+  const u = usuarios.find(x => x.Usuario === nombreUsuario); if (!u) return;
+  $('uTitulo').textContent = 'Editar: ' + u.Usuario;
+  $('uUsuario').value = u.Usuario; $('uUsuario').readOnly = true;
+  $('uNombre').value = u.Nombre; $('uRol').value = u.Rol; $('uActivo').value = u.Activo; $('uClave').value = '';
+  $('uClave').required = false;
+  $('uAyuda').textContent = 'Deja la contraseña vacía para no cambiarla.';
+}
+
+async function guardarUsuarioWeb(e) {
+  e.preventDefault();
+  const btn = $('btnGuardarUsuario');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    await apiPost({
+      accion: 'guardar_usuario',
+      datos: { Usuario: $('uUsuario').value, Nombre: $('uNombre').value, Rol: $('uRol').value, Activo: $('uActivo').value, Clave: $('uClave').value }
+    });
+    toast('✅ Usuario guardado');
+    limpiarFormUsuario();
+    const d = await apiPost({ accion: 'listar_usuarios' });
+    usuarios = d.usuarios; renderUsuarios();
   } catch (err) {
     toast('No se pudo guardar: ' + err.message, false);
   } finally {
@@ -314,18 +453,25 @@ async function guardarProducto(e) {
 $('btnNuevo').addEventListener('click', () => abrirModal(null));
 $('btnCancelar').addEventListener('click', cerrarModal);
 $('formProd').addEventListener('submit', guardarProducto);
+$('btnUsuarios').addEventListener('click', abrirUsuarios);
+$('btnCerrarUsuarios').addEventListener('click', () => $('modalUsuarios').classList.add('hidden'));
+$('btnLimpiarUsuario').addEventListener('click', limpiarFormUsuario);
+$('formUsuario').addEventListener('submit', guardarUsuarioWeb);
+$('listaUsuarios').addEventListener('click', e => {
+  const b = e.target.closest('[data-uedit]'); if (b) editarUsuario(b.dataset.uedit);
+});
+
 $('buscador').addEventListener('input', renderProductos);
 $('buscador').addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   const v = e.target.value.trim();
   if (!v) return;
-  // Un lector de código de barras escribe el código y envía Enter
   const exacto = productos.find(p => String(p.Codigo_Barras).trim() === v);
   if (exacto) { agregar(exacto.ID); e.target.value = ''; renderProductos(); }
 });
 $('productos').addEventListener('click', e => {
   const b = e.target.closest('[data-add]'); if (b) return agregar(b.dataset.add);
-  const ed = e.target.closest('[data-edit]'); if (ed) abrirModal(ed.dataset.edit);
+  const ed = e.target.closest('[data-edit]'); if (ed && esAdmin()) abrirModal(ed.dataset.edit);
 });
 $('carrito').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
@@ -337,7 +483,8 @@ $('btnCobrar').addEventListener('click', cobrar);
 $('btnVaciar').addEventListener('click', () => { carrito = {}; renderProductos(); renderCarrito(); });
 $('btnRecargar').addEventListener('click', cargarProductos);
 
-cargarProductos();
+// ===== Inicio =====
+if (sesion && sesion.token && sesion.usuario) mostrarApp(); else $('lUsuario').focus();
 </script>
 </body>
 </html>
