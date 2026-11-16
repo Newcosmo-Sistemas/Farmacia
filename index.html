@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farmacia - Punto de Venta</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+<header class="bg-emerald-700 text-white shadow sticky top-0 z-20">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
+    <h1 class="text-xl font-bold">💊 Punto de Venta</h1>
+    <input id="buscador" type="search" autofocus autocomplete="off"
+      placeholder="Buscar por nombre, principio activo o escanear código de barras..."
+      class="flex-1 min-w-[220px] rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-300">
+    <button id="btnRecargar" class="bg-emerald-900 hover:bg-emerald-800 rounded-lg px-4 py-2 text-sm font-medium">↻ Actualizar</button>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 py-4 grid lg:grid-cols-3 gap-4">
+
+  <section class="lg:col-span-2">
+    <div id="alertas" class="hidden mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm"></div>
+    <div id="estado" class="text-slate-500 text-sm mb-2">Cargando productos...</div>
+    <div id="productos" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+  </section>
+
+  <aside class="lg:col-span-1">
+    <div class="bg-white rounded-xl shadow p-4 lg:sticky lg:top-20">
+      <h2 class="text-lg font-bold mb-3">🛒 Carrito</h2>
+      <div id="carrito" class="space-y-2 max-h-[45vh] overflow-y-auto"></div>
+
+      <div class="border-t mt-4 pt-4 space-y-3">
+        <div class="flex justify-between text-lg font-bold">
+          <span>Total</span><span id="total">S/ 0.00</span>
+        </div>
+        <label class="block text-sm font-medium">Método de pago
+          <select id="metodoPago" class="mt-1 w-full border rounded-lg px-3 py-2">
+            <option>Efectivo</option>
+            <option>Yape</option>
+            <option>Plin</option>
+            <option>Tarjeta</option>
+            <option>Transferencia</option>
+          </select>
+        </label>
+        <button id="btnCobrar" disabled
+          class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg text-lg">
+          Cobrar
+        </button>
+        <button id="btnVaciar" class="w-full text-sm text-slate-500 hover:text-red-600">Vaciar carrito</button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-5 py-3 rounded-lg shadow-lg text-white font-medium z-30 max-w-[90vw]"></div>
+
+<script>
+// ===== Configuración =====
+const API_URL = 'https://script.google.com/macros/s/AKfycbyOZDnRSivLqWs4tE0fAqw-iLo247Yb95kVZwU44rSg4GAExpdrZ7itDoT1PRVe9HAknQ/exec';
+const STOCK_BAJO = 5;          // Se alerta cuando Stock <= este valor
+const DIAS_POR_VENCER = 90;    // Se alerta cuando faltan <= estos días
+
+// ===== Estado =====
+let productos = [];
+let carrito = {};   // { idComoTexto: cantidad }
+let cobrando = false;
+
+const $ = id => document.getElementById(id);
+const moneda = n => 'S/ ' + Number(n || 0).toFixed(2);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+function toast(msg, ok = true) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 px-5 py-3 rounded-lg shadow-lg text-white font-medium z-30 max-w-[90vw] ' + (ok ? 'bg-emerald-600' : 'bg-red-600');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.add('hidden'), 4000);
+}
+
+function diasParaVencer(fecha) {
+  if (!fecha) return null;
+  const f = new Date(String(fecha).slice(0, 10) + 'T00:00:00');
+  if (isNaN(f)) return null;
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  return Math.round((f - hoy) / 86400000);
+}
+
+const porId = id => productos.find(p => String(p.ID) === String(id));
+
+// ===== doGet: cargar productos =====
+async function cargarProductos() {
+  $('estado').textContent = 'Cargando productos...';
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    productos = data.productos;
+    // Ajusta el carrito si el stock cambió
+    Object.keys(carrito).forEach(id => {
+      const p = porId(id);
+      if (!p) delete carrito[id];
+      else if (carrito[id] > Number(p.Stock)) carrito[id] = Number(p.Stock);
+    });
+    renderTodo();
+  } catch (err) {
+    $('estado').textContent = '';
+    toast('No se pudieron cargar los productos: ' + err.message, false);
+  }
+}
+
+// ===== Render =====
+function renderTodo() { renderAlertas(); renderProductos(); renderCarrito(); }
+
+function renderAlertas() {
+  const bajos = productos.filter(p => Number(p.Stock) <= STOCK_BAJO);
+  const porVencer = productos.filter(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return d !== null && d <= DIAS_POR_VENCER; });
+  const box = $('alertas');
+  if (!bajos.length && !porVencer.length) { box.classList.add('hidden'); return; }
+  let html = '';
+  if (bajos.length) {
+    html += '<p class="font-bold text-amber-800">⚠️ Stock bajo (' + bajos.length + ')</p><p class="mb-2">' +
+      bajos.map(p => esc(p.Nombre) + ' <b>(' + Number(p.Stock) + ')</b>').join(' · ') + '</p>';
+  }
+  if (porVencer.length) {
+    html += '<p class="font-bold text-red-700">⏰ Vencidos o por vencer (' + porVencer.length + ')</p><p>' +
+      porVencer.map(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return esc(p.Nombre) + ' <b>(' + (d < 0 ? 'vencido' : d + ' d') + ')</b>'; }).join(' · ') + '</p>';
+  }
+  box.innerHTML = html;
+  box.classList.remove('hidden');
+}
+
+function renderProductos() {
+  const q = norm($('buscador').value.trim());
+  const lista = productos.filter(p =>
+    !q || norm(p.Nombre).includes(q) || norm(p.Principio_Activo).includes(q) || norm(p.Codigo_Barras).includes(q));
+  $('estado').textContent = lista.length + ' producto(s)';
+
+  $('productos').innerHTML = lista.map(p => {
+    const stock = Number(p.Stock);
+    const dias = diasParaVencer(p.Fecha_Vencimiento);
+    const vencido = dias !== null && dias < 0;
+    const enCarrito = carrito[String(p.ID)] || 0;
+    const agotado = enCarrito >= stock;
+    const bloqueado = vencido || agotado;
+    const stockCls = stock <= STOCK_BAJO ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700';
+    let venc = '';
+    if (vencido) venc = '<span class="text-xs font-semibold text-red-600">VENCIDO ' + esc(String(p.Fecha_Vencimiento).slice(0, 10)) + '</span>';
+    else if (dias !== null && dias <= DIAS_POR_VENCER) venc = '<span class="text-xs font-semibold text-amber-600">Vence en ' + dias + ' días</span>';
+    else if (p.Fecha_Vencimiento) venc = '<span class="text-xs text-slate-400">Vence ' + esc(String(p.Fecha_Vencimiento).slice(0, 10)) + '</span>';
+
+    return '<div class="bg-white rounded-xl shadow-sm p-3 flex flex-col">' +
+      '<div class="font-semibold leading-tight">' + esc(p.Nombre) + '</div>' +
+      '<div class="text-sm text-slate-500">' + esc(p.Principio_Activo) + '</div>' +
+      '<div class="text-xs text-slate-400 mb-2">' + esc(p.Codigo_Barras) + '</div>' +
+      '<div class="flex items-center justify-between mt-auto">' +
+        '<span class="text-lg font-bold">' + moneda(p.Precio) + '</span>' +
+        '<span class="text-xs font-semibold px-2 py-1 rounded-full ' + stockCls + '">Stock: ' + stock + '</span>' +
+      '</div>' +
+      '<div class="mt-1 mb-2">' + venc + '</div>' +
+      '<button data-add="' + esc(p.ID) + '" ' + (bloqueado ? 'disabled' : '') +
+        ' class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg py-2 text-sm font-medium">' +
+        (vencido ? 'No vendible' : agotado ? 'Sin más stock' : 'Agregar') + '</button>' +
+    '</div>';
+  }).join('');
+}
+
+function renderCarrito() {
+  const ids = Object.keys(carrito);
+  let total = 0;
+  $('carrito').innerHTML = ids.length ? ids.map(id => {
+    const p = porId(id); if (!p) return '';
+    const c = carrito[id];
+    const sub = Number(p.Precio) * c;
+    total += sub;
+    return '<div class="flex items-center gap-2 border-b pb-2">' +
+      '<div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">' + esc(p.Nombre) + '</div>' +
+      '<div class="text-xs text-slate-500">' + moneda(p.Precio) + ' c/u</div></div>' +
+      '<button data-menos="' + esc(id) + '" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 font-bold">−</button>' +
+      '<span class="w-6 text-center text-sm">' + c + '</span>' +
+      '<button data-mas="' + esc(id) + '" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 font-bold">+</button>' +
+      '<span class="w-16 text-right text-sm font-semibold">' + moneda(sub) + '</span>' +
+      '<button data-quitar="' + esc(id) + '" class="text-red-500 hover:text-red-700" title="Quitar">✕</button>' +
+    '</div>';
+  }).join('') : '<p class="text-sm text-slate-400 text-center py-6">El carrito está vacío</p>';
+
+  $('total').textContent = moneda(total);
+  $('btnCobrar').disabled = !ids.length || cobrando;
+  $('btnCobrar').textContent = cobrando ? 'Procesando...' : 'Cobrar ' + (ids.length ? moneda(total) : '');
+}
+
+// ===== Carrito =====
+function agregar(id) {
+  const p = porId(id); if (!p) return;
+  const dias = diasParaVencer(p.Fecha_Vencimiento);
+  if (dias !== null && dias < 0) return toast('Producto vencido, no se puede vender', false);
+  const actual = carrito[String(id)] || 0;
+  if (actual + 1 > Number(p.Stock)) return toast('Stock máximo alcanzado para ' + p.Nombre, false);
+  carrito[String(id)] = actual + 1;
+  renderProductos(); renderCarrito();
+}
+function quitarUno(id) {
+  if (!carrito[id]) return;
+  carrito[id]--; if (carrito[id] <= 0) delete carrito[id];
+  renderProductos(); renderCarrito();
+}
+
+// ===== doPost: cobrar =====
+async function cobrar() {
+  if (cobrando || !Object.keys(carrito).length) return;
+  cobrando = true; renderCarrito();
+  try {
+    const payload = {
+      metodo_pago: $('metodoPago').value,
+      productos: Object.keys(carrito).map(id => ({ id: porId(id).ID, cantidad: carrito[id] }))
+    };
+    // text/plain evita el preflight CORS que Apps Script no soporta
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    toast('✅ Venta ' + data.id_venta + ' registrada: ' + moneda(data.total));
+    carrito = {};
+    $('buscador').value = '';
+  } catch (err) {
+    toast('No se pudo cobrar: ' + err.message, false);
+  } finally {
+    cobrando = false;
+    await cargarProductos(); // refresca el stock real
+    $('buscador').focus();
+  }
+}
+
+// ===== Eventos =====
+$('buscador').addEventListener('input', renderProductos);
+$('buscador').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const v = e.target.value.trim();
+  if (!v) return;
+  // Un lector de código de barras escribe el código y envía Enter
+  const exacto = productos.find(p => String(p.Codigo_Barras).trim() === v);
+  if (exacto) { agregar(exacto.ID); e.target.value = ''; renderProductos(); }
+});
+$('productos').addEventListener('click', e => {
+  const b = e.target.closest('[data-add]'); if (b) agregar(b.dataset.add);
+});
+$('carrito').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.mas) agregar(t.dataset.mas);
+  else if (t.dataset.menos) quitarUno(t.dataset.menos);
+  else if (t.dataset.quitar) { delete carrito[t.dataset.quitar]; renderProductos(); renderCarrito(); }
+});
+$('btnCobrar').addEventListener('click', cobrar);
+$('btnVaciar').addEventListener('click', () => { carrito = {}; renderProductos(); renderCarrito(); });
+$('btnRecargar').addEventListener('click', cargarProductos);
+
+cargarProductos();
+</script>
+</body>
+</html>
