@@ -38,6 +38,8 @@
       class="flex-1 min-w-[220px] rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-300">
     <button id="btnNuevo" class="solo-admin hidden btn-w">＋ Producto</button>
     <button id="btnUsuarios" class="solo-admin hidden btn-w">👥 Usuarios</button>
+    <button id="btnInventario" class="solo-admin hidden btn-w">📦 Inventario / Kardex</button>
+    <button id="btnVentas" class="btn-w">🧾 Ventas</button>
     <button id="btnRecargar" class="btn-h">↻ Actualizar</button>
     <span id="infoUsuario" class="text-sm opacity-90"></span>
     <button id="btnSalir" class="btn-h">Salir</button>
@@ -164,11 +166,83 @@
   </div>
 </div>
 
+<!-- ===== Modal Inventario / Kardex (Admin) ===== -->
+<div id="modalInv" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-bold">📦 Inventario / Kardex</h2>
+      <button id="btnCerrarInv" class="text-slate-500 hover:text-slate-800 text-xl">✕</button>
+    </div>
+    <div class="flex gap-2 mb-4">
+      <button id="bt-mov">Movimientos (Kardex)</button>
+      <button id="bt-cuadre">Cuadre / Inventario físico</button>
+    </div>
+
+    <div id="tab-mov">
+      <form id="formMov" class="grid sm:grid-cols-6 gap-2 items-end border rounded-lg p-3 mb-4 bg-slate-50">
+        <label class="lbl sm:col-span-2">Producto<select id="mProd" class="inp mt-1"></select></label>
+        <label class="lbl">Tipo
+          <select id="mTipo" class="inp mt-1">
+            <optgroup label="Entrada"><option>Compra</option><option>Devolución</option></optgroup>
+            <optgroup label="Salida / Descarga"><option>Merma</option><option>Vencido</option><option>Dañado</option><option>Consumo interno</option></optgroup>
+          </select></label>
+        <label class="lbl">Cantidad
+          <div class="flex gap-1 mt-1"><input id="mCant" type="number" min="1" step="1" required class="inp">
+            <select id="mModo" class="inp !w-24"><option value="unidad">Unid.</option><option value="caja">Cajas</option></select></div></label>
+        <label class="lbl">Lote<input id="mLote" class="inp mt-1"></label>
+        <label class="lbl sm:col-span-5">Motivo *<input id="mMotivo" required placeholder="Ej. Factura F001-123 / rotura en almacén" class="inp mt-1"></label>
+        <button id="btnMov" class="btn py-2">Registrar</button>
+      </form>
+      <div class="grid sm:grid-cols-4 gap-2 mb-2">
+        <select id="fTipo" class="inp"><option value="">Todos los tipos</option><option>Venta</option><option>Compra</option><option>Devolución</option><option>Merma</option><option>Vencido</option><option>Dañado</option><option>Consumo interno</option><option>Ajuste inventario</option></select>
+        <input id="fTexto" placeholder="Buscar producto, motivo, usuario, lote" class="inp">
+        <input id="fDesde" type="date" class="inp" title="Desde">
+        <input id="fHasta" type="date" class="inp" title="Hasta">
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-sm">
+        <thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Fecha</th><th class="pr-2">Tipo</th><th class="pr-2">Producto</th><th class="pr-2 text-right">Cant.</th><th class="pr-2 text-right">Stock</th><th class="pr-2">Lote</th><th class="pr-2">Motivo</th><th>Usuario</th></tr></thead>
+        <tbody id="kBody"></tbody></table></div>
+    </div>
+
+    <div id="tab-cuadre" class="hidden">
+      <p class="text-sm text-slate-600 mb-2">Ingresa el stock contado (en unidades). Solo se ajustan los productos con conteo. <span class="text-red-600 font-semibold">Faltante</span> en rojo, <span class="text-blue-600 font-semibold">sobrante</span> en azul.</p>
+      <div class="overflow-x-auto max-h-[50vh] overflow-y-auto"><table class="w-full text-sm">
+        <thead class="text-left text-slate-500 sticky top-0 bg-white"><tr><th class="py-1">Producto</th><th class="text-right pr-2">Sistema</th><th>Físico contado</th><th class="text-right">Diferencia</th></tr></thead>
+        <tbody id="cBody"></tbody></table></div>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <button id="btnAplicar" class="btn px-4 py-2">Aplicar Ajuste de Inventario</button>
+        <button id="btnImprimir" class="border rounded-lg px-4 py-2 hover:bg-slate-50">🖨 Imprimir resumen</button>
+        <button id="btnCsv" class="border rounded-lg px-4 py-2 hover:bg-slate-50">⬇ Exportar CSV</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal Ventas ===== -->
+<div id="modalVentas" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-bold">🧾 Ventas</h2>
+      <button id="btnCerrarVentas" class="text-slate-500 hover:text-slate-800 text-xl">✕</button>
+    </div>
+    <div class="flex flex-wrap items-end gap-2 mb-3">
+      <label class="lbl">Desde<input id="vDesde" type="date" class="inp mt-1"></label>
+      <label class="lbl">Hasta<input id="vHasta" type="date" class="inp mt-1"></label>
+      <button id="btnBuscarVentas" class="btn px-4 py-2">Consultar</button>
+      <span id="vAviso" class="text-xs text-slate-500"></span>
+    </div>
+    <div id="vResumen" class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4"></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Fecha</th><th class="pr-2">Ticket</th><th class="pr-2">Cliente</th><th class="pr-2">Pago</th><th class="pr-2 text-right">Total</th><th class="pr-2">Vendedor</th><th></th></tr></thead>
+      <tbody id="vBody"></tbody></table></div>
+  </div>
+</div>
+
 <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-5 py-3 rounded-lg shadow-lg text-white font-medium z-50 max-w-[90vw]"></div>
 
 <script>
 // ===== Configuración =====
-const API_URL = 'https://script.google.com/macros/s/AKfycby2avlvTRI-X2qPJxma0TJc00uYz0OXRsHzit1CO73txkf530_l_FXv5IbmpNYBUmckIQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyOZDnRSivLqWs4tE0fAqw-iLo247Yb95kVZwU44rSg4GAExpdrZ7itDoT1PRVe9HAknQ/exec';
 const STOCK_BAJO = 5;          // se usa cuando el producto no tiene Stock_Minimo
 const DIAS_POR_VENCER = 90;
 
@@ -239,7 +313,7 @@ function mostrarApp() {
 function cerrarSesion(msg) {
   sesion = null; carrito = {}; productos = [];
   try { sessionStorage.removeItem('sesion'); } catch (e) {}
-  ['modal', 'modalUsuarios'].forEach(id => $(id).classList.add('hidden'));
+  ['modal', 'modalUsuarios', 'modalInv', 'modalVentas'].forEach(id => $(id).classList.add('hidden'));
   $('app').classList.add('hidden');
   $('login').classList.remove('hidden');
   $('lClave').value = '';
@@ -357,7 +431,7 @@ function renderProductos() {
       '</div>' +
       '<div class="mt-1 mb-2 flex items-center justify-between gap-2 min-h-[1rem]"><span>' + venc +
         (bajo ? ' <span class="text-xs font-semibold text-red-600">⚠ Stock bajo (mín. ' + stockMin(p) + ')</span>' : '') + '</span>' +
-        (esAdmin() ? '<button data-edit="' + esc(p.ID) + '" class="ml-auto text-xs text-blue-600 hover:underline">✏️ Editar</button>' : '') + '</div>' +
+        (esAdmin() ? '<span class="ml-auto flex gap-2"><button data-ajustar="' + esc(p.ID) + '" class="text-xs text-emerald-700 hover:underline">📦 Ajustar stock</button><button data-edit="' + esc(p.ID) + '" class="text-xs text-blue-600 hover:underline">✏️ Editar</button></span>' : '') + '</div>' +
       '<div class="flex gap-2">' + bCaja + bUni + '</div>' +
     '</div>';
   }).join('');
@@ -547,7 +621,173 @@ async function guardarUsuarioWeb(e) {
   }
 }
 
+// ===== Inventario / Kardex (solo Admin) =====
+let kardex = [], ultimoCuadre = null, ventas = [], verVenta = -1;
+const ordenados = () => [...productos].sort((a, b) => String(a.Nombre).localeCompare(String(b.Nombre)));
+const hoyISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+
+function verTab(t) {
+  ['mov', 'cuadre'].forEach(x => {
+    $('tab-' + x).classList.toggle('hidden', x !== t);
+    $('bt-' + x).className = 'px-4 py-2 rounded-lg text-sm font-semibold ' + (x === t ? 'bg-emerald-600 text-white' : 'bg-slate-100 hover:bg-slate-200');
+  });
+}
+
+function llenarSelector() {
+  const actual = $('mProd').value;
+  $('mProd').innerHTML = ordenados().map(p => '<option value="' + esc(p.ID) + '">' + esc(p.Nombre) + (p.Concentracion ? ' ' + esc(p.Concentracion) : '') + ' — ' + stockTxt(p) + '</option>').join('');
+  if (actual) $('mProd').value = actual;
+}
+
+function abrirInventario(tab, idProducto) {
+  ultimoCuadre = null;
+  $('modalInv').classList.remove('hidden');
+  llenarSelector();
+  if (idProducto) $('mProd').value = idProducto;
+  ['mCant', 'mLote', 'mMotivo'].forEach(id => $(id).value = '');
+  renderCuadre(); verTab(tab || 'mov'); cargarKardex();
+}
+
+async function registrarMovimiento(e) {
+  e.preventDefault();
+  const btn = $('btnMov'); btn.disabled = true;
+  try {
+    const d = await apiPost({ accion: 'ajustar_stock', id: $('mProd').value, tipo: $('mTipo').value, modo: $('mModo').value,
+      cantidad: Number($('mCant').value), lote: $('mLote').value, motivo: $('mMotivo').value });
+    toast('✅ Movimiento registrado. Stock actual: ' + d.stock + ' unid.');
+    ['mCant', 'mLote', 'mMotivo'].forEach(id => $(id).value = '');
+    await cargarProductos(); llenarSelector(); cargarKardex();
+  } catch (err) { toast('No se pudo registrar: ' + err.message, false); }
+  finally { btn.disabled = false; }
+}
+
+async function cargarKardex() {
+  try { const d = await apiPost({ accion: 'listar_kardex' }); kardex = d.movimientos; renderKardex(); }
+  catch (err) { toast(err.message, false); }
+}
+
+function renderKardex() {
+  const t = $('fTipo').value, q = norm($('fTexto').value), d1 = $('fDesde').value, d2 = $('fHasta').value;
+  const f = kardex.filter(m => (!t || m.Tipo === t) && (!q || norm([m.Producto, m.Motivo, m.Usuario, m.Lote].join(' ')).includes(q)) &&
+    (!d1 || m.Fecha.slice(0, 10) >= d1) && (!d2 || m.Fecha.slice(0, 10) <= d2));
+  $('kBody').innerHTML = f.length ? f.map(m => {
+    const c = Number(m.Cantidad);
+    return '<tr class="border-t"><td class="py-1 pr-2 whitespace-nowrap">' + esc(m.Fecha) + '</td><td class="pr-2">' + esc(m.Tipo) + '</td><td class="pr-2">' + esc(m.Producto) +
+      '</td><td class="pr-2 text-right font-semibold ' + (c < 0 ? 'text-red-600' : 'text-emerald-600') + '">' + (c > 0 ? '+' : '') + c + '</td><td class="pr-2 text-right whitespace-nowrap">' +
+      esc(m.Stock_Antes) + ' → ' + esc(m.Stock_Despues) + '</td><td class="pr-2">' + esc(m.Lote) + '</td><td class="pr-2">' + esc(m.Motivo) + '</td><td>' + esc(m.Usuario) + '</td></tr>';
+  }).join('') : '<tr><td colspan="8" class="py-4 text-center text-slate-400">Sin movimientos</td></tr>';
+}
+
+// --- Cuadre / inventario físico ---
+function renderCuadre() {
+  $('cBody').innerHTML = ordenados().map(p => '<tr class="border-t"><td class="py-1 pr-2">' + esc(p.Nombre) + ' <span class="text-xs text-slate-400">' + esc(p.Concentracion || '') +
+    '</span></td><td class="text-right pr-2">' + Number(p.Stock) + '</td><td><input type="number" min="0" step="1" data-fis="' + esc(p.ID) +
+    '" class="inp !py-1 w-28"></td><td class="text-right font-semibold">—</td></tr>').join('');
+}
+
+const datosCuadre = () => [...document.querySelectorAll('[data-fis]')].filter(i => i.value !== '').map(i => {
+  const p = porId(i.dataset.fis);
+  return { Producto: p.Nombre + (p.Concentracion ? ' ' + p.Concentracion : ''), Sistema: Number(p.Stock), Fisico: Number(i.value), Diferencia: Number(i.value) - Number(p.Stock) };
+});
+
+async function aplicarInventario() {
+  const items = [...document.querySelectorAll('[data-fis]')].filter(i => i.value !== '').map(i => ({ id: i.dataset.fis, fisico: Number(i.value) }));
+  if (!items.length) return toast('Ingresa al menos un conteo', false);
+  const cambios = items.filter(it => Number(porId(it.id).Stock) !== it.fisico).length;
+  if (!cambios) return toast('El conteo coincide con el sistema: no hay nada que ajustar');
+  if (!confirm('Se ajustará el stock de ' + cambios + ' producto(s) al conteo físico y quedará registrado en el Kardex.\n\n¿Continuar?')) return;
+  ultimoCuadre = datosCuadre();
+  try {
+    const d = await apiPost({ accion: 'aplicar_inventario', items });
+    toast('✅ Inventario aplicado: ' + d.ajustados + ' producto(s) ajustado(s). Ya puedes imprimir el resumen.');
+    await cargarProductos(); renderCuadre(); llenarSelector(); cargarKardex();
+  } catch (err) { ultimoCuadre = null; toast('No se pudo aplicar: ' + err.message, false); }
+}
+
+function imprimirCuadre() {
+  const r = ultimoCuadre || datosCuadre();
+  if (!r.length) return toast('No hay conteos para imprimir', false);
+  const filas = r.map(x => '<tr><td>' + esc(x.Producto) + '</td><td>' + x.Sistema + '</td><td>' + x.Fisico + '</td><td style="color:' +
+    (x.Diferencia < 0 ? '#c00' : x.Diferencia > 0 ? '#06c' : '#080') + '"><b>' + (x.Diferencia > 0 ? '+' : '') + x.Diferencia + '</b></td></tr>').join('');
+  const w = window.open('', '_blank');
+  if (!w) return toast('Permite las ventanas emergentes para imprimir', false);
+  w.document.write('<html><head><title>Inventario físico</title><style>body{font-family:Arial;padding:20px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:4px 8px;font-size:13px;text-align:left}</style></head><body><h2>Inventario físico</h2><p>' +
+    new Date().toLocaleString('es-PE') + ' · ' + esc(sesion.usuario.nombre) + '</p><table><tr><th>Producto</th><th>Sistema</th><th>Físico</th><th>Diferencia</th></tr>' + filas + '</table></body></html>');
+  w.document.close(); w.focus(); w.print();
+}
+
+function exportarCuadre() {
+  const r = ultimoCuadre || datosCuadre();
+  if (!r.length) return toast('No hay conteos para exportar', false);
+  const csv = 'Producto,Sistema,Fisico,Diferencia\n' + r.map(x => ['"' + String(x.Producto).replace(/"/g, '""') + '"', x.Sistema, x.Fisico, x.Diferencia].join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'inventario_' + hoyISO() + '.csv';
+  a.click();
+}
+
+// ===== Ventas y reporte diario =====
+function abrirVentas() {
+  $('modalVentas').classList.remove('hidden');
+  if (!$('vDesde').value) $('vDesde').value = hoyISO();
+  if (!$('vHasta').value) $('vHasta').value = hoyISO();
+  $('vDesde').disabled = $('vHasta').disabled = !esAdmin();
+  $('vAviso').textContent = esAdmin() ? '' : 'Se muestran solo tus ventas de hoy.';
+  cargarVentas();
+}
+
+async function cargarVentas() {
+  try { const d = await apiPost({ accion: 'listar_ventas', desde: $('vDesde').value, hasta: $('vHasta').value }); ventas = d.ventas; verVenta = -1; renderVentas(); }
+  catch (err) { toast(err.message, false); }
+}
+
+function ticketHtml(v) {
+  const lineas = v.Detalle ? v.Detalle.map(l => '<div class="flex justify-between"><span>' + l.cantidad + ' × ' + esc(l.nombre) + ' <span class="text-xs text-slate-500">(' + esc(l.modo) + ' · ' + moneda(l.precio) + ')</span></span><span>' + moneda(l.subtotal) + '</span></div>').join('') : esc(v.Productos_Vendidos);
+  const fila = (t, x) => '<div class="flex justify-between"><span>' + t + '</span><span>' + x + '</span></div>';
+  return '<tr class="bg-slate-50"><td colspan="7" class="p-3 text-sm">' + lineas + '<div class="border-t mt-2 pt-2 space-y-0.5">' +
+    (v.Subtotal !== '' ? fila('Subtotal', moneda(v.Subtotal)) : '') + (Number(v.Descuento) ? fila('Descuento', '- ' + moneda(v.Descuento)) : '') + fila('<b>Total</b>', '<b>' + moneda(v.Total) + '</b>') +
+    (v.Monto_Recibido !== '' ? fila('Recibido / Vuelto', moneda(v.Monto_Recibido) + ' / ' + moneda(v.Vuelto)) : '') +
+    (v.Cliente_Doc || v.Cliente_Nombre ? fila('Cliente', esc(v.Cliente_Doc + ' ' + v.Cliente_Nombre)) : '') + '</div></td></tr>';
+}
+
+function renderVentas() {
+  const g = { 'Efectivo': 0, 'Yape / Plin': 0, 'Tarjeta': 0, 'Otros': 0 };
+  let tot = 0;
+  ventas.forEach(v => {
+    const t = Number(v.Total) || 0, m = v.Metodo_Pago; tot += t;
+    g[m === 'Efectivo' ? 'Efectivo' : (m === 'Yape' || m === 'Plin') ? 'Yape / Plin' : m === 'Tarjeta' ? 'Tarjeta' : 'Otros'] += t;
+  });
+  $('vResumen').innerHTML = '<div class="rounded-lg bg-emerald-600 text-white p-3"><div class="text-xs opacity-80">Ingresos (' + ventas.length + ' ventas)</div><div class="text-xl font-bold">' + moneda(tot) + '</div></div>' +
+    Object.keys(g).map(k => '<div class="rounded-lg border p-3"><div class="text-xs text-slate-500">' + k + '</div><div class="text-lg font-bold">' + moneda(g[k]) + '</div></div>').join('');
+  $('vBody').innerHTML = ventas.length ? ventas.map((v, i) => '<tr class="border-t"><td class="py-1 pr-2 whitespace-nowrap">' + esc(v.Fecha) + '</td><td class="pr-2">' + esc(v.ID_Venta) +
+    '</td><td class="pr-2">' + esc(v.Cliente_Nombre || v.Cliente_Doc || '—') + '</td><td class="pr-2">' + esc(v.Metodo_Pago) + '</td><td class="pr-2 text-right font-semibold">' + moneda(v.Total) +
+    '</td><td class="pr-2">' + esc(v.Vendedor) + '</td><td><button data-vver="' + i + '" class="text-xs text-blue-600 hover:underline">' + (verVenta === i ? 'Ocultar' : 'Ver ticket') + '</button></td></tr>' + (verVenta === i ? ticketHtml(v) : '')).join('')
+    : '<tr><td colspan="7" class="py-4 text-center text-slate-400">Sin ventas en el rango</td></tr>';
+}
+
 // ===== Eventos =====
+$('btnInventario').addEventListener('click', () => abrirInventario('mov'));
+$('btnCerrarInv').addEventListener('click', () => $('modalInv').classList.add('hidden'));
+$('bt-mov').addEventListener('click', () => verTab('mov'));
+$('bt-cuadre').addEventListener('click', () => verTab('cuadre'));
+$('formMov').addEventListener('submit', registrarMovimiento);
+['fTipo', 'fTexto', 'fDesde', 'fHasta'].forEach(id => $(id).addEventListener('input', renderKardex));
+$('cBody').addEventListener('input', e => {
+  const i = e.target.closest('[data-fis]'); if (!i) return;
+  const td = i.closest('tr').lastElementChild;
+  if (i.value === '') { td.textContent = '—'; td.className = 'text-right font-semibold'; return; }
+  const dif = Number(i.value) - Number(porId(i.dataset.fis).Stock);
+  td.textContent = dif > 0 ? '+' + dif : String(dif);
+  td.className = 'text-right font-semibold ' + (dif < 0 ? 'text-red-600' : dif > 0 ? 'text-blue-600' : 'text-emerald-600');
+});
+$('btnAplicar').addEventListener('click', aplicarInventario);
+$('btnImprimir').addEventListener('click', imprimirCuadre);
+$('btnCsv').addEventListener('click', exportarCuadre);
+$('btnVentas').addEventListener('click', abrirVentas);
+$('btnCerrarVentas').addEventListener('click', () => $('modalVentas').classList.add('hidden'));
+$('btnBuscarVentas').addEventListener('click', cargarVentas);
+$('vBody').addEventListener('click', e => { const b = e.target.closest('[data-vver]'); if (b) { const i = Number(b.dataset.vver); verVenta = verVenta === i ? -1 : i; renderVentas(); } });
+
 $('btnNuevo').addEventListener('click', () => abrirModal(null));
 $('btnCancelar').addEventListener('click', cerrarModal);
 $('formProd').addEventListener('submit', guardarProducto);
@@ -566,6 +806,7 @@ $('buscador').addEventListener('keydown', e => {
 });
 $('productos').addEventListener('click', e => {
   const b = e.target.closest('[data-add]'); if (b) return agregar(b.dataset.add, b.dataset.modo);
+  const aj = e.target.closest('[data-ajustar]'); if (aj && esAdmin()) return abrirInventario('mov', aj.dataset.ajustar);
   const ed = e.target.closest('[data-edit]'); if (ed && esAdmin()) abrirModal(ed.dataset.edit);
 });
 $('carrito').addEventListener('click', e => {
