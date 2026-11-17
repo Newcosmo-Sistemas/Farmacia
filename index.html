@@ -40,6 +40,7 @@
     <button id="btnUsuarios" class="solo-admin hidden btn-w">👥 Usuarios</button>
     <button id="btnInventario" class="solo-admin hidden btn-w">📦 Inventario / Kardex</button>
     <button id="btnVentas" class="btn-w">🧾 Ventas</button>
+    <button id="btnClientes" class="btn-w">👥 Clientes</button>
     <button id="btnRecargar" class="btn-h">↻ Actualizar</button>
     <span id="infoUsuario" class="text-sm opacity-90"></span>
     <button id="btnSalir" class="btn-h">Salir</button>
@@ -61,9 +62,12 @@
       <div class="border-t mt-4 pt-3 space-y-3">
         <details>
           <summary class="text-sm font-medium cursor-pointer">👤 Datos del cliente (opcional)</summary>
+          <div class="flex gap-2 mt-2"><input id="cBuscar" class="inp" placeholder="Buscar cliente por DNI o nombre"><button id="btnElegirCliente" type="button" class="btn px-3 text-sm">Buscar</button></div>
           <div class="mt-2 space-y-2">
             <input id="cDoc" inputmode="numeric" maxlength="11" placeholder="DNI / RUC" class="inp">
             <input id="cNombre" placeholder="Nombre o razón social" class="inp">
+            <input id="cTelefono" placeholder="Teléfono" class="inp">
+            <input id="cDireccion" placeholder="Dirección" class="inp">
           </div>
         </details>
 
@@ -235,6 +239,25 @@
     <div class="overflow-x-auto"><table class="w-full text-sm">
       <thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Fecha</th><th class="pr-2">Ticket</th><th class="pr-2">Cliente</th><th class="pr-2">Pago</th><th class="pr-2 text-right">Total</th><th class="pr-2">Vendedor</th><th></th></tr></thead>
       <tbody id="vBody"></tbody></table></div>
+  </div>
+</div>
+
+<div id="modalClientes" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">👥 Gestión de clientes</h2>
+      <button id="btnCerrarClientes" class="text-slate-500 text-xl">✕</button>
+    </div>
+    <form id="formCliente" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+      <input id="clDoc" class="inp" placeholder="DNI / RUC *" maxlength="11" required>
+      <input id="clNombre" class="inp" placeholder="Nombre / razón social *" required>
+      <input id="clTelefono" class="inp" placeholder="Teléfono">
+      <input id="clCorreo" class="inp" type="email" placeholder="Correo">
+      <input id="clDireccion" class="inp sm:col-span-2 lg:col-span-3" placeholder="Dirección">
+      <button class="btn px-4 py-2" type="submit">Guardar cliente</button>
+    </form>
+    <div class="flex gap-2 mb-3"><input id="clBuscar" class="inp" placeholder="Buscar por documento, nombre o teléfono"></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead><tr class="text-slate-500"><th class="p-2">Documento</th><th class="p-2">Cliente</th><th class="p-2">Teléfono</th><th class="p-2">Correo</th><th class="p-2">Acción</th></tr></thead><tbody id="clBody"></tbody></table></div>
   </div>
 </div>
 
@@ -511,12 +534,12 @@ async function cobrar() {
       metodo_pago: $('metodoPago').value,
       productos: claves.map(k => { const [i, m] = dividir(k); return { id: porId(i).ID, modo: m, cantidad: carrito[k] }; }),
       descuento: { tipo: $('dTipo').value, valor: Number($('dValor').value) || 0 },
-      cliente: { doc: $('cDoc').value, nombre: $('cNombre').value },
+      cliente: { doc: $('cDoc').value, nombre: $('cNombre').value, telefono: $('cTelefono').value, direccion: $('cDireccion').value },
       monto_recibido: efectivo ? $('recibido').value : ''
     });
     toast('✅ Venta ' + data.id_venta + ' · ' + moneda(data.total) + (data.vuelto !== '' ? ' · Vuelto ' + moneda(data.vuelto) : ''));
     carrito = {};
-    ['buscador', 'cDoc', 'cNombre', 'dValor', 'recibido'].forEach(id => $(id).value = '');
+    ['buscador', 'cDoc', 'cNombre', 'cTelefono', 'cDireccion', 'dValor', 'recibido'].forEach(id => $(id).value = '');
   } catch (err) {
     toast('No se pudo cobrar: ' + err.message, false);
   } finally {
@@ -747,7 +770,8 @@ function ticketHtml(v) {
   return '<tr class="bg-slate-50"><td colspan="7" class="p-3 text-sm">' + lineas + '<div class="border-t mt-2 pt-2 space-y-0.5">' +
     (v.Subtotal !== '' ? fila('Subtotal', moneda(v.Subtotal)) : '') + (Number(v.Descuento) ? fila('Descuento', '- ' + moneda(v.Descuento)) : '') + fila('<b>Total</b>', '<b>' + moneda(v.Total) + '</b>') +
     (v.Monto_Recibido !== '' ? fila('Recibido / Vuelto', moneda(v.Monto_Recibido) + ' / ' + moneda(v.Vuelto)) : '') +
-    (v.Cliente_Doc || v.Cliente_Nombre ? fila('Cliente', esc(v.Cliente_Doc + ' ' + v.Cliente_Nombre)) : '') + '</div></td></tr>';
+    (v.Cliente_Doc || v.Cliente_Nombre ? fila('Cliente', esc(v.Cliente_Doc + ' ' + v.Cliente_Nombre)) : '') + (v.Cliente_Telefono ? fila('Teléfono', esc(v.Cliente_Telefono)) : '') + (v.Cliente_Direccion ? fila('Dirección', esc(v.Cliente_Direccion)) : '') +
+    '<div class="mt-3 flex justify-end"><button onclick="imprimirComprobante(\'' + esc(v.ID_Venta) + '\')" class="btn px-4 py-2 text-xs">🖨️ Imprimir comprobante</button></div>' + '</div></td></tr>';
 }
 
 function renderVentas() {
@@ -765,7 +789,61 @@ function renderVentas() {
     : '<tr><td colspan="7" class="py-4 text-center text-slate-400">Sin ventas en el rango</td></tr>';
 }
 
+
+ // ===== Gestión de clientes =====
+let clientes = [];
+function abrirClientes() {
+  $('modalClientes').classList.remove('hidden');
+  cargarClientes();
+}
+async function cargarClientes() {
+  try { const d = await apiPost({ accion: 'listar_clientes' }); clientes = d.clientes || []; renderClientes(); }
+  catch (err) { toast('No se pudieron cargar clientes: ' + err.message, false); }
+}
+function renderClientes() {
+  const q = norm(($('clBuscar').value || '').trim());
+  const lista = clientes.filter(c => !q || norm([c.Documento,c.Nombre,c.Telefono,c.Correo].join(' ')).includes(q));
+  $('clBody').innerHTML = lista.map(c => '<tr class="border-t"><td class="p-2">' + esc(c.Documento) + '</td><td class="p-2">' + esc(c.Nombre) + '</td><td class="p-2">' + esc(c.Telefono || '') + '</td><td class="p-2">' + esc(c.Correo || '') + '</td><td class="p-2"><button type="button" class="text-emerald-700 underline" data-cliente="' + esc(c.Documento) + '">Usar / Editar</button></td></tr>').join('') || '<tr><td colspan="5" class="p-3 text-center text-slate-400">No hay clientes</td></tr>';
+}
+async function guardarClienteWeb(e) {
+  e.preventDefault();
+  try {
+    const datos = { Documento:$('clDoc').value.trim(), Nombre:$('clNombre').value.trim(), Telefono:$('clTelefono').value.trim(), Correo:$('clCorreo').value.trim(), Direccion:$('clDireccion').value.trim() };
+    await apiPost({ accion:'guardar_cliente', datos });
+    $('formCliente').reset(); await cargarClientes(); toast('Cliente guardado correctamente');
+  } catch(err) { toast(err.message, false); }
+}
+function usarCliente(c) {
+  $('cDoc').value = c.Documento || ''; $('cNombre').value = c.Nombre || ''; $('cTelefono').value = c.Telefono || ''; $('cDireccion').value = c.Direccion || '';
+  $('cBuscar').value = '';
+  $('clDoc').value = c.Documento || ''; $('clNombre').value = c.Nombre || '';
+  $('clTelefono').value = c.Telefono || ''; $('clCorreo').value = c.Correo || ''; $('clDireccion').value = c.Direccion || '';
+  $('modalClientes').classList.add('hidden');
+}
+function imprimirComprobante(id) {
+  const v = ventas.find(x => String(x.ID_Venta) === String(id));
+  if (!v) return toast('No se encontró la venta', false);
+  const lineas = v.Detalle ? v.Detalle.map(l => '<tr><td>' + esc(l.cantidad + ' x ' + l.nombre) + '</td><td>' + moneda(l.subtotal) + '</td></tr>').join('') : '<tr><td colspan="2">' + esc(v.Productos_Vendidos) + '</td></tr>';
+  const htmlTicket = '<!doctype html><html><head><meta charset="utf-8"><title>Comprobante ' + esc(v.ID_Venta) + '</title><style>body{font:12px Arial;max-width:320px;margin:20px auto;color:#111}h2,p{text-align:center;margin:5px 0}.line{border-top:1px dashed #333;margin:8px 0}table{width:100%;font-size:12px}td:last-child{text-align:right}.r{text-align:right}.small{font-size:11px}</style></head><body><h2>COMPROBANTE DE VENTA</h2><p>FARMACIA</p><div class="line"></div><p class="small">' + esc(v.ID_Venta) + '</p><p class="small">' + esc(v.Fecha) + '</p><div class="line"></div><p style="text-align:left">Cliente: ' + esc(v.Cliente_Nombre || 'Público general') + '<br>Documento: ' + esc(v.Cliente_Doc || '—') + '<br>Teléfono: ' + esc(v.Cliente_Telefono || '—') + '<br>Dirección: ' + esc(v.Cliente_Direccion || '—') + '</p><div class="line"></div><table>' + lineas + '</table><div class="line"></div><p class="r">Subtotal: ' + moneda(v.Subtotal) + '</p><p class="r">Descuento: ' + moneda(v.Descuento) + '</p><h3 class="r">TOTAL: ' + moneda(v.Total) + '</h3><p class="r">Pago: ' + esc(v.Metodo_Pago) + '</p>' + (v.Monto_Recibido !== '' ? '<p class="r">Recibido: ' + moneda(v.Monto_Recibido) + '</p><p class="r">Vuelto: ' + moneda(v.Vuelto) + '</p>' : '') + '<div class="line"></div><p>¡Gracias por su compra!</p><script>window.onload=function(){window.print();};<\/script></body></html>';
+  const w = window.open('', '_blank', 'width=420,height=700');
+  if (!w) return toast('Permite las ventanas emergentes para imprimir', false);
+  w.document.open(); w.document.write(htmlTicket); w.document.close();
+}
+
 // ===== Eventos =====
+$('btnClientes').addEventListener('click', abrirClientes);
+$('btnCerrarClientes').addEventListener('click', () => $('modalClientes').classList.add('hidden'));
+$('formCliente').addEventListener('submit', guardarClienteWeb);
+$('clBuscar').addEventListener('input', renderClientes);
+$('clBody').addEventListener('click', e => { const b=e.target.closest('[data-cliente]'); if (!b) return; const c=clientes.find(x=>String(x.Documento)===b.dataset.cliente); if (c) usarCliente(c); });
+$('btnElegirCliente').addEventListener('click', async () => {
+  const q=norm($('cBuscar').value.trim());
+  if (!clientes.length) { try { const d=await apiPost({accion:'listar_clientes'}); clientes=d.clientes||[]; } catch(err) { return toast(err.message,false); } }
+  const encontrados=clientes.filter(c=>!q || norm([c.Documento,c.Nombre].join(' ')).includes(q));
+  if (encontrados.length===1) usarCliente(encontrados[0]);
+  else if (encontrados.length>1) { $('modalClientes').classList.remove('hidden'); $('clBuscar').value=$('cBuscar').value; renderClientes(); }
+  else toast('No se encontró el cliente. Regístralo en Gestión de clientes.', false);
+});
 $('btnInventario').addEventListener('click', () => abrirInventario('mov'));
 $('btnCerrarInv').addEventListener('click', () => $('modalInv').classList.add('hidden'));
 $('bt-mov').addEventListener('click', () => verTab('mov'));
