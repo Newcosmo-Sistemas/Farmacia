@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Farmacia - Punto de Venta</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style type="text/tailwindcss">
+@layer components {
+  .inp { @apply w-full border rounded-lg px-3 py-2 bg-white; }
+  .lbl { @apply block text-sm font-medium; }
+  .btn { @apply bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold rounded-lg; }
+  .btn-h { @apply bg-emerald-900 hover:bg-emerald-800 rounded-lg px-3 py-2 text-sm text-white; }
+  .btn-w { @apply bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold; }
+}
+</style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
@@ -13,10 +22,10 @@
   <form id="formLogin" class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 space-y-4">
     <h1 class="text-2xl font-bold text-center">💊 Farmacia</h1>
     <p class="text-center text-sm text-slate-500">Ingresa con tu usuario</p>
-    <input id="lUsuario" required autocomplete="username" placeholder="Usuario" class="w-full border rounded-lg px-3 py-2">
-    <input id="lClave" type="password" required autocomplete="current-password" placeholder="Contraseña" class="w-full border rounded-lg px-3 py-2">
+    <input id="lUsuario" required autocomplete="username" placeholder="Usuario" class="inp">
+    <input id="lClave" type="password" required autocomplete="current-password" placeholder="Contraseña" class="inp">
     <p id="loginError" class="text-sm text-red-600 min-h-[1.25rem]"></p>
-    <button id="btnLogin" class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold py-2 rounded-lg">Ingresar</button>
+    <button id="btnLogin" class="btn w-full py-2">Ingresar</button>
   </form>
 </div>
 
@@ -25,14 +34,13 @@
 <header class="bg-emerald-700 text-white shadow sticky top-0 z-20">
   <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
     <h1 class="text-xl font-bold">💊 Punto de Venta</h1>
-    <input id="buscador" type="search" autocomplete="off"
-      placeholder="Buscar por nombre, principio activo o escanear código de barras..."
+    <input id="buscador" type="search" autocomplete="off" placeholder="Buscar por nombre, principio activo, laboratorio o código de barras..."
       class="flex-1 min-w-[220px] rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-    <button id="btnNuevo" class="solo-admin hidden bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold">＋ Producto</button>
-    <button id="btnUsuarios" class="solo-admin hidden bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold">👥 Usuarios</button>
-    <button id="btnRecargar" class="bg-emerald-900 hover:bg-emerald-800 rounded-lg px-4 py-2 text-sm font-medium">↻ Actualizar</button>
+    <button id="btnNuevo" class="solo-admin hidden btn-w">＋ Producto</button>
+    <button id="btnUsuarios" class="solo-admin hidden btn-w">👥 Usuarios</button>
+    <button id="btnRecargar" class="btn-h">↻ Actualizar</button>
     <span id="infoUsuario" class="text-sm opacity-90"></span>
-    <button id="btnSalir" class="bg-emerald-900 hover:bg-emerald-800 rounded-lg px-3 py-2 text-sm">Salir</button>
+    <button id="btnSalir" class="btn-h">Salir</button>
   </div>
 </header>
 
@@ -44,17 +52,47 @@
   </section>
 
   <aside class="lg:col-span-1">
-    <div class="bg-white rounded-xl shadow p-4 lg:sticky lg:top-20">
+    <div class="bg-white rounded-xl shadow p-4 lg:sticky lg:top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
       <h2 class="text-lg font-bold mb-3">🛒 Carrito</h2>
-      <div id="carrito" class="space-y-2 max-h-[45vh] overflow-y-auto"></div>
-      <div class="border-t mt-4 pt-4 space-y-3">
-        <div class="flex justify-between text-lg font-bold"><span>Total</span><span id="total">S/ 0.00</span></div>
-        <label class="block text-sm font-medium">Método de pago
-          <select id="metodoPago" class="mt-1 w-full border rounded-lg px-3 py-2">
+      <div id="carrito" class="space-y-2 max-h-[30vh] overflow-y-auto"></div>
+
+      <div class="border-t mt-4 pt-3 space-y-3">
+        <details>
+          <summary class="text-sm font-medium cursor-pointer">👤 Datos del cliente (opcional)</summary>
+          <div class="mt-2 space-y-2">
+            <input id="cDoc" inputmode="numeric" maxlength="11" placeholder="DNI / RUC" class="inp">
+            <input id="cNombre" placeholder="Nombre o razón social" class="inp">
+          </div>
+        </details>
+
+        <div>
+          <div class="lbl mb-1">Descuento</div>
+          <div class="flex gap-2">
+            <select id="dTipo" class="inp !w-28"><option value="monto">S/ monto</option><option value="porcentaje">% porc.</option></select>
+            <input id="dValor" type="number" min="0" step="0.01" placeholder="0" class="inp">
+          </div>
+        </div>
+
+        <label class="lbl">Método de pago
+          <select id="metodoPago" class="inp mt-1">
             <option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option>
           </select>
         </label>
-        <button id="btnCobrar" disabled class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg text-lg">Cobrar</button>
+
+        <div id="filaEfectivo" class="space-y-1">
+          <label class="lbl">Monto recibido (S/)
+            <input id="recibido" type="number" min="0" step="0.01" placeholder="0.00" class="inp mt-1">
+          </label>
+          <div class="flex justify-between text-sm"><span>Vuelto</span><b id="vuelto">S/ 0.00</b></div>
+        </div>
+
+        <div class="text-sm space-y-1 border-t pt-3">
+          <div class="flex justify-between"><span>Subtotal</span><span id="subtotal">S/ 0.00</span></div>
+          <div class="flex justify-between text-red-600"><span>Descuento</span><span id="descMonto">- S/ 0.00</span></div>
+          <div class="flex justify-between text-lg font-bold"><span>Total</span><span id="total">S/ 0.00</span></div>
+        </div>
+
+        <button id="btnCobrar" disabled class="btn w-full py-3 text-lg">Cobrar</button>
         <button id="btnVaciar" class="w-full text-sm text-slate-500 hover:text-red-600">Vaciar carrito</button>
       </div>
     </div>
@@ -64,20 +102,38 @@
 
 <!-- ===== Modal producto (Admin) ===== -->
 <div id="modal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
-  <form id="formProd" class="bg-white rounded-xl shadow-xl w-full max-w-md p-5 space-y-3 max-h-[95vh] overflow-y-auto">
+  <form id="formProd" class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-5 space-y-3 max-h-[95vh] overflow-y-auto">
     <h2 id="mTitulo" class="text-lg font-bold">Producto</h2>
     <input type="hidden" id="pID">
-    <label class="block text-sm font-medium">Nombre *<input id="pNombre" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
-    <label class="block text-sm font-medium">Principio activo<input id="pPrincipio" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
-    <label class="block text-sm font-medium">Código de barras<input id="pCodigo" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
-    <div class="grid grid-cols-2 gap-3">
-      <label class="block text-sm font-medium">Precio (S/) *<input id="pPrecio" type="number" step="0.01" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
-      <label class="block text-sm font-medium">Stock *<input id="pStock" type="number" step="1" min="0" required class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <label class="lbl">Nombre *<input id="pNombre" required class="inp mt-1"></label>
+      <label class="lbl">Principio activo<input id="pPrincipio" class="inp mt-1"></label>
+      <label class="lbl">Concentración<input id="pConc" placeholder="500 mg" class="inp mt-1"></label>
+      <label class="lbl">Presentación<input id="pPres" placeholder="Caja x 100 tab" class="inp mt-1"></label>
+      <label class="lbl">Laboratorio / Marca<input id="pLab" class="inp mt-1"></label>
+      <label class="lbl">Código de barras<input id="pCodigo" class="inp mt-1"></label>
+      <label class="lbl">Número de lote<input id="pLote" class="inp mt-1"></label>
+      <label class="lbl">Ubicación en estante<input id="pUbic" placeholder="Estante A - Nivel 2" class="inp mt-1"></label>
+      <label class="lbl">Fecha de vencimiento<input id="pVenc" type="date" class="inp mt-1"></label>
+      <label class="lbl">Stock mínimo (alerta)<input id="pStockMin" type="number" min="0" step="1" placeholder="5" class="inp mt-1"></label>
     </div>
-    <label class="block text-sm font-medium">Fecha de vencimiento<input id="pVenc" type="date" class="mt-1 w-full border rounded-lg px-3 py-2"></label>
+
+    <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-3">
+      <div class="font-semibold text-sm">Precios y stock</div>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <label class="lbl">Precio por caja / pack (S/) *<input id="pPrecio" type="number" step="0.01" min="0" required class="inp mt-1"></label>
+        <label class="lbl">Stock total (en unidades) *<input id="pStock" type="number" step="1" min="0" required class="inp mt-1"></label>
+        <label class="lbl">Unidades por caja<input id="pUpc" type="number" step="1" min="1" value="1" class="inp mt-1"></label>
+        <label class="lbl">Precio por unidad / blíster (S/)<input id="pPrecioU" type="number" step="0.01" min="0" placeholder="vacío = no se fracciona" class="inp mt-1"></label>
+      </div>
+      <p class="text-xs text-slate-600">El stock siempre se guarda en unidades. Ej.: 2 cajas de 100 tab = 200. Una venta por caja descuenta las unidades por caja; por unidad descuenta 1.</p>
+    </div>
+
+    <label class="flex items-center gap-2 text-sm font-medium"><input id="pReceta" type="checkbox" class="w-4 h-4"> Requiere receta médica</label>
+
     <div class="flex gap-2 pt-2">
       <button type="button" id="btnCancelar" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Cancelar</button>
-      <button type="submit" id="btnGuardar" class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-lg py-2">Guardar</button>
+      <button type="submit" id="btnGuardar" class="btn flex-1 py-2">Guardar</button>
     </div>
   </form>
 </div>
@@ -92,17 +148,17 @@
     <div id="listaUsuarios" class="divide-y mb-4"></div>
     <form id="formUsuario" class="space-y-2 border-t pt-3">
       <h3 id="uTitulo" class="font-semibold">Nuevo usuario</h3>
-      <input id="uUsuario" required placeholder="Usuario (ej. maria)" autocomplete="off" class="w-full border rounded-lg px-3 py-2">
-      <input id="uNombre" required placeholder="Nombre completo" class="w-full border rounded-lg px-3 py-2">
+      <input id="uUsuario" required placeholder="Usuario (ej. maria)" autocomplete="off" class="inp">
+      <input id="uNombre" required placeholder="Nombre completo" class="inp">
       <div class="grid grid-cols-2 gap-2">
-        <select id="uRol" class="border rounded-lg px-3 py-2"><option value="Cajero">Cajero</option><option value="Admin">Administrador</option></select>
-        <select id="uActivo" class="border rounded-lg px-3 py-2"><option value="SI">Activo</option><option value="NO">Desactivado</option></select>
+        <select id="uRol" class="inp"><option value="Cajero">Cajero</option><option value="Admin">Administrador</option></select>
+        <select id="uActivo" class="inp"><option value="SI">Activo</option><option value="NO">Desactivado</option></select>
       </div>
-      <input id="uClave" type="password" placeholder="Contraseña (mínimo 6)" autocomplete="new-password" class="w-full border rounded-lg px-3 py-2">
+      <input id="uClave" type="password" placeholder="Contraseña (mínimo 6)" autocomplete="new-password" class="inp">
       <p id="uAyuda" class="text-xs text-slate-500"></p>
       <div class="flex gap-2">
         <button type="button" id="btnLimpiarUsuario" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Nuevo</button>
-        <button type="submit" id="btnGuardarUsuario" class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold rounded-lg py-2">Guardar</button>
+        <button type="submit" id="btnGuardarUsuario" class="btn flex-1 py-2">Guardar</button>
       </div>
     </form>
   </div>
@@ -112,16 +168,13 @@
 
 <script>
 // ===== Configuración =====
-const API_URL = 'https://script.google.com/macros/s/AKfycbyaMlM75JMdD1SJql-BZQh_hkeTlEs9txO7rujVv9ad8USkgd5hHI1AOkhlagOF3s4UiA/exec';
-const STOCK_BAJO = 5;
+const API_URL = 'https://script.google.com/macros/s/AKfycbyOZDnRSivLqWs4tE0fAqw-iLo247Yb95kVZwU44rSg4GAExpdrZ7itDoT1PRVe9HAknQ/exec';
+const STOCK_BAJO = 5;          // se usa cuando el producto no tiene Stock_Minimo
 const DIAS_POR_VENCER = 90;
 
 // ===== Estado =====
-let productos = [];
-let usuarios = [];
-let carrito = {};
-let cobrando = false;
-let sesion = null; // { token, usuario: { usuario, nombre, rol } }
+let productos = [], usuarios = [], carrito = {}, cobrando = false, sesion = null;
+// carrito: { "ID|caja": cantidad, "ID|unidad": cantidad }
 try { sesion = JSON.parse(sessionStorage.getItem('sesion')); } catch (e) { sesion = null; }
 
 const $ = id => document.getElementById(id);
@@ -131,12 +184,26 @@ const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '
 const esAdmin = () => !!sesion && String(sesion.usuario.rol).toLowerCase() === 'admin';
 const porId = id => productos.find(p => String(p.ID) === String(id));
 
+// ===== Reglas de producto =====
+const upc = p => Math.max(1, Number(p.Unidades_Por_Caja) || 1);
+const fracc = p => upc(p) > 1 && Number(p.Precio_Unidad) > 0;
+const stockMin = p => (p.Stock_Minimo === '' || p.Stock_Minimo == null) ? STOCK_BAJO : Number(p.Stock_Minimo);
+const conReceta = p => String(p.Requiere_Receta || '').toUpperCase() === 'SI';
+const precioDe = (p, modo) => Number(modo === 'unidad' ? p.Precio_Unidad : p.Precio);
+const unidadesDe = (p, modo, c) => modo === 'unidad' ? c : c * upc(p);
+const stockTxt = p => { const s = Number(p.Stock), u = upc(p); return u > 1 ? Math.floor(s / u) + ' caja(s) + ' + (s % u) + ' unid.' : s + ' unid.'; };
+const dividir = k => k.split('|');
+const unidadesEnCarrito = id => Object.keys(carrito).reduce((t, k) => {
+  const [i, m] = dividir(k); const p = String(i) === String(id) ? porId(i) : null;
+  return p ? t + unidadesDe(p, m, carrito[k]) : t;
+}, 0);
+
 function toast(msg, ok = true) {
   const t = $('toast');
   t.textContent = msg;
   t.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 px-5 py-3 rounded-lg shadow-lg text-white font-medium z-50 max-w-[90vw] ' + (ok ? 'bg-emerald-600' : 'bg-red-600');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.add('hidden'), 4000);
+  toast._t = setTimeout(() => t.classList.add('hidden'), 4500);
 }
 
 function diasParaVencer(fecha) {
@@ -148,18 +215,14 @@ function diasParaVencer(fecha) {
 }
 
 // ===== Comunicación con Apps Script =====
-// POST con text/plain evita el preflight CORS que Apps Script no soporta
 async function apiPost(payload) {
   const res = await fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita el preflight CORS
     body: JSON.stringify(Object.assign({}, payload, { token: sesion && sesion.token }))
   });
   const data = await res.json();
-  if (!data.ok && data.error === 'SESION_INVALIDA') {
-    cerrarSesion('Tu sesión expiró. Ingresa de nuevo.');
-    throw new Error('Sesión expirada');
-  }
+  if (!data.ok && data.error === 'SESION_INVALIDA') { cerrarSesion('Tu sesión expiró. Ingresa de nuevo.'); throw new Error('Sesión expirada'); }
   if (!data.ok) throw new Error(data.error || 'Error desconocido');
   return data;
 }
@@ -190,8 +253,7 @@ $('formLogin').addEventListener('submit', async e => {
   btn.disabled = true; btn.textContent = 'Ingresando...'; $('loginError').textContent = '';
   try {
     const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ accion: 'login', usuario: $('lUsuario').value, clave: $('lClave').value })
     });
     const data = await res.json();
@@ -224,10 +286,12 @@ async function cargarProductos() {
       throw new Error(data.error || 'Error desconocido');
     }
     productos = data.productos;
-    Object.keys(carrito).forEach(id => {
-      const p = porId(id);
-      if (!p) delete carrito[id];
-      else if (carrito[id] > Number(p.Stock)) carrito[id] = Number(p.Stock);
+    // Ajusta el carrito si el stock o el producto cambiaron
+    Object.keys(carrito).forEach(k => {
+      const [i, m] = dividir(k); const p = porId(i);
+      if (!p || (m === 'unidad' && !fracc(p))) { delete carrito[k]; return; }
+      while (carrito[k] > 0 && unidadesEnCarrito(i) > Number(p.Stock)) carrito[k]--;
+      if (carrito[k] <= 0) delete carrito[k];
     });
     renderTodo();
   } catch (err) {
@@ -240,111 +304,145 @@ async function cargarProductos() {
 function renderTodo() { renderAlertas(); renderProductos(); renderCarrito(); }
 
 function renderAlertas() {
-  const bajos = productos.filter(p => Number(p.Stock) <= STOCK_BAJO);
+  const bajos = productos.filter(p => Number(p.Stock) <= stockMin(p));
   const porVencer = productos.filter(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return d !== null && d <= DIAS_POR_VENCER; });
   const box = $('alertas');
   if (!bajos.length && !porVencer.length) { box.classList.add('hidden'); return; }
   let html = '';
-  if (bajos.length) {
-    html += '<p class="font-bold text-amber-800">⚠️ Stock bajo (' + bajos.length + ')</p><p class="mb-2">' +
-      bajos.map(p => esc(p.Nombre) + ' <b>(' + Number(p.Stock) + ')</b>').join(' · ') + '</p>';
-  }
-  if (porVencer.length) {
-    html += '<p class="font-bold text-red-700">⏰ Vencidos o por vencer (' + porVencer.length + ')</p><p>' +
-      porVencer.map(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return esc(p.Nombre) + ' <b>(' + (d < 0 ? 'vencido' : d + ' d') + ')</b>'; }).join(' · ') + '</p>';
-  }
+  if (bajos.length) html += '<p class="font-bold text-amber-800">⚠️ Stock bajo (' + bajos.length + ')</p><p class="mb-2">' +
+    bajos.map(p => esc(p.Nombre) + ' <b>(' + Number(p.Stock) + ' / mín. ' + stockMin(p) + ')</b>').join(' · ') + '</p>';
+  if (porVencer.length) html += '<p class="font-bold text-red-700">⏰ Vencidos o por vencer (' + porVencer.length + ')</p><p>' +
+    porVencer.map(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return esc(p.Nombre) + ' <b>(' + (d < 0 ? 'vencido' : d + ' d') + ')</b>'; }).join(' · ') + '</p>';
   box.innerHTML = html;
   box.classList.remove('hidden');
 }
 
 function renderProductos() {
   const q = norm($('buscador').value.trim());
-  const lista = productos.filter(p =>
-    !q || norm(p.Nombre).includes(q) || norm(p.Principio_Activo).includes(q) || norm(p.Codigo_Barras).includes(q));
+  const lista = productos.filter(p => !q || [p.Nombre, p.Principio_Activo, p.Laboratorio, p.Concentracion, p.Codigo_Barras].some(v => norm(v).includes(q)));
   $('estado').textContent = lista.length + ' producto(s)';
 
   $('productos').innerHTML = lista.map(p => {
     const stock = Number(p.Stock);
+    const libre = stock - unidadesEnCarrito(p.ID);   // unidades aún disponibles para agregar
     const dias = diasParaVencer(p.Fecha_Vencimiento);
     const vencido = dias !== null && dias < 0;
-    const enCarrito = carrito[String(p.ID)] || 0;
-    const agotado = enCarrito >= stock;
-    const bloqueado = vencido || agotado;
-    const stockCls = stock <= STOCK_BAJO ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700';
+    const bajo = stock <= stockMin(p);
+    const porVencer = !vencido && dias !== null && dias <= DIAS_POR_VENCER;
+    const u = upc(p);
+    const ring = vencido || bajo ? 'ring-2 ring-red-300' : porVencer ? 'ring-2 ring-amber-300' : '';
+
     let venc = '';
     if (vencido) venc = '<span class="text-xs font-semibold text-red-600">VENCIDO ' + esc(String(p.Fecha_Vencimiento).slice(0, 10)) + '</span>';
-    else if (dias !== null && dias <= DIAS_POR_VENCER) venc = '<span class="text-xs font-semibold text-amber-600">Vence en ' + dias + ' días</span>';
+    else if (porVencer) venc = '<span class="text-xs font-semibold text-amber-600">⏰ Vence en ' + dias + ' días</span>';
     else if (p.Fecha_Vencimiento) venc = '<span class="text-xs text-slate-400">Vence ' + esc(String(p.Fecha_Vencimiento).slice(0, 10)) + '</span>';
-    const editar = esAdmin() ? '<button data-edit="' + esc(p.ID) + '" class="ml-auto text-xs text-blue-600 hover:underline">✏️ Editar</button>' : '';
 
-    return '<div class="bg-white rounded-xl shadow-sm p-3 flex flex-col">' +
-      '<div class="font-semibold leading-tight">' + esc(p.Nombre) + '</div>' +
-      '<div class="text-sm text-slate-500">' + esc(p.Principio_Activo) + '</div>' +
-      '<div class="text-xs text-slate-400 mb-2">' + esc(p.Codigo_Barras) + '</div>' +
-      '<div class="flex items-center justify-between mt-auto">' +
-        '<span class="text-lg font-bold">' + moneda(p.Precio) + '</span>' +
-        '<span class="text-xs font-semibold px-2 py-1 rounded-full ' + stockCls + '">Stock: ' + stock + '</span>' +
+    const detalle = [p.Concentracion, p.Presentacion].filter(Boolean).join(' · ');
+    const dis = vencido ? 'disabled' : '';
+    const bCaja = '<button data-add="' + esc(p.ID) + '" data-modo="caja" ' + (vencido || libre < u ? 'disabled' : '') + ' class="btn flex-1 py-2 text-sm">' +
+      (vencido ? 'No vendible' : stock <= 0 ? 'Agotado' : libre < u ? 'Sin stock' : (u > 1 ? '+ Caja' : 'Agregar')) + '</button>';
+    const bUni = fracc(p) ? '<button data-add="' + esc(p.ID) + '" data-modo="unidad" ' + (vencido || libre < 1 ? 'disabled' : '') +
+      ' class="btn flex-1 py-2 text-sm !bg-teal-600 hover:!bg-teal-700 disabled:!bg-slate-300">+ Unidad</button>' : '';
+
+    return '<div class="bg-white rounded-xl shadow-sm p-3 flex flex-col ' + ring + '">' +
+      '<div class="flex items-start justify-between gap-2"><div class="font-semibold leading-tight">' + esc(p.Nombre) + '</div>' +
+        (conReceta(p) ? '<span class="shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-600 text-white">Con Receta</span>' : '') + '</div>' +
+      (detalle ? '<div class="text-sm font-medium text-emerald-800">' + esc(detalle) + '</div>' : '') +
+      '<div class="text-sm text-slate-500">' + esc(p.Principio_Activo) + (p.Laboratorio ? ' · ' + esc(p.Laboratorio) : '') + '</div>' +
+      '<div class="text-xs text-slate-400 mb-2">' + [p.Lote ? 'Lote ' + esc(p.Lote) : '', p.Ubicacion ? '📍 ' + esc(p.Ubicacion) : '', esc(p.Codigo_Barras)].filter(Boolean).join(' · ') + '</div>' +
+      '<div class="flex items-end justify-between mt-auto">' +
+        '<div><div class="text-lg font-bold leading-none">' + moneda(p.Precio) + (u > 1 ? ' <span class="text-xs font-normal text-slate-500">caja</span>' : '') + '</div>' +
+        (fracc(p) ? '<div class="text-sm text-slate-600">' + moneda(p.Precio_Unidad) + ' <span class="text-xs text-slate-500">unidad</span></div>' : '') + '</div>' +
+        '<span class="text-xs font-semibold px-2 py-1 rounded-full text-right ' + (bajo ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700') + '">Stock: ' + stockTxt(p) + '</span>' +
       '</div>' +
-      '<div class="mt-1 mb-2 flex items-center justify-between min-h-[1rem]">' + venc + editar + '</div>' +
-      '<button data-add="' + esc(p.ID) + '" ' + (bloqueado ? 'disabled' : '') +
-        ' class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg py-2 text-sm font-medium">' +
-        (vencido ? 'No vendible' : agotado ? (stock <= 0 ? 'Agotado' : 'Sin más stock') : 'Agregar') + '</button>' +
+      '<div class="mt-1 mb-2 flex items-center justify-between gap-2 min-h-[1rem]"><span>' + venc +
+        (bajo ? ' <span class="text-xs font-semibold text-red-600">⚠ Stock bajo (mín. ' + stockMin(p) + ')</span>' : '') + '</span>' +
+        (esAdmin() ? '<button data-edit="' + esc(p.ID) + '" class="ml-auto text-xs text-blue-600 hover:underline">✏️ Editar</button>' : '') + '</div>' +
+      '<div class="flex gap-2">' + bCaja + bUni + '</div>' +
     '</div>';
   }).join('');
 }
 
 function renderCarrito() {
-  const ids = Object.keys(carrito);
-  let total = 0;
-  $('carrito').innerHTML = ids.length ? ids.map(id => {
-    const p = porId(id); if (!p) return '';
-    const c = carrito[id];
-    const sub = Number(p.Precio) * c;
-    total += sub;
+  const claves = Object.keys(carrito);
+  $('carrito').innerHTML = claves.length ? claves.map(k => {
+    const [id, modo] = dividir(k); const p = porId(id); if (!p) return '';
+    const c = carrito[k], sub = precioDe(p, modo) * c;
     return '<div class="flex items-center gap-2 border-b pb-2">' +
-      '<div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">' + esc(p.Nombre) + '</div>' +
-      '<div class="text-xs text-slate-500">' + moneda(p.Precio) + ' c/u</div></div>' +
-      '<button data-menos="' + esc(id) + '" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 font-bold">−</button>' +
+      '<div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">' + esc(p.Nombre) + (conReceta(p) ? ' <span class="text-[10px] text-red-600 font-bold">RX</span>' : '') + '</div>' +
+      '<div class="text-xs text-slate-500">' + moneda(precioDe(p, modo)) + ' c/' + (modo === 'unidad' ? 'unidad' : (upc(p) > 1 ? 'caja' : 'u')) + '</div></div>' +
+      '<button data-menos="' + esc(k) + '" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 font-bold">−</button>' +
       '<span class="w-6 text-center text-sm">' + c + '</span>' +
-      '<button data-mas="' + esc(id) + '" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 font-bold">+</button>' +
+      '<button data-mas="' + esc(k) + '" class="w-7 h-7 rounded bg-slate-200 hover:bg-slate-300 font-bold">+</button>' +
       '<span class="w-16 text-right text-sm font-semibold">' + moneda(sub) + '</span>' +
-      '<button data-quitar="' + esc(id) + '" class="text-red-500 hover:text-red-700" title="Quitar">✕</button>' +
-    '</div>';
-  }).join('') : '<p class="text-sm text-slate-400 text-center py-6">El carrito está vacío</p>';
+      '<button data-quitar="' + esc(k) + '" class="text-red-500 hover:text-red-700" title="Quitar">✕</button></div>';
+  }).join('') : '<p class="text-sm text-slate-400 text-center py-4">El carrito está vacío</p>';
+  renderTotales();
+}
 
-  $('total').textContent = moneda(total);
-  $('btnCobrar').disabled = !ids.length || cobrando;
-  $('btnCobrar').textContent = cobrando ? 'Procesando...' : 'Cobrar ' + (ids.length ? moneda(total) : '');
+function calcTotales() {
+  let sub = 0;
+  Object.keys(carrito).forEach(k => { const [i, m] = dividir(k); const p = porId(i); if (p) sub += precioDe(p, m) * carrito[k]; });
+  sub = Math.round(sub * 100) / 100;
+  const v = Math.max(0, Number($('dValor').value) || 0);
+  let d = $('dTipo').value === 'porcentaje' ? sub * Math.min(v, 100) / 100 : v;
+  d = Math.min(Math.round(d * 100) / 100, sub);
+  return { sub, d, total: Math.round((sub - d) * 100) / 100 };
+}
+
+function renderTotales() {
+  const t = calcTotales();
+  const efectivo = $('metodoPago').value === 'Efectivo';
+  const rec = $('recibido').value === '' ? null : Number($('recibido').value);
+  $('filaEfectivo').classList.toggle('hidden', !efectivo);
+  $('subtotal').textContent = moneda(t.sub);
+  $('descMonto').textContent = '- ' + moneda(t.d);
+  $('total').textContent = moneda(t.total);
+  const falta = efectivo && rec !== null && rec < t.total;
+  $('vuelto').textContent = efectivo && rec !== null ? (falta ? 'Falta ' + moneda(t.total - rec) : moneda(rec - t.total)) : moneda(0);
+  $('vuelto').className = falta ? 'text-red-600' : '';
+  const hay = Object.keys(carrito).length > 0;
+  $('btnCobrar').disabled = !hay || cobrando || falta;
+  $('btnCobrar').textContent = cobrando ? 'Procesando...' : 'Cobrar ' + (hay ? moneda(t.total) : '');
 }
 
 // ===== Carrito =====
-function agregar(id) {
+function agregar(id, modo) {
   const p = porId(id); if (!p) return;
   const dias = diasParaVencer(p.Fecha_Vencimiento);
   if (dias !== null && dias < 0) return toast('Producto vencido, no se puede vender', false);
-  const actual = carrito[String(id)] || 0;
-  if (actual + 1 > Number(p.Stock)) return toast('Stock máximo alcanzado para ' + p.Nombre, false);
-  carrito[String(id)] = actual + 1;
+  if (modo === 'unidad' && !fracc(p)) return toast('Este producto no se vende por unidad', false);
+  if (unidadesEnCarrito(id) + unidadesDe(p, modo, 1) > Number(p.Stock)) return toast('Stock insuficiente para ' + p.Nombre, false);
+  const k = id + '|' + modo;
+  carrito[k] = (carrito[k] || 0) + 1;
   renderProductos(); renderCarrito();
 }
-function quitarUno(id) {
-  if (!carrito[id]) return;
-  carrito[id]--; if (carrito[id] <= 0) delete carrito[id];
+function quitarUno(k) {
+  if (!carrito[k]) return;
+  carrito[k]--; if (carrito[k] <= 0) delete carrito[k];
   renderProductos(); renderCarrito();
 }
 
 // ===== doPost: cobrar =====
 async function cobrar() {
-  if (cobrando || !Object.keys(carrito).length) return;
-  cobrando = true; renderCarrito();
+  const claves = Object.keys(carrito);
+  if (cobrando || !claves.length) return;
+  const rx = [...new Set(claves.map(k => porId(dividir(k)[0])).filter(p => p && conReceta(p)).map(p => p.Nombre))];
+  if (rx.length && !confirm('⚠️ Esta venta incluye productos que requieren receta médica:\n\n• ' + rx.join('\n• ') + '\n\n¿Confirmas que se verificó la receta?')) return;
+
+  cobrando = true; renderTotales();
   try {
+    const efectivo = $('metodoPago').value === 'Efectivo';
     const data = await apiPost({
       metodo_pago: $('metodoPago').value,
-      productos: Object.keys(carrito).map(id => ({ id: porId(id).ID, cantidad: carrito[id] }))
+      productos: claves.map(k => { const [i, m] = dividir(k); return { id: porId(i).ID, modo: m, cantidad: carrito[k] }; }),
+      descuento: { tipo: $('dTipo').value, valor: Number($('dValor').value) || 0 },
+      cliente: { doc: $('cDoc').value, nombre: $('cNombre').value },
+      monto_recibido: efectivo ? $('recibido').value : ''
     });
-    toast('✅ Venta ' + data.id_venta + ' registrada: ' + moneda(data.total));
+    toast('✅ Venta ' + data.id_venta + ' · ' + moneda(data.total) + (data.vuelto !== '' ? ' · Vuelto ' + moneda(data.vuelto) : ''));
     carrito = {};
-    $('buscador').value = '';
+    ['buscador', 'cDoc', 'cNombre', 'dValor', 'recibido'].forEach(id => $(id).value = '');
   } catch (err) {
     toast('No se pudo cobrar: ' + err.message, false);
   } finally {
@@ -357,14 +455,15 @@ async function cobrar() {
 // ===== Producto (solo Admin) =====
 function abrirModal(id) {
   const p = id ? porId(id) : null;
+  const v = k => p ? (p[k] ?? '') : '';
   $('mTitulo').textContent = p ? 'Editar producto' : 'Nuevo producto';
-  $('pID').value = p ? p.ID : '';
-  $('pNombre').value = p ? p.Nombre : '';
-  $('pPrincipio').value = p ? p.Principio_Activo : '';
-  $('pCodigo').value = p ? p.Codigo_Barras : '';
-  $('pPrecio').value = p ? p.Precio : '';
-  $('pStock').value = p ? p.Stock : '';
+  $('pID').value = v('ID'); $('pNombre').value = v('Nombre'); $('pPrincipio').value = v('Principio_Activo');
+  $('pConc').value = v('Concentracion'); $('pPres').value = v('Presentacion'); $('pLab').value = v('Laboratorio');
+  $('pCodigo').value = v('Codigo_Barras'); $('pLote').value = v('Lote'); $('pUbic').value = v('Ubicacion');
   $('pVenc').value = p && p.Fecha_Vencimiento ? String(p.Fecha_Vencimiento).slice(0, 10) : '';
+  $('pStockMin').value = v('Stock_Minimo'); $('pPrecio').value = v('Precio'); $('pStock').value = v('Stock');
+  $('pUpc').value = p ? upc(p) : 1; $('pPrecioU').value = v('Precio_Unidad');
+  $('pReceta').checked = !!p && conReceta(p);
   $('modal').classList.remove('hidden');
   $('pNombre').focus();
 }
@@ -379,8 +478,12 @@ async function guardarProducto(e) {
       accion: 'guardar_producto',
       producto: {
         ID: $('pID').value, Nombre: $('pNombre').value, Principio_Activo: $('pPrincipio').value,
-        Codigo_Barras: $('pCodigo').value, Precio: Number($('pPrecio').value),
-        Stock: Number($('pStock').value), Fecha_Vencimiento: $('pVenc').value
+        Concentracion: $('pConc').value, Presentacion: $('pPres').value, Laboratorio: $('pLab').value,
+        Codigo_Barras: $('pCodigo').value, Lote: $('pLote').value, Ubicacion: $('pUbic').value,
+        Fecha_Vencimiento: $('pVenc').value, Stock_Minimo: $('pStockMin').value,
+        Precio: Number($('pPrecio').value), Stock: Number($('pStock').value),
+        Unidades_Por_Caja: Number($('pUpc').value) || 1, Precio_Unidad: $('pPrecioU').value,
+        Requiere_Receta: $('pReceta').checked ? 'SI' : 'NO'
       }
     });
     toast('✅ Producto guardado (ID ' + data.id + ')');
@@ -397,10 +500,8 @@ async function guardarProducto(e) {
 async function abrirUsuarios() {
   limpiarFormUsuario();
   $('modalUsuarios').classList.remove('hidden');
-  try {
-    const d = await apiPost({ accion: 'listar_usuarios' });
-    usuarios = d.usuarios; renderUsuarios();
-  } catch (err) { toast(err.message, false); }
+  try { const d = await apiPost({ accion: 'listar_usuarios' }); usuarios = d.usuarios; renderUsuarios(); }
+  catch (err) { toast(err.message, false); }
 }
 
 function renderUsuarios() {
@@ -434,14 +535,11 @@ async function guardarUsuarioWeb(e) {
   const btn = $('btnGuardarUsuario');
   btn.disabled = true; btn.textContent = 'Guardando...';
   try {
-    await apiPost({
-      accion: 'guardar_usuario',
-      datos: { Usuario: $('uUsuario').value, Nombre: $('uNombre').value, Rol: $('uRol').value, Activo: $('uActivo').value, Clave: $('uClave').value }
-    });
+    await apiPost({ accion: 'guardar_usuario',
+      datos: { Usuario: $('uUsuario').value, Nombre: $('uNombre').value, Rol: $('uRol').value, Activo: $('uActivo').value, Clave: $('uClave').value } });
     toast('✅ Usuario guardado');
     limpiarFormUsuario();
-    const d = await apiPost({ accion: 'listar_usuarios' });
-    usuarios = d.usuarios; renderUsuarios();
+    const d = await apiPost({ accion: 'listar_usuarios' }); usuarios = d.usuarios; renderUsuarios();
   } catch (err) {
     toast('No se pudo guardar: ' + err.message, false);
   } finally {
@@ -457,33 +555,32 @@ $('btnUsuarios').addEventListener('click', abrirUsuarios);
 $('btnCerrarUsuarios').addEventListener('click', () => $('modalUsuarios').classList.add('hidden'));
 $('btnLimpiarUsuario').addEventListener('click', limpiarFormUsuario);
 $('formUsuario').addEventListener('submit', guardarUsuarioWeb);
-$('listaUsuarios').addEventListener('click', e => {
-  const b = e.target.closest('[data-uedit]'); if (b) editarUsuario(b.dataset.uedit);
-});
+$('listaUsuarios').addEventListener('click', e => { const b = e.target.closest('[data-uedit]'); if (b) editarUsuario(b.dataset.uedit); });
 
 $('buscador').addEventListener('input', renderProductos);
 $('buscador').addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
-  const v = e.target.value.trim();
-  if (!v) return;
-  const exacto = productos.find(p => String(p.Codigo_Barras).trim() === v);
-  if (exacto) { agregar(exacto.ID); e.target.value = ''; renderProductos(); }
+  const v = e.target.value.trim(); if (!v) return;
+  const exacto = productos.find(p => String(p.Codigo_Barras).trim() === v); // lector de código de barras: agrega 1 caja/unidad
+  if (exacto) { agregar(exacto.ID, 'caja'); e.target.value = ''; renderProductos(); }
 });
 $('productos').addEventListener('click', e => {
-  const b = e.target.closest('[data-add]'); if (b) return agregar(b.dataset.add);
+  const b = e.target.closest('[data-add]'); if (b) return agregar(b.dataset.add, b.dataset.modo);
   const ed = e.target.closest('[data-edit]'); if (ed && esAdmin()) abrirModal(ed.dataset.edit);
 });
 $('carrito').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
-  if (t.dataset.mas) agregar(t.dataset.mas);
+  if (t.dataset.mas) { const [i, m] = dividir(t.dataset.mas); agregar(i, m); }
   else if (t.dataset.menos) quitarUno(t.dataset.menos);
   else if (t.dataset.quitar) { delete carrito[t.dataset.quitar]; renderProductos(); renderCarrito(); }
 });
+['dTipo', 'dValor', 'metodoPago', 'recibido'].forEach(id => $(id).addEventListener('input', renderTotales));
 $('btnCobrar').addEventListener('click', cobrar);
 $('btnVaciar').addEventListener('click', () => { carrito = {}; renderProductos(); renderCarrito(); });
 $('btnRecargar').addEventListener('click', cargarProductos);
 
 // ===== Inicio =====
+renderTotales();
 if (sesion && sesion.token && sesion.usuario) mostrarApp(); else $('lUsuario').focus();
 </script>
 </body>
