@@ -14,6 +14,54 @@
   .btn-w { @apply bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold; }
 }
 </style>
+
+<style>
+:root{--navy:#142b3b;--green:#07865f;--muted:#718096}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.app-shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
+.sidebar{background:#132b3b;color:#dbe7ed;min-height:100vh;padding:24px 15px 18px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:11px;padding:3px 10px 28px}
+.brand-mark{width:42px;height:42px;border-radius:14px;background:#0b9b70;display:grid;place-items:center;font-size:22px;box-shadow:0 7px 18px #071b2b66}
+.brand-name{font-size:19px;font-weight:850;letter-spacing:-.5px;color:white}.brand-name span{color:#48d5a4}
+.brand-caption{font-size:10px;color:#9fb2bf;margin-top:2px;letter-spacing:.5px}
+.nav-label,.nav-section{font-size:10px;font-weight:800;letter-spacing:1.2px;color:#8298a6;padding:10px 12px}
+.nav-section{padding-top:19px}
+.side-nav{display:flex;flex-direction:column;gap:5px}
+.nav-link{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 13px;border-radius:10px;color:#c3d1d9;font-size:13px;font-weight:650;transition:.18s}
+.nav-link:hover{background:#ffffff12;color:white}.nav-link.active{background:#087d5d;color:white;box-shadow:0 6px 16px #061b2a55}
+.nav-ico{width:20px;text-align:center;font-size:17px;color:#8fe1c3}
+.sidebar-bottom{margin-top:auto}.sidebar-status{display:flex;align-items:center;gap:8px;padding:12px 10px;color:#9fb2bf;font-size:11px;border-bottom:1px solid #ffffff18}
+.status-dot{width:7px;height:7px;background:#36d399;border-radius:50%;box-shadow:0 0 0 4px #36d39920}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:16px 7px 3px}.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#d8f5e9;color:#087d5d;font-weight:800}
+.user-meta{display:flex;flex-direction:column;min-width:0}.user-meta strong{font-size:12px;color:white}.user-meta small{font-size:10px;color:#91a8b5}
+.workspace{min-width:0}.topbar{min-height:82px;background:white;border-bottom:1px solid #e5ebef;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 30px;position:sticky;top:0;z-index:20}
+.eyebrow{font-size:9px;letter-spacing:1.25px;font-weight:800;color:#8394a1}.topbar-title h1{font-size:21px;line-height:1.25;font-weight:800;color:#183247;margin-top:3px}
+.topbar-actions{display:flex;align-items:center;gap:11px}.search-wrap{width:min(35vw,390px);height:42px;border:1px solid #e0e7ec;background:#f8fafb;border-radius:11px;display:flex;align-items:center;gap:9px;padding:0 13px;color:#82919c}
+.search-wrap span{font-size:24px;line-height:1}.search-wrap input{width:100%;background:transparent;outline:none;font-size:12px;color:#243746}
+.icon-action{height:40px;width:40px;border:1px solid #e2e9ed;border-radius:11px;color:#526675;font-size:20px;background:white}
+.top-user{display:flex;align-items:center;gap:9px;padding-left:8px}.top-user strong,.top-user small{display:block}.top-user strong{font-size:11px;color:#243746}.top-user small{font-size:10px;color:#8a99a5}
+.logout-btn{font-size:11px;font-weight:700;color:#647785;border:1px solid #e2e9ed;border-radius:9px;padding:9px 12px}
+.dashboard-content{padding:27px 30px 36px;max-width:1800px;margin:auto}
+.welcome-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}.welcome-row h2{font-size:23px;font-weight:850;letter-spacing:-.6px;color:#173246;margin:3px 0}.welcome-row p{font-size:12px;color:#82919c}.date-chip{background:#e7f7f0;color:#087d5d;border-radius:20px;padding:8px 12px;font-size:10px;font-weight:750}
+.quick-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:21px}
+.stat-card{background:white;border:1px solid #e8eef1;border-radius:14px;padding:15px;display:flex;align-items:center;gap:13px;box-shadow:0 3px 12px #16304708}
+.stat-icon{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:20px}.stat-green{background:#e4f7ef;color:#07865f}.stat-blue{background:#eaf2ff;color:#4778c7}.stat-amber{background:#fff4df;color:#b77a16}
+.stat-card span,.stat-card strong,.stat-card small{display:block}.stat-card span{font-size:10px;color:#8b9aa5}.stat-card strong{font-size:14px;color:#243c4d;margin:1px 0}.stat-card small{font-size:10px;color:#9aa7b0}
+.pos-layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;align-items:start}
+.catalog-panel{min-width:0;background:transparent}.section-heading{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px;gap:10px}.section-heading h3,.cart-heading h3{font-size:16px;font-weight:800;color:#1b3548}.section-heading p{font-size:11px;color:#8796a0;margin-top:3px}.catalog-count{font-size:11px;color:#84939e}
+#productos>div{border:1px solid #e4ebef!important;border-radius:14px!important;box-shadow:0 3px 12px #17304708!important;transition:transform .18s,box-shadow .18s}
+#productos>div:hover{transform:translateY(-2px);box-shadow:0 9px 22px #17304712!important}
+.cart-panel{background:white;border:1px solid #e5ecef;border-radius:16px;padding:17px;box-shadow:0 5px 20px #1630470a;position:sticky;top:99px;max-height:calc(100vh - 116px);overflow-y:auto}
+.cart-heading{display:flex;align-items:center;justify-content:space-between;padding-bottom:13px;border-bottom:1px solid #edf1f3;margin-bottom:12px}.cart-heading h3{margin-top:3px}.cart-bag{width:36px;height:36px;background:#e8f7f0;border-radius:11px;display:grid;place-items:center}
+.cart-fields{border-top:1px solid #edf1f3;margin-top:12px;padding-top:12px;display:flex;flex-direction:column;gap:13px}
+.inp{border-color:#dfe7eb!important;border-radius:9px!important;font-size:12px!important}.lbl{font-size:11px!important;color:#506371!important}
+.btn{background:#078b63!important;border-radius:10px!important;box-shadow:0 4px 10px #078b6320}.btn:hover{background:#067553!important}
+#alertas{border-radius:12px}
+@media(max-width:1150px){.app-shell{grid-template-columns:210px minmax(0,1fr)}.sidebar{padding-left:11px;padding-right:11px}.topbar{padding:12px 20px}.dashboard-content{padding:22px 20px}.pos-layout{grid-template-columns:minmax(0,1fr) 320px}}
+@media(max-width:850px){.app-shell{display:block}.sidebar{position:relative;top:auto;height:auto;min-height:0;padding:12px 14px}.brand{padding:0 5px 10px}.nav-label,.sidebar-bottom{display:none}.side-nav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:2px}.nav-section{display:none}.nav-link{width:auto;white-space:nowrap;padding:9px 11px;font-size:11px}.topbar{position:relative;flex-wrap:wrap;padding:13px 16px}.topbar-actions{width:100%;flex-wrap:wrap}.search-wrap{flex:1;width:auto;min-width:180px}.dashboard-content{padding:18px 14px}.pos-layout{grid-template-columns:1fr}.cart-panel{position:relative;top:auto;max-height:none;order:2}.quick-stats{gap:8px}.stat-card{padding:10px;gap:8px}.stat-icon{width:34px;height:34px}.stat-card small{display:none}}
+@media(max-width:520px){.topbar-title h1{font-size:18px}.top-user{display:none}.logout-btn{margin-left:auto}.welcome-row{align-items:flex-start}.welcome-row h2{font-size:20px}.date-chip{font-size:9px;white-space:nowrap}.quick-stats{grid-template-columns:1fr}.stat-card small{display:block}.section-heading{align-items:flex-start;flex-direction:column}#productos{grid-template-columns:1fr!important}}
+</style>
+
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
@@ -30,80 +78,87 @@
 </div>
 
 <!-- ===== Aplicación ===== -->
-<div id="app" class="hidden">
-<header class="bg-emerald-700 text-white shadow sticky top-0 z-20">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-    <h1 class="text-xl font-bold">💊 Punto de Venta</h1>
-    <input id="buscador" type="search" autocomplete="off" placeholder="Buscar por nombre, principio activo, laboratorio o código de barras..."
-      class="flex-1 min-w-[220px] rounded-lg px-4 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-300">
-    <button id="btnNuevo" class="solo-admin hidden btn-w">＋ Producto</button>
-    <button id="btnUsuarios" class="solo-admin hidden btn-w">👥 Usuarios</button>
-    <button id="btnInventario" class="solo-admin hidden btn-w">📦 Inventario / Kardex</button>
-    <button id="btnVentas" class="btn-w">🧾 Ventas</button>
-    <button id="btnClientes" class="btn-w">👥 Clientes</button>
-    <button id="btnRecargar" class="btn-h">↻ Actualizar</button>
-    <span id="infoUsuario" class="text-sm opacity-90"></span>
-    <button id="btnSalir" class="btn-h">Salir</button>
-  </div>
-</header>
-
-<main class="max-w-7xl mx-auto px-4 py-4 grid lg:grid-cols-3 gap-4">
-  <section class="lg:col-span-2">
-    <div id="alertas" class="hidden mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm"></div>
-    <div id="estado" class="text-slate-500 text-sm mb-2">Cargando productos...</div>
-    <div id="productos" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
-  </section>
-
-  <aside class="lg:col-span-1">
-    <div class="bg-white rounded-xl shadow p-4 lg:sticky lg:top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-      <h2 class="text-lg font-bold mb-3">🛒 Carrito</h2>
-      <div id="carrito" class="space-y-2 max-h-[30vh] overflow-y-auto"></div>
-
-      <div class="border-t mt-4 pt-3 space-y-3">
-        <details>
-          <summary class="text-sm font-medium cursor-pointer">👤 Datos del cliente (opcional)</summary>
-          <div class="flex gap-2 mt-2"><input id="cBuscar" class="inp" placeholder="Buscar cliente por DNI o nombre"><button id="btnElegirCliente" type="button" class="btn px-3 text-sm">Buscar</button></div>
-          <div class="mt-2 space-y-2">
-            <input id="cDoc" inputmode="numeric" maxlength="11" placeholder="DNI / RUC" class="inp">
-            <input id="cNombre" placeholder="Nombre o razón social" class="inp">
-            <input id="cTelefono" placeholder="Teléfono" class="inp">
-            <input id="cDireccion" placeholder="Dirección" class="inp">
-          </div>
-        </details>
-
-        <div>
-          <div class="lbl mb-1">Descuento</div>
-          <div class="flex gap-2">
-            <select id="dTipo" class="inp !w-28"><option value="monto">S/ monto</option><option value="porcentaje">% porc.</option></select>
-            <input id="dValor" type="number" min="0" step="0.01" placeholder="0" class="inp">
-          </div>
-        </div>
-
-        <label class="lbl">Método de pago
-          <select id="metodoPago" class="inp mt-1">
-            <option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option>
-          </select>
-        </label>
-
-        <div id="filaEfectivo" class="space-y-1">
-          <label class="lbl">Monto recibido (S/)
-            <input id="recibido" type="number" min="0" step="0.01" placeholder="0.00" class="inp mt-1">
-          </label>
-          <div class="flex justify-between text-sm"><span>Vuelto</span><b id="vuelto">S/ 0.00</b></div>
-        </div>
-
-        <div class="text-sm space-y-1 border-t pt-3">
-          <div class="flex justify-between"><span>Subtotal</span><span id="subtotal">S/ 0.00</span></div>
-          <div class="flex justify-between text-red-600"><span>Descuento</span><span id="descMonto">- S/ 0.00</span></div>
-          <div class="flex justify-between text-lg font-bold"><span>Total</span><span id="total">S/ 0.00</span></div>
-        </div>
-
-        <button id="btnCobrar" disabled class="btn w-full py-3 text-lg">Cobrar</button>
-        <button id="btnVaciar" class="w-full text-sm text-slate-500 hover:text-red-600">Vaciar carrito</button>
+<div id="app" class="hidden min-h-screen bg-slate-100">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">💊</div>
+        <div><div class="brand-name">Farma<span>POS</span></div><div class="brand-caption">Panel de administración</div></div>
       </div>
+      <div class="nav-label">MENÚ PRINCIPAL</div>
+      <nav class="side-nav">
+        <div class="nav-section">VENTAS</div>
+        <button id="navPuntoVenta" class="nav-link active" type="button"><span class="nav-ico">▦</span> Punto de venta</button>
+        <button id="btnVentas" class="nav-link" type="button"><span class="nav-ico">▤</span> Historial de ventas</button>
+        <button id="btnClientes" class="nav-link" type="button"><span class="nav-ico">♙</span> Clientes</button>
+        <div class="nav-section">INVENTARIO</div>
+        <button id="btnNuevo" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">＋</span> Nuevo producto</button>
+        <button id="btnInventario" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">▣</span> Inventario / Kardex</button>
+        <div class="nav-section">CONFIGURACIÓN</div>
+        <button id="btnUsuarios" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">♧</span> Usuarios</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-status"><span class="status-dot"></span><span>Sistema conectado</span></div>
+        <div class="sidebar-user"><div class="avatar">A</div><div class="user-meta"><strong id="sideUserName">Administrador</strong><small id="sideUserRole">Cuenta activa</small></div></div>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div class="topbar-title"><span class="eyebrow">FARMACIA / OPERACIONES</span><h1>Punto de venta</h1></div>
+        <div class="topbar-actions">
+          <label class="search-wrap"><span>⌕</span><input id="buscador" type="search" autocomplete="off" placeholder="Buscar producto, principio activo o código..."></label>
+          <button id="btnRecargar" class="icon-action" title="Actualizar" aria-label="Actualizar">↻</button>
+          <div class="top-user"><div class="avatar">A</div><div><strong id="infoUsuario">Administrador</strong><small>Sesión activa</small></div></div>
+          <button id="btnSalir" class="logout-btn">Salir</button>
+        </div>
+      </header>
+
+      <main class="dashboard-content">
+        <section class="welcome-row">
+          <div><div class="eyebrow">RESUMEN GENERAL</div><h2>Panel de control</h2><p>Administra tus productos y registra ventas fácilmente.</p></div>
+          <div class="date-chip">● Sistema de farmacia</div>
+        </section>
+        <section class="quick-stats">
+          <div class="stat-card"><div class="stat-icon stat-green">▦</div><div><span>Catálogo</span><strong>Productos</strong><small>Consulta y busca medicamentos</small></div></div>
+          <div class="stat-card"><div class="stat-icon stat-blue">♙</div><div><span>Atención</span><strong>Clientes</strong><small>Datos e historial de compras</small></div></div>
+          <div class="stat-card"><div class="stat-icon stat-amber">▤</div><div><span>Operaciones</span><strong>Ventas</strong><small>Registro y comprobantes</small></div></div>
+        </section>
+
+        <div class="pos-layout">
+          <section class="catalog-panel">
+            <div class="section-heading"><div><h3>Catálogo de productos</h3><p>Selecciona un producto para agregarlo al carrito.</p></div><span id="estado" class="catalog-count">Cargando productos...</span></div>
+            <div id="alertas" class="hidden mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm"></div>
+            <div id="productos" class="grid sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4"></div>
+          </section>
+
+          <aside class="cart-panel">
+            <div class="cart-heading"><div><span class="eyebrow">NUEVA OPERACIÓN</span><h3>Carrito de venta</h3></div><span class="cart-bag">🛒</span></div>
+            <div id="carrito" class="space-y-2 max-h-[25vh] overflow-y-auto"></div>
+
+            <div class="cart-fields">
+              <details>
+                <summary class="text-sm font-semibold cursor-pointer">♙ Datos del cliente (opcional)</summary>
+                <div class="flex gap-2 mt-2"><input id="cBuscar" class="inp" placeholder="Buscar cliente por DNI o nombre"><button id="btnElegirCliente" type="button" class="btn px-3 text-sm">Buscar</button></div>
+                <div class="mt-2 space-y-2">
+                  <input id="cDoc" inputmode="numeric" maxlength="11" placeholder="DNI / RUC" class="inp">
+                  <input id="cNombre" placeholder="Nombre o razón social" class="inp">
+                  <input id="cTelefono" placeholder="Teléfono" class="inp">
+                  <input id="cDireccion" placeholder="Dirección" class="inp">
+                </div>
+              </details>
+              <div><div class="lbl mb-1">Descuento</div><div class="flex gap-2"><select id="dTipo" class="inp !w-28"><option value="monto">S/ monto</option><option value="porcentaje">% porc.</option></select><input id="dValor" type="number" min="0" step="0.01" placeholder="0" class="inp"></div></div>
+              <label class="lbl">Método de pago<select id="metodoPago" class="inp mt-1"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option></select></label>
+              <div id="filaEfectivo" class="space-y-1"><label class="lbl">Monto recibido (S/)<input id="recibido" type="number" min="0" step="0.01" placeholder="0.00" class="inp mt-1"></label><div class="flex justify-between text-sm"><span>Vuelto</span><b id="vuelto">S/ 0.00</b></div></div>
+              <div class="text-sm space-y-2 border-t pt-3"><div class="flex justify-between"><span>Subtotal</span><span id="subtotal">S/ 0.00</span></div><div class="flex justify-between text-red-600"><span>Descuento</span><span id="descMonto">- S/ 0.00</span></div><div class="flex justify-between text-xl font-extrabold text-slate-900 pt-1"><span>Total</span><span id="total">S/ 0.00</span></div></div>
+              <button id="btnCobrar" disabled class="btn w-full py-3 text-lg">Cobrar venta</button>
+              <button id="btnVaciar" class="w-full text-sm text-slate-500 hover:text-red-600 py-1">Vaciar carrito</button>
+            </div>
+          </aside>
+        </div>
+      </main>
     </div>
-  </aside>
-</main>
+  </div>
 </div>
 
 <!-- ===== Modal producto (Admin) ===== -->
@@ -329,6 +384,8 @@ function mostrarApp() {
   $('login').classList.add('hidden');
   $('app').classList.remove('hidden');
   $('infoUsuario').textContent = sesion.usuario.nombre + ' · ' + sesion.usuario.rol;
+  if ($('sideUserName')) $('sideUserName').textContent = sesion.usuario.nombre;
+  if ($('sideUserRole')) $('sideUserRole').textContent = sesion.usuario.rol;
   document.querySelectorAll('.solo-admin').forEach(el => el.classList.toggle('hidden', !esAdmin()));
   cargarProductos();
 }
