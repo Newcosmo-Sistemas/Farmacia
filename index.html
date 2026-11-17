@@ -958,6 +958,103 @@ $('btnRecargar').addEventListener('click', cargarProductos);
 // ===== Inicio =====
 renderTotales();
 if (sesion && sesion.token && sesion.usuario) mostrarApp(); else $('lUsuario').focus();
+
+  
+async function cargarResumenDashboard() {
+  try {
+    const data = await apiPost({
+      accion: 'resumen_dashboard'
+    });
+
+    const r = data.resumen;
+
+    const valores = {
+      dashVentasHoy: moneda(r.total_hoy),
+      dashCantidadVentas: r.ventas_hoy,
+      dashVentasMes: moneda(r.total_mes),
+      dashProductos: r.productos,
+      dashStockBajo: r.stock_bajo,
+      dashPorVencer: r.por_vencer,
+      dashVencidos: r.vencidos
+    };
+
+    Object.entries(valores).forEach(([id, valor]) => {
+      const elemento = document.getElementById(id);
+      if (elemento) elemento.textContent = valor;
+    });
+
+    dibujarVentasSemana(r.ventas_7_dias || []);
+    dibujarMetodosPago(r.metodos_pago || {});
+    dibujarProductosTop(r.productos_mas_vendidos || []);
+
+  } catch (error) {
+    console.error(error);
+    toast('No se pudo cargar el dashboard: ' + error.message, false);
+  }
+}
+
+function dibujarVentasSemana(datos) {
+  const contenedor = document.getElementById('dashGraficoVentas');
+  if (!contenedor) return;
+
+  const maximo = Math.max(
+    1,
+    ...datos.map(d => Number(d.total) || 0)
+  );
+
+  contenedor.innerHTML = datos.map(d => {
+    const altura = Math.max(
+      3,
+      (Number(d.total) / maximo) * 100
+    );
+
+    return `
+      <div class="flex-1 flex flex-col items-center justify-end gap-2">
+        <span class="text-xs font-semibold">${moneda(d.total)}</span>
+        <div class="w-full rounded-t-lg bg-blue-500"
+             style="height:${altura}px;max-height:160px">
+        </div>
+        <span class="text-xs text-slate-500">
+          ${esc(d.fecha.slice(5))}
+        </span>
+      </div>
+    `;
+  }).join('');
+}
+
+function dibujarMetodosPago(datos) {
+  const contenedor = document.getElementById('dashMetodosPago');
+  if (!contenedor) return;
+
+  const entradas = Object.entries(datos);
+  const total = entradas.reduce((s, x) => s + Number(x[1]), 0);
+
+  contenedor.innerHTML = entradas.length
+    ? entradas.map(([nombre, importe]) => `
+        <div class="flex justify-between border-b py-2 text-sm">
+          <span>${esc(nombre)}</span>
+          <strong>${moneda(importe)}</strong>
+        </div>
+      `).join('') +
+      `<p class="font-bold text-right pt-2">Total: ${moneda(total)}</p>`
+    : '<p class="text-slate-500">Sin ventas registradas</p>';
+}
+
+function dibujarProductosTop(datos) {
+  const contenedor = document.getElementById('dashProductosTop');
+  if (!contenedor) return;
+
+  contenedor.innerHTML = datos.length
+    ? datos.map((p, i) => `
+        <div class="flex justify-between border-b py-2 text-sm">
+          <span>${i + 1}. ${esc(p.nombre)}</span>
+          <strong>${Number(p.cantidad)}</strong>
+        </div>
+      `).join('')
+    : '<p class="text-slate-500">Sin información disponible</p>';
+}
+
+  
 </script>
 </body>
 </html>
