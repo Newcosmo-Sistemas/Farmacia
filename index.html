@@ -94,6 +94,8 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
         <div class="nav-section">INVENTARIO</div>
         <button id="btnNuevo" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">＋</span> Nuevo producto</button>
         <button id="btnInventario" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">▣</span> Inventario / Kardex</button>
+        <div class="nav-section">INFORMES</div>
+        <button id="btnReportes" class="nav-link" type="button"><span class="nav-ico">▤</span> Reportes</button>
         <div class="nav-section">CONFIGURACIÓN</div>
         <button id="btnUsuarios" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">♧</span> Usuarios</button>
       </nav>
@@ -316,6 +318,37 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
   </div>
 </div>
 
+<!-- ===== Modal Reportes ===== -->
+<div id="modalReportes" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-3">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <div><h2 class="text-xl font-bold text-slate-800">📊 Centro de reportes</h2><p class="text-xs text-slate-500">Consultas y exportación de información · Moneda PEN (S/)</p></div>
+      <button id="btnCerrarReportes" class="text-slate-500 hover:text-slate-800 text-xl" type="button">✕</button>
+    </div>
+    <div class="grid sm:grid-cols-4 gap-3 mb-4">
+      <label class="lbl sm:col-span-2">Tipo de reporte
+        <select id="rTipo" class="inp mt-1">
+          <option value="ventas">Ventas</option>
+          <option value="inventario">Inventario general</option>
+          <option value="alertas">Vencimientos y stock bajo</option>
+          <option value="kardex">Movimientos Kardex</option>
+        </select>
+      </label>
+      <label class="lbl">Desde<input id="rDesde" type="date" class="inp mt-1"></label>
+      <label class="lbl">Hasta<input id="rHasta" type="date" class="inp mt-1"></label>
+    </div>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button id="btnGenerarReporte" class="btn px-5 py-2" type="button">Consultar reporte</button>
+      <button id="btnExcelReporte" class="border rounded-lg px-4 py-2 text-sm font-semibold hover:bg-slate-50" type="button">📗 Exportar para Excel</button>
+      <button id="btnPdfReporte" class="border rounded-lg px-4 py-2 text-sm font-semibold hover:bg-slate-50" type="button">📄 Imprimir / Guardar PDF</button>
+    </div>
+    <div id="rResumen" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+    <div class="flex justify-between items-center mb-2"><h3 id="rTitulo" class="font-bold text-slate-700">Resultados</h3><span id="rCantidad" class="text-xs text-slate-500"></span></div>
+    <div class="overflow-x-auto border rounded-lg"><table class="w-full text-sm"><thead id="rHead" class="bg-slate-100 text-slate-600 text-left"></thead><tbody id="rBody"></tbody></table></div>
+    <p id="rAviso" class="text-xs text-slate-500 mt-3">Selecciona un reporte y pulsa Consultar.</p>
+  </div>
+</div>
+
 <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-5 py-3 rounded-lg shadow-lg text-white font-medium z-50 max-w-[90vw]"></div>
 
 <script>
@@ -393,7 +426,7 @@ function mostrarApp() {
 function cerrarSesion(msg) {
   sesion = null; carrito = {}; productos = [];
   try { sessionStorage.removeItem('sesion'); } catch (e) {}
-  ['modal', 'modalUsuarios', 'modalInv', 'modalVentas'].forEach(id => $(id).classList.add('hidden'));
+  ['modal', 'modalUsuarios', 'modalInv', 'modalVentas', 'modalClientes', 'modalReportes'].forEach(id => $(id).classList.add('hidden'));
   $('app').classList.add('hidden');
   $('login').classList.remove('hidden');
   $('lClave').value = '';
@@ -887,7 +920,138 @@ function imprimirComprobante(id) {
   w.document.open(); w.document.write(htmlTicket); w.document.close();
 }
 
+// ===== Centro de reportes =====
+let reporteActual = { titulo: '', columnas: [], filas: [], resumen: [] };
+
+function abrirReportes() {
+  $('modalReportes').classList.remove('hidden');
+  if (!$('rDesde').value) {
+    const d = new Date(); d.setDate(1);
+    $('rDesde').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+  }
+  if (!$('rHasta').value) $('rHasta').value = hoyISO();
+  const admin = esAdmin();
+  ['inventario', 'alertas', 'kardex'].forEach(v => {
+    const op = $('rTipo').querySelector('option[value="' + v + '"]');
+    if (op) op.disabled = !admin;
+  });
+  if (!admin) { $('rTipo').value = 'ventas'; $('rDesde').value = hoyISO(); $('rHasta').value = hoyISO(); }
+  $('rDesde').disabled = $('rHasta').disabled = !admin;
+  generarReporte();
+}
+
+function tarjetaReporte(titulo, valor) {
+  return '<div class="rounded-lg border bg-slate-50 p-3"><div class="text-xs text-slate-500">' + esc(titulo) + '</div><div class="text-lg font-bold text-slate-800">' + esc(valor) + '</div></div>';
+}
+
+async function generarReporte() {
+  const tipo = $('rTipo').value, desde = $('rDesde').value, hasta = $('rHasta').value;
+  if (!esAdmin() && tipo !== 'ventas') return toast('Este reporte está disponible solo para Administrador.', false);
+  if (desde && hasta && desde > hasta) return toast('La fecha inicial no puede ser mayor que la final.', false);
+  const btn = $('btnGenerarReporte'); btn.disabled = true; btn.textContent = 'Consultando...';
+  $('rAviso').textContent = 'Obteniendo información...';
+  try {
+    let columnas = [], filas = [], resumen = [], titulo = '';
+    if (tipo === 'ventas') {
+      const d = await apiPost({ accion: 'listar_ventas', desde, hasta });
+      const lista = d.ventas || [];
+      const total = lista.reduce((s, v) => s + Number(v.Total || 0), 0);
+      const efectivo = lista.filter(v => v.Metodo_Pago === 'Efectivo').reduce((s, v) => s + Number(v.Total || 0), 0);
+      const digital = lista.filter(v => ['Yape', 'Plin', 'Transferencia'].includes(v.Metodo_Pago)).reduce((s, v) => s + Number(v.Total || 0), 0);
+      const tarjeta = lista.filter(v => v.Metodo_Pago === 'Tarjeta').reduce((s, v) => s + Number(v.Total || 0), 0);
+      titulo = 'Reporte de ventas';
+      resumen = [['Operaciones', String(lista.length)], ['Total vendido', moneda(total)], ['Efectivo', moneda(efectivo)], ['Otros medios', moneda(digital + tarjeta)]];
+      columnas = ['Fecha', 'Comprobante interno', 'Documento cliente', 'Cliente', 'Método de pago', 'Subtotal (S/)', 'Descuento (S/)', 'Total (S/)', 'Vendedor'];
+      filas = lista.map(v => [v.Fecha, v.ID_Venta, v.Cliente_Doc, v.Cliente_Nombre || 'Público general', v.Metodo_Pago, Number(v.Subtotal || 0).toFixed(2), Number(v.Descuento || 0).toFixed(2), Number(v.Total || 0).toFixed(2), v.Vendedor]);
+    } else if (tipo === 'inventario') {
+      const lista = productos.slice().sort((a,b) => String(a.Nombre).localeCompare(String(b.Nombre)));
+      const unidades = lista.reduce((s,p) => s + Number(p.Stock || 0), 0);
+      const bajos = lista.filter(p => Number(p.Stock || 0) <= stockMin(p)).length;
+      titulo = 'Reporte general de inventario';
+      resumen = [['Productos', String(lista.length)], ['Unidades disponibles', String(unidades)], ['Stock bajo', String(bajos)], ['Fecha de consulta', hoyISO()]];
+      columnas = ['ID', 'Producto', 'Principio activo', 'Concentración', 'Laboratorio', 'Precio caja (S/)', 'Precio unidad (S/)', 'Stock (unidades)', 'Stock mínimo', 'Lote', 'Vencimiento'];
+      filas = lista.map(p => [p.ID, p.Nombre, p.Principio_Activo, p.Concentracion, p.Laboratorio, Number(p.Precio || 0).toFixed(2), Number(p.Precio_Unidad || 0).toFixed(2), Number(p.Stock || 0), stockMin(p), p.Lote, p.Fecha_Vencimiento]);
+    } else if (tipo === 'alertas') {
+      const lista = productos.filter(p => {
+        const dias = diasParaVencer(p.Fecha_Vencimiento);
+        return Number(p.Stock || 0) <= stockMin(p) || (dias !== null && dias <= DIAS_POR_VENCER);
+      });
+      const vencidos = lista.filter(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return d !== null && d < 0; }).length;
+      const proximos = lista.filter(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return d !== null && d >= 0 && d <= DIAS_POR_VENCER; }).length;
+      const bajos = lista.filter(p => Number(p.Stock || 0) <= stockMin(p)).length;
+      titulo = 'Reporte de vencimientos y stock bajo';
+      resumen = [['Productos alertados', String(lista.length)], ['Vencidos', String(vencidos)], ['Por vencer (90 días)', String(proximos)], ['Stock bajo', String(bajos)]];
+      columnas = ['ID', 'Producto', 'Stock actual', 'Stock mínimo', 'Lote', 'Fecha vencimiento', 'Días restantes', 'Alerta'];
+      filas = lista.map(p => {
+        const dias = diasParaVencer(p.Fecha_Vencimiento); let alerta = '';
+        if (dias !== null && dias < 0) alerta = 'VENCIDO';
+        else if (dias !== null && dias <= DIAS_POR_VENCER) alerta = 'POR VENCER';
+        if (Number(p.Stock || 0) <= stockMin(p)) alerta += (alerta ? ' / ' : '') + 'STOCK BAJO';
+        return [p.ID, p.Nombre, Number(p.Stock || 0), stockMin(p), p.Lote, p.Fecha_Vencimiento, dias === null ? '' : dias, alerta];
+      });
+    } else if (tipo === 'kardex') {
+      if (!esAdmin()) throw new Error('Solo el Administrador puede consultar el Kardex.');
+      const d = await apiPost({ accion: 'listar_kardex' });
+      const lista = (d.movimientos || []).filter(m => {
+        const fecha = String(m.Fecha || '').slice(0,10);
+        return (!desde || fecha >= desde) && (!hasta || fecha <= hasta);
+      });
+      const entradas = lista.filter(m => Number(m.Cantidad) > 0).reduce((s,m) => s + Number(m.Cantidad), 0);
+      const salidas = lista.filter(m => Number(m.Cantidad) < 0).reduce((s,m) => s + Math.abs(Number(m.Cantidad)), 0);
+      titulo = 'Reporte de movimientos Kardex';
+      resumen = [['Movimientos', String(lista.length)], ['Unidades ingresadas', String(entradas)], ['Unidades retiradas', String(salidas)], ['Diferencia', String(entradas - salidas)]];
+      columnas = ['Fecha', 'Tipo', 'Producto', 'Cantidad', 'Stock anterior', 'Stock nuevo', 'Lote', 'Motivo', 'Usuario'];
+      filas = lista.map(m => [m.Fecha, m.Tipo, m.Producto, m.Cantidad, m.Stock_Antes, m.Stock_Despues, m.Lote, m.Motivo, m.Usuario]);
+    }
+    reporteActual = { titulo, columnas, filas, resumen };
+    renderReporte();
+    $('rAviso').textContent = 'Consulta generada correctamente. Los datos corresponden a la información disponible en el sistema.';
+  } catch (err) {
+    $('rAviso').textContent = 'No se pudo generar el reporte: ' + err.message;
+    toast(err.message, false);
+  } finally { btn.disabled = false; btn.textContent = 'Consultar reporte'; }
+}
+
+function renderReporte() {
+  const r = reporteActual;
+  $('rTitulo').textContent = r.titulo;
+  $('rCantidad').textContent = r.filas.length + ' registro(s)';
+  $('rResumen').innerHTML = r.resumen.map(x => tarjetaReporte(x[0], x[1])).join('');
+  $('rHead').innerHTML = '<tr>' + r.columnas.map(c => '<th class="p-2 whitespace-nowrap">' + esc(c) + '</th>').join('') + '</tr>';
+  $('rBody').innerHTML = r.filas.length ? r.filas.map(f => '<tr class="border-t">' + f.map(v => '<td class="p-2 whitespace-nowrap">' + esc(v) + '</td>').join('') + '</tr>').join('') : '<tr><td colspan="' + Math.max(1,r.columnas.length) + '" class="p-5 text-center text-slate-400">No hay información para mostrar</td></tr>';
+}
+
+function exportarReporteExcel() {
+  const r = reporteActual;
+  if (!r.columnas.length) return toast('Primero genera un reporte.', false);
+  const escapar = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const contenido = [r.columnas.map(escapar).join(';'), ...r.filas.map(f => f.map(escapar).join(';'))].join('\r\n');
+  const blob = new Blob(['\ufeff' + contenido], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = 'FARMACIA_' + r.titulo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_') + '_' + hoyISO() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function imprimirReportePDF() {
+  const r = reporteActual;
+  if (!r.columnas.length) return toast('Primero genera un reporte.', false);
+  const w = window.open('', '_blank');
+  if (!w) return toast('Permite las ventanas emergentes para imprimir o guardar el PDF.', false);
+  const resumen = r.resumen.map(x => '<div class="res"><b>' + esc(x[0]) + '</b><br>' + esc(x[1]) + '</div>').join('');
+  const cabecera = r.columnas.map(c => '<th>' + esc(c) + '</th>').join('');
+  const cuerpo = r.filas.map(f => '<tr>' + f.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>').join('');
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(r.titulo) + '</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#263746}h1{font-size:21px}p{font-size:11px;color:#667}.resumen{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.res{border:1px solid #ddd;padding:10px;min-width:130px;font-size:12px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #ddd;padding:6px;text-align:left}th{background:#edf2f5}@media print{body{padding:0}tr{break-inside:avoid}}</style></head><body><h1>FARMACIA PRO 2.0</h1><h2>' + esc(r.titulo) + '</h2><p>Fecha de emisión: ' + hoyISO() + ' · Usuario: ' + esc(sesion.usuario.nombre) + '</p><div class="resumen">' + resumen + '</div><table><thead><tr>' + cabecera + '</tr></thead><tbody>' + cuerpo + '</tbody></table><script>window.onload=function(){window.print();};<\/script></body></html>');
+  w.document.close();
+}
+
 // ===== Eventos =====
+$('btnReportes').addEventListener('click', abrirReportes);
+$('btnCerrarReportes').addEventListener('click', () => $('modalReportes').classList.add('hidden'));
+$('btnGenerarReporte').addEventListener('click', generarReporte);
+$('rTipo').addEventListener('change', generarReporte);
+$('btnExcelReporte').addEventListener('click', exportarReporteExcel);
+$('btnPdfReporte').addEventListener('click', imprimirReportePDF);
+
 $('btnClientes').addEventListener('click', abrirClientes);
 $('btnCerrarClientes').addEventListener('click', () => $('modalClientes').classList.add('hidden'));
 $('formCliente').addEventListener('submit', guardarClienteWeb);
@@ -958,103 +1122,6 @@ $('btnRecargar').addEventListener('click', cargarProductos);
 // ===== Inicio =====
 renderTotales();
 if (sesion && sesion.token && sesion.usuario) mostrarApp(); else $('lUsuario').focus();
-
-  
-async function cargarResumenDashboard() {
-  try {
-    const data = await apiPost({
-      accion: 'resumen_dashboard'
-    });
-
-    const r = data.resumen;
-
-    const valores = {
-      dashVentasHoy: moneda(r.total_hoy),
-      dashCantidadVentas: r.ventas_hoy,
-      dashVentasMes: moneda(r.total_mes),
-      dashProductos: r.productos,
-      dashStockBajo: r.stock_bajo,
-      dashPorVencer: r.por_vencer,
-      dashVencidos: r.vencidos
-    };
-
-    Object.entries(valores).forEach(([id, valor]) => {
-      const elemento = document.getElementById(id);
-      if (elemento) elemento.textContent = valor;
-    });
-
-    dibujarVentasSemana(r.ventas_7_dias || []);
-    dibujarMetodosPago(r.metodos_pago || {});
-    dibujarProductosTop(r.productos_mas_vendidos || []);
-
-  } catch (error) {
-    console.error(error);
-    toast('No se pudo cargar el dashboard: ' + error.message, false);
-  }
-}
-
-function dibujarVentasSemana(datos) {
-  const contenedor = document.getElementById('dashGraficoVentas');
-  if (!contenedor) return;
-
-  const maximo = Math.max(
-    1,
-    ...datos.map(d => Number(d.total) || 0)
-  );
-
-  contenedor.innerHTML = datos.map(d => {
-    const altura = Math.max(
-      3,
-      (Number(d.total) / maximo) * 100
-    );
-
-    return `
-      <div class="flex-1 flex flex-col items-center justify-end gap-2">
-        <span class="text-xs font-semibold">${moneda(d.total)}</span>
-        <div class="w-full rounded-t-lg bg-blue-500"
-             style="height:${altura}px;max-height:160px">
-        </div>
-        <span class="text-xs text-slate-500">
-          ${esc(d.fecha.slice(5))}
-        </span>
-      </div>
-    `;
-  }).join('');
-}
-
-function dibujarMetodosPago(datos) {
-  const contenedor = document.getElementById('dashMetodosPago');
-  if (!contenedor) return;
-
-  const entradas = Object.entries(datos);
-  const total = entradas.reduce((s, x) => s + Number(x[1]), 0);
-
-  contenedor.innerHTML = entradas.length
-    ? entradas.map(([nombre, importe]) => `
-        <div class="flex justify-between border-b py-2 text-sm">
-          <span>${esc(nombre)}</span>
-          <strong>${moneda(importe)}</strong>
-        </div>
-      `).join('') +
-      `<p class="font-bold text-right pt-2">Total: ${moneda(total)}</p>`
-    : '<p class="text-slate-500">Sin ventas registradas</p>';
-}
-
-function dibujarProductosTop(datos) {
-  const contenedor = document.getElementById('dashProductosTop');
-  if (!contenedor) return;
-
-  contenedor.innerHTML = datos.length
-    ? datos.map((p, i) => `
-        <div class="flex justify-between border-b py-2 text-sm">
-          <span>${i + 1}. ${esc(p.nombre)}</span>
-          <strong>${Number(p.cantidad)}</strong>
-        </div>
-      `).join('')
-    : '<p class="text-slate-500">Sin información disponible</p>';
-}
-
-  
 </script>
 </body>
 </html>
