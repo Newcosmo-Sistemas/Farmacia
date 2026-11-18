@@ -19,18 +19,18 @@
 :root{--navy:#142b3b;--green:#07865f;--muted:#718096}
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
 .app-shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
-.sidebar{background:#132b3b;color:#dbe7ed;min-height:100vh;padding:24px 15px 18px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
-.brand{display:flex;align-items:center;gap:11px;padding:3px 10px 28px}
+.sidebar{background:#132b3b;color:#dbe7ed;min-height:100vh;padding:18px 15px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:11px;padding:3px 10px 14px}
 .brand-mark{width:42px;height:42px;border-radius:14px;background:#0b9b70;display:grid;place-items:center;font-size:22px;box-shadow:0 7px 18px #071b2b66}
 .brand-name{font-size:19px;font-weight:850;letter-spacing:-.5px;color:white}.brand-name span{color:#48d5a4}
 .brand-caption{font-size:10px;color:#9fb2bf;margin-top:2px;letter-spacing:.5px}
 .nav-label,.nav-section{font-size:10px;font-weight:800;letter-spacing:1.2px;color:#8298a6;padding:10px 12px}
-.nav-section{padding-top:19px}
-.side-nav{display:flex;flex-direction:column;gap:5px}
-.nav-link{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 13px;border-radius:10px;color:#c3d1d9;font-size:13px;font-weight:650;transition:.18s}
+.nav-section{padding-top:12px;padding-bottom:6px}
+.side-nav{display:flex;flex-direction:column;gap:3px;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:2px;scrollbar-width:thin;scrollbar-color:#ffffff30 transparent}
+.nav-link{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:9px 13px;border-radius:10px;color:#c3d1d9;font-size:13px;font-weight:650;transition:.18s}
 .nav-link:hover{background:#ffffff12;color:white}.nav-link.active{background:#087d5d;color:white;box-shadow:0 6px 16px #061b2a55}
 .nav-ico{width:20px;text-align:center;font-size:17px;color:#8fe1c3}
-.sidebar-bottom{margin-top:auto}.sidebar-status{display:flex;align-items:center;gap:8px;padding:12px 10px;color:#9fb2bf;font-size:11px;border-bottom:1px solid #ffffff18}
+.sidebar-bottom{margin-top:8px;flex-shrink:0}.sidebar-status{display:flex;align-items:center;gap:8px;padding:12px 10px;color:#9fb2bf;font-size:11px;border-bottom:1px solid #ffffff18}
 .status-dot{width:7px;height:7px;background:#36d399;border-radius:50%;box-shadow:0 0 0 4px #36d39920}
 .sidebar-user{display:flex;align-items:center;gap:10px;padding:16px 7px 3px}.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#d8f5e9;color:#087d5d;font-weight:800}
 .user-meta{display:flex;flex-direction:column;min-width:0}.user-meta strong{font-size:12px;color:white}.user-meta small{font-size:10px;color:#91a8b5}
@@ -117,16 +117,6 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
       </header>
 
       <main class="dashboard-content">
-        <section class="welcome-row">
-          <div><div class="eyebrow">RESUMEN GENERAL</div><h2>Panel de control</h2><p>Administra tus productos y registra ventas fácilmente.</p></div>
-          <div class="date-chip">● Sistema de farmacia</div>
-        </section>
-        <section class="quick-stats">
-          <div class="stat-card"><div class="stat-icon stat-green">▦</div><div><span>Catálogo</span><strong>Productos</strong><small>Consulta y busca medicamentos</small></div></div>
-          <div class="stat-card"><div class="stat-icon stat-blue">♙</div><div><span>Atención</span><strong>Clientes</strong><small>Datos e historial de compras</small></div></div>
-          <div class="stat-card"><div class="stat-icon stat-amber">▤</div><div><span>Operaciones</span><strong>Ventas</strong><small>Registro y comprobantes</small></div></div>
-        </section>
-
         <div class="pos-layout">
           <section class="catalog-panel">
             <div class="section-heading"><div><h3>Catálogo de productos</h3><p>Selecciona un producto para agregarlo al carrito.</p></div><span id="estado" class="catalog-count">Cargando productos...</span></div>
