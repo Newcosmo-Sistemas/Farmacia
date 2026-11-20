@@ -175,7 +175,8 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
     <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-3">
       <div class="font-semibold text-sm">Precios y stock</div>
       <div class="grid sm:grid-cols-2 gap-3">
-        <label class="lbl">Precio por caja / pack (S/) *<input id="pPrecio" type="number" step="0.01" min="0" required class="inp mt-1"></label>
+        <label class="lbl">Precio de compra por caja / pack (S/)<input id="pPrecioCompra" type="number" step="0.01" min="0" placeholder="Costo de adquisición" class="inp mt-1"></label>
+        <label class="lbl">Precio de venta por caja / pack (S/) *<input id="pPrecio" type="number" step="0.01" min="0" required class="inp mt-1"></label>
         <label class="lbl">Stock total (en unidades) *<input id="pStock" type="number" step="1" min="0" required class="inp mt-1"></label>
         <label class="lbl">Unidades por caja<input id="pUpc" type="number" step="1" min="1" value="1" class="inp mt-1"></label>
         <label class="lbl">Precio por unidad / blíster (S/)<input id="pPrecioU" type="number" step="0.01" min="0" placeholder="vacío = no se fracciona" class="inp mt-1"></label>
@@ -332,6 +333,8 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
         <select id="rTipo" class="inp mt-1">
           <option value="ventas">Ventas</option>
           <option value="inventario">Inventario general</option>
+          <option value="valorizado">Inventario valorizado (compra y venta)</option>
+          <option value="bajo_stock">Productos con bajo stock (lista para imprimir)</option>
           <option value="alertas">Vencimientos y stock bajo</option>
           <option value="kardex">Movimientos Kardex</option>
         </select>
@@ -355,7 +358,7 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
 
 <script>
 // ===== Configuración =====
-const API_URL = 'https://script.google.com/macros/s/AKfycbwPLxhJzzRUwfU6fc5NoptgFn8B2lcpHwFnuzikpMdXC1HKmkVpnL5zy6xbMLnNTXwqBg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxo0yQlBXfNcax4tuEaPfG2dshez78s_eerIHS7IefbPLeY2kzVrYbqX-ZbKMhSjjaCaw/exec';
 const STOCK_BAJO = 5;          // se usa cuando el producto no tiene Stock_Minimo
 const DIAS_POR_VENCER = 90;
 
@@ -651,7 +654,7 @@ function abrirModal(id) {
   $('pConc').value = v('Concentracion'); $('pPres').value = v('Presentacion'); $('pLab').value = v('Laboratorio');
   $('pCodigo').value = v('Codigo_Barras'); $('pLote').value = v('Lote'); $('pUbic').value = v('Ubicacion');
   $('pVenc').value = p && p.Fecha_Vencimiento ? String(p.Fecha_Vencimiento).slice(0, 10) : '';
-  $('pStockMin').value = v('Stock_Minimo'); $('pPrecio').value = v('Precio'); $('pStock').value = v('Stock');
+  $('pStockMin').value = v('Stock_Minimo'); $('pPrecio').value = v('Precio'); $('pPrecioCompra').value = v('Precio_Compra'); $('pStock').value = v('Stock');
   $('pUpc').value = p ? upc(p) : 1; $('pPrecioU').value = v('Precio_Unidad');
   $('pReceta').checked = !!p && conReceta(p);
   $('modal').classList.remove('hidden');
@@ -671,7 +674,7 @@ async function guardarProducto(e) {
         Concentracion: $('pConc').value, Presentacion: $('pPres').value, Laboratorio: $('pLab').value,
         Codigo_Barras: $('pCodigo').value, Lote: $('pLote').value, Ubicacion: $('pUbic').value,
         Fecha_Vencimiento: $('pVenc').value, Stock_Minimo: $('pStockMin').value,
-        Precio: Number($('pPrecio').value), Stock: Number($('pStock').value),
+        Precio: Number($('pPrecio').value), Precio_Compra: $('pPrecioCompra').value, Stock: Number($('pStock').value),
         Unidades_Por_Caja: Number($('pUpc').value) || 1, Precio_Unidad: $('pPrecioU').value,
         Requiere_Receta: $('pReceta').checked ? 'SI' : 'NO'
       }
@@ -949,7 +952,7 @@ function abrirReportes() {
   }
   if (!$('rHasta').value) $('rHasta').value = hoyISO();
   const admin = esAdmin();
-  ['inventario', 'alertas', 'kardex'].forEach(v => {
+  ['inventario', 'valorizado', 'bajo_stock', 'alertas', 'kardex'].forEach(v => {
     const op = $('rTipo').querySelector('option[value="' + v + '"]');
     if (op) op.disabled = !admin;
   });
@@ -989,6 +992,29 @@ async function generarReporte() {
       resumen = [['Productos', String(lista.length)], ['Unidades disponibles', String(unidades)], ['Stock bajo', String(bajos)], ['Fecha de consulta', hoyISO()]];
       columnas = ['ID', 'Producto', 'Principio activo', 'Concentración', 'Laboratorio', 'Precio caja (S/)', 'Precio unidad (S/)', 'Stock (unidades)', 'Stock mínimo', 'Lote', 'Vencimiento'];
       filas = lista.map(p => [p.ID, p.Nombre, p.Principio_Activo, p.Concentracion, p.Laboratorio, Number(p.Precio || 0).toFixed(2), Number(p.Precio_Unidad || 0).toFixed(2), Number(p.Stock || 0), stockMin(p), p.Lote, p.Fecha_Vencimiento]);
+    } else if (tipo === 'valorizado') {
+      const lista = productos.slice().sort((a,b) => String(a.Nombre).localeCompare(String(b.Nombre)));
+      let inversion = 0, ventaPotencial = 0, sinCosto = 0;
+      filas = lista.map(p => {
+        const stock = Number(p.Stock || 0), upc = Math.max(1, Number(p.Unidades_Por_Caja) || 1);
+        const costoCaja = Number(p.Precio_Compra || 0);
+        const costoUnitario = costoCaja > 0 ? costoCaja / upc : null;
+        const precioUnitario = Number(p.Precio_Unidad) > 0 ? Number(p.Precio_Unidad) : Number(p.Precio || 0) / upc;
+        const costoStock = costoUnitario === null ? '' : (stock * costoUnitario);
+        if (costoUnitario === null) sinCosto++; else inversion += costoStock;
+        const ventaStock = stock * precioUnitario; ventaPotencial += ventaStock;
+        return [p.ID, p.Nombre, stock, upc, costoCaja ? costoCaja.toFixed(2) : 'SIN COSTO', costoUnitario === null ? 'SIN COSTO' : costoUnitario.toFixed(4), costoStock === '' ? 'SIN COSTO' : costoStock.toFixed(2), precioUnitario.toFixed(4), ventaStock.toFixed(2), costoStock === '' ? 'PENDIENTE' : (ventaStock-costoStock).toFixed(2)];
+      });
+      titulo = 'Inventario valorizado (costo y precio de venta)';
+      resumen = [['Productos', String(lista.length)], ['Inversión valorizada', moneda(inversion)], ['Valor potencial de venta', moneda(ventaPotencial)], ['Productos sin costo', String(sinCosto)]];
+      columnas = ['ID','Producto','Stock (unid.)','Unid./caja','Compra/caja (S/)','Costo/unidad (S/)','Valor costo (S/)','Venta/unidad (S/)','Valor venta (S/)','Margen estimado (S/)'];
+    } else if (tipo === 'bajo_stock') {
+      const lista = productos.filter(p => Number(p.Stock || 0) <= stockMin(p)).sort((a,b) => Number(a.Stock||0)-Number(b.Stock||0) || String(a.Nombre).localeCompare(String(b.Nombre)));
+      titulo = 'Productos con bajo stock - Reposición';
+      const agotados = lista.filter(p => Number(p.Stock||0) <= 0).length;
+      resumen = [['Productos por reponer', String(lista.length)], ['Agotados', String(agotados)], ['Fecha de consulta', hoyISO()], ['Criterio', 'Stock actual ≤ mínimo']];
+      columnas = ['Código','Producto','Principio activo','Laboratorio','Stock actual','Stock mínimo','Faltante sugerido','Ubicación'];
+      filas = lista.map(p => [p.Codigo_Barras || p.ID, p.Nombre, p.Principio_Activo, p.Laboratorio, Number(p.Stock||0), stockMin(p), Math.max(0, stockMin(p)-Number(p.Stock||0)), p.Ubicacion || '']);
     } else if (tipo === 'alertas') {
       const lista = productos.filter(p => {
         const dias = diasParaVencer(p.Fecha_Vencimiento);
@@ -1023,7 +1049,7 @@ async function generarReporte() {
     }
     reporteActual = { titulo, columnas, filas, resumen };
     renderReporte();
-    $('rAviso').textContent = 'Consulta generada correctamente. Los datos corresponden a la información disponible en el sistema.';
+    $('rAviso').textContent = tipo === 'valorizado' ? 'El costo se calcula por unidad a partir del precio de compra por caja dividido entre unidades por caja. Los productos sin costo registrado no se incluyen en la inversión valorizada.' : (tipo === 'bajo_stock' ? 'Lista lista para imprimir o guardar como PDF. Incluye productos agotados y productos cuyo stock es igual o menor al mínimo configurado.' : 'Consulta generada correctamente. Los datos corresponden a la información disponible en el sistema.');
   } catch (err) {
     $('rAviso').textContent = 'No se pudo generar el reporte: ' + err.message;
     toast(err.message, false);
