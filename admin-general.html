@@ -17,7 +17,7 @@
 <section class="panel"><div class="panelhead"><div><h2>Farmacias registradas</h2><div class="sub">Consulta su estado y administra las licencias.</div></div><div class="tools"><input id="search" placeholder="Buscar por nombre o código"><select id="filter"><option value="TODAS">Todas</option><option value="ACTIVA">Activas</option><option value="SUSPENDIDA">Suspendidas</option><option value="VENCIDA">Vencidas</option></select><button class="btn light" id="refreshBtn">Actualizar</button></div></div><div class="tablewrap"><table><thead><tr><th>Farmacia</th><th>Código</th><th>Plan</th><th>Estado</th><th>Vencimiento</th><th>Correo</th><th>Acciones</th></tr></thead><tbody id="companyRows"><tr><td colspan="7" class="empty">Cargando información…</td></tr></tbody></table></div></section><div id="globalMsg" class="message"></div>
 </main></div>
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbxo0yQlBXfNcax4tuEaPfG2dshez78s_eerIHS7IefbPLeY2kzVrYbqX-ZbKMhSjjaCaw/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbzJVpG-T0ZfkorhpgVn-w7Xg9Y2385znbbCRiEU3J6mddzm_78c4IzotlhWMUw8aBNi/exec';
 let token='',companies=[];
 async function call(action,data={}){const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:action,token,...data})});const j=await r.json();if(!j.ok)throw new Error(j.error||'No se pudo completar la operación');return j}
 function msg(id,text,type='success'){const el=document.getElementById(id);el.className='message '+type;el.textContent=text}
