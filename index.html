@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Farmacia - Punto de Venta</title>
+<title>FARMACIA PRO 2.0 | Sistema de Gestión</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <style type="text/tailwindcss">
 @layer components {
@@ -61,19 +61,47 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
 @media(max-width:850px){.app-shell{display:block}.sidebar{position:relative;top:auto;height:auto;min-height:0;padding:12px 14px}.brand{padding:0 5px 10px}.nav-label,.sidebar-bottom{display:none}.side-nav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:2px}.nav-section{display:none}.nav-link{width:auto;white-space:nowrap;padding:9px 11px;font-size:11px}.topbar{position:relative;flex-wrap:wrap;padding:13px 16px}.topbar-actions{width:100%;flex-wrap:wrap}.search-wrap{flex:1;width:auto;min-width:180px}.dashboard-content{padding:18px 14px}.pos-layout{grid-template-columns:1fr}.cart-panel{position:relative;top:auto;max-height:none;order:2}.quick-stats{gap:8px}.stat-card{padding:10px;gap:8px}.stat-icon{width:34px;height:34px}.stat-card small{display:none}}
 @media(max-width:520px){.topbar-title h1{font-size:18px}.top-user{display:none}.logout-btn{margin-left:auto}.welcome-row{align-items:flex-start}.welcome-row h2{font-size:20px}.date-chip{font-size:9px;white-space:nowrap}.quick-stats{grid-template-columns:1fr}.stat-card small{display:block}.section-heading{align-items:flex-start;flex-direction:column}#productos{grid-template-columns:1fr!important}}
 </style>
+<style>
+/* Identidad visual FARMACIA PRO 2.0 */
+:root{--navy:#102638;--green:#078b68;--mint:#dff8ee;--ink:#173246;--muted:#718394}
+body{background:#f3f7f9;color:var(--ink)}
+.login-screen{overflow:hidden;background:radial-gradient(circle at 15% 18%,#1a9b7a 0,transparent 34%),radial-gradient(circle at 88% 82%,#1b5270 0,transparent 38%),linear-gradient(135deg,#071c2b 0%,#0c3544 52%,#092538 100%)}
+.login-screen:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,black,transparent 92%)}
+.login-orb{position:absolute;border-radius:50%;filter:blur(2px);pointer-events:none}.orb-one{width:280px;height:280px;border:1px solid #6ee7b733;top:-115px;right:8%;box-shadow:0 0 80px #10b98118}.orb-two{width:190px;height:190px;border:1px solid #93c5fd30;bottom:-85px;left:7%}
+.login-card{position:relative;z-index:1;max-width:420px!important;padding:38px 36px 27px!important;border:1px solid #ffffff28;border-radius:25px!important;background:linear-gradient(145deg,#fffffffa,#f5fbf9f5)!important;box-shadow:0 30px 90px #020d18a6!important;display:flex;flex-direction:column;gap:12px!important}
+.login-brand-mark{width:66px;height:66px;margin:0 auto 3px;border-radius:21px;display:grid;place-items:center;font-size:32px;background:linear-gradient(145deg,#d7faec,#a8efd5);box-shadow:0 10px 25px #078b6826;border:1px solid #b8ead8}
+.login-kicker{font-size:9px;letter-spacing:2.1px;font-weight:850;color:#078b68}.login-heading h1{font-size:25px;line-height:1.2;font-weight:900;letter-spacing:-.8px;color:#102c3e;margin:8px 0 5px}.login-heading h1 span{color:#078b68}.login-heading p{font-size:12px;color:#7c8d98}
+.login-divider{display:flex;align-items:center;gap:12px;color:#9aa9b1;font-size:9px;font-weight:800;letter-spacing:1.6px;margin:8px 0 2px}.login-divider:before,.login-divider:after{content:"";height:1px;background:#e4eceb;flex:1}
+.login-label{font-size:11px!important;font-weight:750!important;color:#405766!important;margin:0 0 -8px}.login-input-wrap{height:48px;display:flex;align-items:center;gap:11px;padding:0 14px;border:1px solid #dce8e5;border-radius:12px;background:#fbfdfd;transition:.2s}.login-input-wrap:focus-within{border-color:#0b9b70;box-shadow:0 0 0 4px #0b9b7017;background:white}.login-input-wrap span{color:#078b68;font-size:17px}.login-input-wrap input{width:100%;outline:none;background:transparent;font-size:13px;color:#183747}.login-input-wrap input::placeholder{color:#a1afb6}
+.login-submit{height:49px;border:0;border-radius:12px;background:linear-gradient(100deg,#078b68,#0aa77b);color:white;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:16px;box-shadow:0 9px 20px #078b6833;transition:.2s}.login-submit:hover{transform:translateY(-1px);filter:brightness(1.04)}.login-submit:disabled{opacity:.65;cursor:wait;transform:none}.login-submit b{font-size:19px;font-weight:500}.login-foot{text-align:center;color:#91a0a7;font-size:10px;margin-top:1px}
+.app-shell{grid-template-columns:256px minmax(0,1fr);background:#f3f7f9}.sidebar{background:linear-gradient(180deg,#102b3c 0%,#0b202e 100%);border-right:1px solid #ffffff0c;box-shadow:8px 0 30px #1026380b;padding-top:21px}.brand{padding:3px 9px 20px}.brand-mark{background:linear-gradient(145deg,#10a879,#087b60);border:1px solid #ffffff22;border-radius:15px;box-shadow:0 8px 20px #020f1d55}.brand-name{font-size:15px;letter-spacing:-.35px;white-space:nowrap}.brand-name span{display:block;color:#58ddb0;font-size:13px;letter-spacing:.3px}.brand-caption{font-size:9px;letter-spacing:.35px;margin-top:4px}.nav-label,.nav-section{color:#7894a3;letter-spacing:1.45px}.nav-link{padding:10px 13px;border-radius:11px;font-size:12px;color:#c1d0d8}.nav-link.active{background:linear-gradient(100deg,#087e60,#0b966e);box-shadow:0 7px 18px #031a2a65}.nav-link:hover{background:#ffffff13}.nav-ico{color:#75dcb7}.sidebar-status{border-color:#ffffff14}.sidebar-user{padding-top:15px}
+.workspace{background:#f3f7f9}.topbar{min-height:78px;padding:13px 30px;background:#ffffffed;backdrop-filter:blur(16px);border-bottom:1px solid #e7eef0;box-shadow:0 3px 14px #18374805}.topbar-title h1{font-size:20px;color:#132f42}.eyebrow{color:#0b9870}.search-wrap{border-radius:13px;background:#f7fafb}.icon-action{border-radius:12px}.logout-btn{border-radius:10px}.dashboard-content{padding:25px 30px 38px;max-width:1900px}.dashboard-welcome{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 23px;padding:22px 25px;border-radius:19px;background:linear-gradient(110deg,#10354a 0%,#0c5b55 58%,#078b68 100%);box-shadow:0 12px 28px #123b4b20;position:relative;overflow:hidden}.dashboard-welcome:after{content:"✚";position:absolute;right:14%;top:-48px;font-size:180px;line-height:1;color:#ffffff0b;transform:rotate(-12deg);pointer-events:none}.welcome-kicker{font-size:9px;letter-spacing:1.7px;font-weight:850;color:#9cebd0}.dashboard-welcome h2{font-size:22px;line-height:1.25;font-weight:850;letter-spacing:-.5px;color:white;margin:6px 0}.dashboard-welcome h2 span{color:#9bf0d0}.dashboard-welcome p{font-size:11px;color:#d0e8e2}.welcome-status{position:relative;z-index:1;white-space:nowrap;padding:9px 13px;border:1px solid #ffffff35;border-radius:30px;background:#ffffff12;color:#e9fff7;font-size:10px;font-weight:750}.welcome-status i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#63e6a9;margin-right:7px;box-shadow:0 0 0 4px #63e6a922}
+.stat-card,.cart-panel{border-radius:17px;box-shadow:0 7px 24px #173b4b0a;border-color:#e6eef0}.stat-card{padding:17px}.stat-icon{border-radius:13px}.catalog-panel .section-heading h3,.cart-heading h3{color:#173246}.cart-panel{top:94px}.btn{border-radius:11px!important}
+@media(max-width:850px){.app-shell{display:block}.sidebar{min-height:0;padding:12px 14px}.brand-name span{display:inline}.dashboard-welcome{padding:18px;align-items:flex-start;flex-direction:column}.dashboard-welcome h2{font-size:19px}.welcome-status{align-self:flex-start}.login-card{padding:30px 24px 23px!important}}
+@media(max-width:520px){.dashboard-content{padding:15px 11px 25px}.topbar{padding:12px}.dashboard-welcome{margin-bottom:16px}.login-card{max-width:390px!important}.login-heading h1{font-size:22px}}
+</style>
 
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
-<!-- ===== Login ===== -->
-<div id="login" class="fixed inset-0 z-50 bg-slate-100 flex items-center justify-center p-4">
-  <form id="formLogin" class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6 space-y-4">
-    <h1 class="text-2xl font-bold text-center">💊 Farmacia</h1>
-    <p class="text-center text-sm text-slate-500">Ingresa con tu usuario</p>
-    <input id="lUsuario" required autocomplete="username" placeholder="Usuario" class="inp">
-    <input id="lClave" type="password" required autocomplete="current-password" placeholder="Contraseña" class="inp">
-    <p id="loginError" class="text-sm text-red-600 min-h-[1.25rem]"></p>
-    <button id="btnLogin" class="btn w-full py-2">Ingresar</button>
+<!-- ===== Acceso FARMACIA PRO 2.0 ===== -->
+<div id="login" class="login-screen fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="login-orb orb-one"></div><div class="login-orb orb-two"></div>
+  <form id="formLogin" class="login-card w-full max-w-sm space-y-4">
+    <div class="login-brand-mark">💊</div>
+    <div class="text-center login-heading">
+      <div class="login-kicker">SISTEMA INTEGRAL DE GESTIÓN</div>
+      <h1>FARMACIA <span>PRO 2.0</span></h1>
+      <p>Control inteligente para tu farmacia</p>
+    </div>
+    <div class="login-divider"><span>INICIA SESIÓN</span></div>
+    <label class="login-label" for="lUsuario">Usuario</label>
+    <div class="login-input-wrap"><span>♙</span><input id="lUsuario" required autocomplete="username" placeholder="Ingresa tu usuario"></div>
+    <label class="login-label" for="lClave">Contraseña</label>
+    <div class="login-input-wrap"><span>◈</span><input id="lClave" type="password" required autocomplete="current-password" placeholder="Ingresa tu contraseña"></div>
+    <p id="loginError" class="text-sm text-red-600 min-h-[1.25rem]" role="alert"></p>
+    <button id="btnLogin" class="login-submit w-full" type="submit"><span>Ingresar al sistema</span><b>→</b></button>
+    <p class="login-foot">Acceso seguro · Personal autorizado</p>
   </form>
 </div>
 
@@ -83,7 +111,7 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">💊</div>
-        <div><div class="brand-name">Farma<span>POS</span></div><div class="brand-caption">Panel de administración</div></div>
+        <div><div class="brand-name">FARMACIA <span>PRO 2.0</span></div><div class="brand-caption">Sistema de gestión farmacéutica</div></div>
       </div>
       <div class="nav-label">MENÚ PRINCIPAL</div>
       <nav class="side-nav">
@@ -108,7 +136,7 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
 
     <div class="workspace">
       <header class="topbar">
-        <div class="topbar-title"><span class="eyebrow">FARMACIA / OPERACIONES</span><h1>Punto de venta</h1></div>
+        <div class="topbar-title"><span class="eyebrow">FARMACIA PRO 2.0 / OPERACIONES</span><h1>Punto de venta</h1></div>
         <div class="topbar-actions">
           <label class="search-wrap"><span>⌕</span><input id="buscador" type="search" autocomplete="off" placeholder="Buscar producto, principio activo o código..."></label>
           <button id="btnRecargar" class="icon-action" title="Actualizar" aria-label="Actualizar">↻</button>
@@ -118,6 +146,10 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
       </header>
 
       <main class="dashboard-content">
+        <section class="dashboard-welcome">
+          <div><span class="welcome-kicker">PANEL DE CONTROL</span><h2>Bienvenido a <span>FARMACIA PRO 2.0</span></h2><p>Administra tus ventas, inventario y operaciones desde un solo lugar.</p></div>
+          <div class="welcome-status"><i></i> Sistema operativo</div>
+        </section>
         <div class="pos-layout">
           <section class="catalog-panel">
             <div class="section-heading"><div><h3>Catálogo de productos</h3><p>Selecciona un producto para agregarlo al carrito.</p></div><span id="estado" class="catalog-count">Cargando productos...</span></div>
@@ -358,7 +390,7 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
 
 <script>
 // ===== Configuración =====
-const API_URL = 'https://script.google.com/macros/s/AKfycbyXi-nn0UyEiRaefETgO5ZUOlAu06Q0VuoTrou_ReJDKdZVlN5nw0tRFUGnNuQGnCtZcA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxo0yQlBXfNcax4tuEaPfG2dshez78s_eerIHS7IefbPLeY2kzVrYbqX-ZbKMhSjjaCaw/exec';
 const STOCK_BAJO = 5;          // se usa cuando el producto no tiene Stock_Minimo
 const DIAS_POR_VENCER = 90;
 
