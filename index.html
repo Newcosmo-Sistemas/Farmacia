@@ -90,6 +90,7 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
         <div class="nav-section">VENTAS</div>
         <button id="navPuntoVenta" class="nav-link active" type="button"><span class="nav-ico">▦</span> Punto de venta</button>
         <button id="btnVentas" class="nav-link" type="button"><span class="nav-ico">▤</span> Historial de ventas</button>
+        <button id="btnCaja" class="nav-link" type="button"><span class="nav-ico">▣</span> Apertura / cierre de caja</button>
         <button id="btnClientes" class="nav-link" type="button"><span class="nav-ico">♙</span> Clientes</button>
         <div class="nav-section">INVENTARIO</div>
         <button id="btnNuevo" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">＋</span> Nuevo producto</button>
@@ -289,6 +290,17 @@ body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-ser
   </div>
 </div>
 
+<!-- ===== Modal Caja ===== -->
+<div id="modalCaja" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+ <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-5 max-h-[95vh] overflow-y-auto">
+  <div class="flex items-center justify-between mb-4"><div><h2 class="text-lg font-bold">💵 Control de caja</h2><p class="text-xs text-slate-500">Apertura, movimientos y cierre por usuario</p></div><button id="btnCerrarCajaModal" class="text-slate-500 text-xl">✕</button></div>
+  <div id="cajaEstado" class="rounded-lg border p-4 mb-4 bg-slate-50 text-sm">Consultando estado...</div>
+  <div id="cajaApertura" class="border rounded-lg p-4 space-y-3"><h3 class="font-semibold">Aperturar caja</h3><label class="lbl">Monto inicial en efectivo (S/)<input id="cajaMontoInicial" type="number" min="0" step="0.01" value="0" class="inp mt-1"></label><button id="btnAperturarCaja" class="btn px-4 py-2">Aperturar caja</button></div>
+  <div id="cajaCierre" class="hidden border rounded-lg p-4 space-y-3"><h3 class="font-semibold">Cerrar caja</h3><div id="cajaResumen" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div><label class="lbl">Efectivo contado físicamente (S/)<input id="cajaMontoContado" type="number" min="0" step="0.01" class="inp mt-1"></label><label class="lbl">Observación<textarea id="cajaObservacion" class="inp mt-1" rows="2" placeholder="Observaciones del cierre"></textarea></label><button id="btnCerrarCaja" class="btn px-4 py-2">Confirmar cierre de caja</button></div>
+  <p class="text-xs text-slate-500 mt-3">Las ventas se registran en la caja abierta del usuario. El cierre calcula efectivo esperado, otros pagos y diferencias.</p>
+ </div>
+</div>
+
 <div id="modalClientes" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
   <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl p-5 max-h-[95vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-4">
@@ -411,12 +423,13 @@ function mostrarApp() {
   if ($('sideUserRole')) $('sideUserRole').textContent = sesion.usuario.rol;
   document.querySelectorAll('.solo-admin').forEach(el => el.classList.toggle('hidden', !esAdmin()));
   cargarProductos();
+  apiPost({accion:'estado_caja'}).then(d=>{cajaAbierta=!!d.abierta;if(!cajaAbierta) toast('Apertura caja antes de registrar ventas',false);}).catch(()=>{});
 }
 
 function cerrarSesion(msg) {
   sesion = null; carrito = {}; productos = [];
   try { sessionStorage.removeItem('sesion'); } catch (e) {}
-  ['modal', 'modalUsuarios', 'modalInv', 'modalVentas', 'modalClientes', 'modalReportes'].forEach(id => $(id).classList.add('hidden'));
+  ['modal', 'modalUsuarios', 'modalInv', 'modalVentas', 'modalCaja', 'modalClientes', 'modalReportes'].forEach(id => $(id).classList.add('hidden'));
   $('app').classList.add('hidden');
   $('login').classList.remove('hidden');
   $('lClave').value = '';
@@ -829,6 +842,20 @@ function exportarCuadre() {
   a.click();
 }
 
+// ===== Control de caja =====
+let cajaAbierta = false;
+async function cargarEstadoCaja() {
+  const d=await apiPost({accion:'estado_caja'}); cajaAbierta=!!d.abierta;
+  $('cajaEstado').innerHTML = d.abierta ? '<b class="text-emerald-700">● Caja ABIERTA</b><div class="mt-1">Código: '+esc(d.caja.ID_Caja)+' · Apertura: '+esc(String(d.caja.Fecha_Apertura))+' · Fondo inicial: '+moneda(d.caja.Monto_Inicial)+'</div>' : '<b class="text-amber-700">● No tienes una caja abierta</b><div class="mt-1">Apertura una caja para poder registrar ventas.</div>';
+  $('cajaApertura').classList.toggle('hidden',cajaAbierta); $('cajaCierre').classList.toggle('hidden',!cajaAbierta);
+  if(d.abierta){const r=d.resumen||{};$('cajaResumen').innerHTML=[['Ventas',r.ventas||0],['Efectivo',moneda(r.efectivo)],['Otros pagos',moneda(r.otros)],['Total',moneda(r.total)]].map(x=>'<div class="rounded-lg bg-slate-50 p-2"><div class="text-xs text-slate-500">'+x[0]+'</div><b>'+x[1]+'</b></div>').join('');}
+}
+async function abrirModalCaja(){ $('modalCaja').classList.remove('hidden'); try{await cargarEstadoCaja();}catch(e){toast(e.message,false);} }
+$('btnCaja').addEventListener('click',abrirModalCaja);
+$('btnCerrarCajaModal').addEventListener('click',()=>$('modalCaja').classList.add('hidden'));
+$('btnAperturarCaja').addEventListener('click',async()=>{try{const d=await apiPost({accion:'aperturar_caja',monto_inicial:$('cajaMontoInicial').value});toast('Caja aperturada: '+d.caja.ID_Caja);await cargarEstadoCaja();}catch(e){toast(e.message,false);}});
+$('btnCerrarCaja').addEventListener('click',async()=>{const monto=$('cajaMontoContado').value;if(monto==='')return toast('Ingresa el efectivo contado',false);if(!confirm('¿Confirmas el cierre de caja? Esta acción no se puede deshacer.'))return;try{const d=await apiPost({accion:'cerrar_caja',monto_contado:monto,observacion:$('cajaObservacion').value});toast('Caja cerrada. Diferencia: '+moneda(d.diferencia));await cargarEstadoCaja();}catch(e){toast(e.message,false);}});
+
 // ===== Ventas y reporte diario =====
 function abrirVentas() {
   $('modalVentas').classList.remove('hidden');
@@ -858,6 +885,7 @@ function renderVentas() {
   const g = { 'Efectivo': 0, 'Yape / Plin': 0, 'Tarjeta': 0, 'Otros': 0 };
   let tot = 0;
   ventas.forEach(v => {
+    if (String(v.Estado || 'VIGENTE') === 'ANULADA') return;
     const t = Number(v.Total) || 0, m = v.Metodo_Pago; tot += t;
     g[m === 'Efectivo' ? 'Efectivo' : (m === 'Yape' || m === 'Plin') ? 'Yape / Plin' : m === 'Tarjeta' ? 'Tarjeta' : 'Otros'] += t;
   });
@@ -865,7 +893,7 @@ function renderVentas() {
     Object.keys(g).map(k => '<div class="rounded-lg border p-3"><div class="text-xs text-slate-500">' + k + '</div><div class="text-lg font-bold">' + moneda(g[k]) + '</div></div>').join('');
   $('vBody').innerHTML = ventas.length ? ventas.map((v, i) => '<tr class="border-t"><td class="py-1 pr-2 whitespace-nowrap">' + esc(v.Fecha) + '</td><td class="pr-2">' + esc(v.ID_Venta) +
     '</td><td class="pr-2">' + esc(v.Cliente_Nombre || v.Cliente_Doc || '—') + '</td><td class="pr-2">' + esc(v.Metodo_Pago) + '</td><td class="pr-2 text-right font-semibold">' + moneda(v.Total) +
-    '</td><td class="pr-2">' + esc(v.Vendedor) + '</td><td><button data-vver="' + i + '" class="text-xs text-blue-600 hover:underline">' + (verVenta === i ? 'Ocultar' : 'Ver ticket') + '</button></td></tr>' + (verVenta === i ? ticketHtml(v) : '')).join('')
+    '</td><td class="pr-2">' + esc(v.Vendedor) + '</td><td class="space-x-2 whitespace-nowrap"><button data-vver="' + i + '" class="text-xs text-blue-600 hover:underline">' + (verVenta === i ? 'Ocultar' : 'Ver ticket') + '</button>' + (String(v.Estado||'VIGENTE')==='VIGENTE' ? (esAdmin() ? '<button data-anular="'+esc(v.ID_Venta)+'" class="text-xs text-red-600 hover:underline">Anular</button>' : '') + '<button data-cambio="'+esc(v.ID_Venta)+'" class="text-xs text-emerald-700 hover:underline">Cambiar</button>' : '<span class="text-xs text-red-600 font-semibold">ANULADA</span>') + '</td></tr>' + (verVenta === i ? ticketHtml(v) : '')).join('')
     : '<tr><td colspan="7" class="py-4 text-center text-slate-400">Sin ventas en el rango</td></tr>';
 }
 
@@ -1076,6 +1104,7 @@ $('btnVentas').addEventListener('click', abrirVentas);
 $('btnCerrarVentas').addEventListener('click', () => $('modalVentas').classList.add('hidden'));
 $('btnBuscarVentas').addEventListener('click', cargarVentas);
 $('vBody').addEventListener('click', e => { const b = e.target.closest('[data-vver]'); if (b) { const i = Number(b.dataset.vver); verVenta = verVenta === i ? -1 : i; renderVentas(); } });
+$('vBody').addEventListener('click', async e => { const a=e.target.closest('[data-anular]'); if(a){const motivo=prompt('Motivo de anulación:');if(!motivo)return;try{await apiPost({accion:'anular_venta',id_venta:a.dataset.anular,motivo});toast('Venta anulada y stock devuelto');await cargarVentas();await cargarProductos();}catch(err){toast(err.message,false);}return;} const b=e.target.closest('[data-cambio]');if(b){const id=b.dataset.cambio;const saleId=prompt('ID del producto que devuelve (según inventario):');if(!saleId)return;const cantSale=prompt('Cantidad que devuelve:','1');if(!cantSale)return;const entraId=prompt('ID del producto de reemplazo:');if(!entraId)return;const cantEntra=prompt('Cantidad del producto de reemplazo:','1');if(!cantEntra)return;const modo=prompt('Modo del producto nuevo: escribe caja o unidad','caja')||'caja';const motivo=prompt('Motivo del cambio:');if(!motivo)return;try{const d=await apiPost({accion:'cambiar_producto',id_venta:id,producto_sale:{id:saleId,cantidad:Number(cantSale)},producto_entra:{id:entraId,cantidad:Number(cantEntra),modo:modo},motivo});toast(d.mensaje+' · Diferencia '+moneda(d.diferencia));await cargarProductos();}catch(err){toast(err.message,false);}} });
 
 $('btnNuevo').addEventListener('click', () => abrirModal(null));
 $('btnCancelar').addEventListener('click', cerrarModal);
