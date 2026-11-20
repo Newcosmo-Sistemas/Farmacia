@@ -95,6 +95,8 @@ body{background:#f3f7f9;color:var(--ink)}
       <p>Control inteligente para tu farmacia</p>
     </div>
     <div class="login-divider"><span>INICIA SESIÓN</span></div>
+    <label class="login-label" for="lEmpresa">Código de farmacia</label>
+    <div class="login-input-wrap"><span>⌂</span><input id="lEmpresa" required autocomplete="organization" placeholder="Ej. FARMACIA01" style="text-transform:uppercase"></div>
     <label class="login-label" for="lUsuario">Usuario</label>
     <div class="login-input-wrap"><span>♙</span><input id="lUsuario" required autocomplete="username" placeholder="Ingresa tu usuario"></div>
     <label class="login-label" for="lClave">Contraseña</label>
@@ -453,7 +455,7 @@ async function apiPost(payload) {
 function mostrarApp() {
   $('login').classList.add('hidden');
   $('app').classList.remove('hidden');
-  $('infoUsuario').textContent = sesion.usuario.nombre + ' · ' + sesion.usuario.rol;
+  $('infoUsuario').textContent = sesion.usuario.nombre + ' · ' + sesion.usuario.rol + ' · ' + (sesion.usuario.empresa || 'FARMACIA PRO 2.0');
   if ($('sideUserName')) $('sideUserName').textContent = sesion.usuario.nombre;
   if ($('sideUserRole')) $('sideUserRole').textContent = sesion.usuario.rol;
   document.querySelectorAll('.solo-admin').forEach(el => el.classList.toggle('hidden', !esAdmin()));
@@ -479,7 +481,7 @@ $('formLogin').addEventListener('submit', async e => {
   try {
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ accion: 'login', usuario: $('lUsuario').value, clave: $('lClave').value })
+      body: JSON.stringify({ accion: 'login', codigo_farmacia: $('lEmpresa').value.trim().toUpperCase(), usuario: $('lUsuario').value, clave: $('lClave').value })
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Error desconocido');
