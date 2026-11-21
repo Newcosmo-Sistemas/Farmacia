@@ -81,6 +81,41 @@ body{background:#f3f7f9;color:var(--ink)}
 @media(max-width:520px){.dashboard-content{padding:15px 11px 25px}.topbar{padding:12px}.dashboard-welcome{margin-bottom:16px}.login-card{max-width:390px!important}.login-heading h1{font-size:22px}}
 </style>
 
+<style>
+
+/* ===== Ajuste compacto del acceso: evita cortes en pantallas bajas ===== */
+.login-screen{overflow-y:auto!important;overflow-x:hidden!important;padding:14px!important}
+.login-card{
+  width:min(100%,390px)!important;max-width:390px!important;
+  padding:23px 25px 18px!important;gap:8px!important;border-radius:20px!important;
+  max-height:calc(100dvh - 28px);overflow-y:auto;
+}
+.login-card>*+*{margin-top:0!important}
+.login-brand-mark{width:48px;height:48px;border-radius:15px;font-size:25px;margin:0 auto}
+.login-heading h1{font-size:21px;margin:4px 0}
+.login-heading p{font-size:11px}
+.login-divider{margin:4px 0 0}
+.login-input-wrap{height:43px;border-radius:10px}
+.login-input-wrap input{font-size:12px}
+.login-label{font-size:10px!important;margin:0 0 -5px}
+.login-submit{height:44px;font-size:12px}
+.login-foot{font-size:9px}
+#loginError{min-height:0!important;margin:0!important;font-size:11px!important}
+@media(max-height:760px){
+  .login-screen{align-items:flex-start!important}
+  .login-card{margin:auto!important;padding:17px 22px 14px!important;gap:6px!important}
+  .login-brand-mark{width:40px;height:40px;font-size:21px;border-radius:13px}
+  .login-heading h1{font-size:19px}
+  .login-divider{margin:2px 0}
+  .login-input-wrap{height:40px}
+  .login-submit{height:41px}
+}
+@media(max-width:520px){
+  .login-screen{padding:10px!important}
+  .login-card{width:min(100%,360px)!important;padding:20px 18px 16px!important}
+}
+
+</style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
