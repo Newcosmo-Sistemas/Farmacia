@@ -161,6 +161,81 @@ td.state.err{color:var(--red);font-weight:600}
   .loginbox{padding:28px 22px 22px}
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+
+/* ===== Rediseño compacto y responsive del acceso y panel general ===== */
+.login{padding:12px;overflow-y:auto;align-items:center}
+.loginbox{width:min(370px,100%);padding:24px 25px 19px;border-radius:20px}
+.lmark{width:46px;height:46px;border-radius:14px;font-size:23px;margin:0 auto 12px}
+.loginbox h1{font-size:21px;line-height:1.2;text-align:center}
+.lsub{text-align:center;font-size:12px;line-height:1.5;margin:0 0 16px}
+.loginbox .btn{height:43px;margin-top:12px}
+.loginbox .inp{height:42px}
+.lfoot{font-size:10px;line-height:1.45;margin-top:12px}
+.errbox{font-size:12px;padding:9px 11px}
+.shell{grid-template-columns:235px minmax(0,1fr)}
+.side{padding:20px 14px}
+.brand{padding:0 7px 22px}
+.brand b{font-size:14px}
+.brand small{font-size:11px}
+.side .nav{margin:3px 0;text-decoration:none;transition:background .15s,color .15s}
+.side .nav:not(.active):hover{background:#ffffff12;color:#fff}
+.main{padding:26px 30px 38px}
+.top{align-items:center;padding:18px 21px;margin-bottom:18px;border:1px solid #e3ecee;border-radius:17px;background:linear-gradient(110deg,#fff,#f5fbf8);box-shadow:0 5px 18px #173b4b08;position:relative}
+.top h1{font-size:24px}
+.top:before{content:"CENTRO DE CONTROL · SUPERADMINISTRADOR";position:absolute;top:8px;left:21px;font-size:9px;letter-spacing:1.35px;font-weight:800;color:var(--brand)}
+.top>div:first-child{padding-top:10px}
+.stats{border-radius:16px;box-shadow:0 5px 18px #173b4b08}
+.stat{padding:16px 19px}
+.stat strong{font-size:30px}
+.panel{border-radius:16px;padding:20px;box-shadow:0 5px 20px #173b4b07}
+.phead{margin-bottom:15px}
+.phead h2{font-size:16px}
+.formgrid{gap:12px}
+.tablewrap{border:1px solid #edf2f4;border-radius:12px;overflow-x:auto}
+.tablewrap table{min-width:820px}
+th{background:#f8fbfb}
+tbody tr:last-child td{border-bottom:0}
+.btn{transition:transform .15s,box-shadow .15s,background .15s}
+.btn:not([disabled]):hover{box-shadow:0 4px 12px #0f2a3714}
+#companyRows .actions .btn{font-size:11.5px}
+@media(max-width:950px){
+  .shell{display:block}
+  .side{position:relative;height:auto;flex-direction:row;align-items:center;padding:12px 16px}
+  .side .nav{display:inline-flex;margin-left:auto;padding:9px 11px;font-size:12px}
+  .sidefoot{display:none}
+  .main{padding:18px 16px 30px}
+}
+@media(max-width:760px){
+  .top{padding:17px 15px;margin-top:12px}
+  .top:before{left:15px;top:7px}
+  .stats{margin-bottom:14px}
+  .panel{margin-bottom:14px;padding:16px}
+  .tablewrap{border:0;overflow:visible}
+  .tablewrap table{min-width:0}
+}
+@media(max-width:560px){
+  .login{padding:10px}
+  .loginbox{width:min(350px,100%);padding:21px 19px 16px}
+  .lmark{width:40px;height:40px;font-size:20px;margin-bottom:9px}
+  .loginbox h1{font-size:19px}
+  .lsub{font-size:11px;margin-bottom:13px}
+  .loginbox .btn{height:41px;margin-top:10px}
+  .lfoot{font-size:9px}
+  .main{padding:15px 11px 25px}
+  .top h1{font-size:20px}
+  .top .sub{font-size:11.5px}
+  .stat{padding:12px 13px}
+  .stat strong{font-size:25px}
+}
+@media(max-height:700px){
+  .loginbox{padding:17px 23px 14px}
+  .lmark{width:38px;height:38px;font-size:19px;margin-bottom:8px}
+  .loginbox h1{font-size:19px}
+  .lsub{margin-bottom:11px}
+  .loginbox .btn{height:40px;margin-top:9px}
+  .lfoot{margin-top:9px}
+}
+
 </style>
 </head>
 <body>
@@ -190,7 +265,9 @@ td.state.err{color:var(--red);font-weight:600}
 <div id="appView" class="shell hidden">
   <aside class="side">
     <div class="brand"><div class="mark">💊</div><div><b>FARMACIA PRO 2.0</b><small>Administración general</small></div></div>
-    <div class="nav active"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Resumen y farmacias</div>
+    <a class="nav active" href="#overview"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Resumen</a>
+    <a class="nav" href="#new-pharmacy"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Registrar farmacia</a>
+    <a class="nav" href="#pharmacy-list"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Farmacias registradas</a>
     <div class="sidefoot"><span class="dot"></span>Panel privado · v2.0</div>
   </aside>
 
@@ -203,14 +280,14 @@ td.state.err{color:var(--red);font-weight:600}
       <div class="acts"><button class="btn ghost" id="logoutBtn" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Cerrar sesión</button></div>
     </header>
 
-    <section class="stats" aria-label="Resumen">
+    <section class="stats" id="overview" aria-label="Resumen">
       <div class="stat" style="--c:#3b82c4"><span class="k"><i></i>Total de farmacias</span><strong id="mTotal">0</strong><small>Registradas en el sistema</small></div>
       <div class="stat" style="--c:#0a8f6a"><span class="k"><i></i>Activas y vigentes</span><strong id="mActive">0</strong><small>Con licencia al día</small></div>
       <div class="stat" style="--c:#cf3f4e"><span class="k"><i></i>Suspendidas</span><strong id="mSuspended">0</strong><small>Sin acceso al sistema</small></div>
       <div class="stat" style="--c:#d9961a"><span class="k"><i></i>Suscripciones vencidas</span><strong id="mExpired">0</strong><small>Pendientes de renovar</small></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="new-pharmacy">
       <div class="phead"><div><h2>Registrar nueva farmacia</h2><div class="sub">Se creará una base de datos independiente y un usuario administrador inicial.</div></div></div>
       <form id="createForm">
         <div class="formgrid">
@@ -227,7 +304,7 @@ td.state.err{color:var(--red);font-weight:600}
       <div id="createMsg"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="pharmacy-list">
       <div class="phead">
         <div><h2>Farmacias registradas</h2><div class="sub">Consulta su estado y administra las licencias.</div></div>
         <div class="tools">
