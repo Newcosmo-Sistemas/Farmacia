@@ -482,6 +482,7 @@ async function apiPost(payload) {
   });
   const data = await res.json();
   if (!data.ok && data.error === 'SESION_INVALIDA') { cerrarSesion('Tu sesión expiró. Ingresa de nuevo.'); throw new Error('Sesión expirada'); }
+  if (!data.ok && data.error === 'CAMBIO_CLAVE_REQUERIDO') { pedirCambioClave(true); throw new Error('Debes cambiar tu contraseña'); }
   if (!data.ok) throw new Error(data.error || 'Error desconocido');
   return data;
 }
@@ -494,8 +495,49 @@ function mostrarApp() {
   if ($('sideUserName')) $('sideUserName').textContent = sesion.usuario.nombre;
   if ($('sideUserRole')) $('sideUserRole').textContent = sesion.usuario.rol;
   document.querySelectorAll('.solo-admin').forEach(el => el.classList.toggle('hidden', !esAdmin()));
+  if (sesion.usuario.debeCambiarClave) { pedirCambioClave(true); return; }
+  iniciarDatos();
+}
+
+function iniciarDatos() {
   cargarProductos();
   apiPost({accion:'estado_caja'}).then(d=>{cajaAbierta=!!d.abierta;if(!cajaAbierta) toast('Apertura caja antes de registrar ventas',false);}).catch(()=>{});
+}
+
+// Cambio de contraseña. forzado=true: obligatorio tras el primer ingreso (no se puede cerrar).
+// También puedes llamar pedirCambioClave(false) desde un botón "Cambiar contraseña".
+function pedirCambioClave(forzado) {
+  if ($('modalClave')) return;
+  const m = document.createElement('div');
+  m.id = 'modalClave';
+  m.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
+  m.innerHTML = `<form id="formClave" class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-3">
+    <h2 class="text-lg font-bold text-slate-800">${forzado ? 'Crea tu contraseña personal' : 'Cambiar contraseña'}</h2>
+    ${forzado ? '<p class="text-sm text-slate-500">Por seguridad debes cambiar la contraseña inicial antes de continuar.</p>' : ''}
+    <input id="cpActual" type="password" required autocomplete="current-password" placeholder="Contraseña actual" class="w-full border rounded-lg px-3 py-2">
+    <input id="cpNueva" type="password" required minlength="8" autocomplete="new-password" placeholder="Nueva contraseña (mín. 8 caracteres)" class="w-full border rounded-lg px-3 py-2">
+    <input id="cpRepite" type="password" required minlength="8" autocomplete="new-password" placeholder="Repite la nueva contraseña" class="w-full border rounded-lg px-3 py-2">
+    <p id="cpError" class="text-sm text-red-600"></p>
+    <div class="flex gap-2 justify-end">
+      <button type="button" id="cpSalir" class="px-4 py-2 rounded-lg border">${forzado ? 'Salir' : 'Cancelar'}</button>
+      <button type="submit" id="cpGuardar" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold">Guardar</button>
+    </div></form>`;
+  document.body.appendChild(m);
+  $('cpActual').focus();
+  $('cpSalir').onclick = () => { if (forzado) $('btnSalir').click(); else m.remove(); };
+  $('formClave').onsubmit = async ev => {
+    ev.preventDefault();
+    const nueva = $('cpNueva').value;
+    if (nueva !== $('cpRepite').value) { $('cpError').textContent = 'Las contraseñas nuevas no coinciden'; return; }
+    const b = $('cpGuardar'); b.disabled = true; $('cpError').textContent = '';
+    try {
+      await apiPost({ accion: 'cambiar_clave', clave_actual: $('cpActual').value, clave_nueva: nueva });
+      sesion.usuario.debeCambiarClave = false;
+      try { sessionStorage.setItem('sesion', JSON.stringify(sesion)); } catch (e) {}
+      m.remove(); toast('Contraseña actualizada');
+      if (forzado) iniciarDatos();
+    } catch (err) { $('cpError').textContent = err.message; b.disabled = false; }
+  };
 }
 
 function cerrarSesion(msg) {
@@ -503,6 +545,7 @@ function cerrarSesion(msg) {
   try { sessionStorage.removeItem('sesion'); } catch (e) {}
   ['modal', 'modalUsuarios', 'modalInv', 'modalVentas', 'modalCaja', 'modalClientes', 'modalReportes'].forEach(id => $(id).classList.add('hidden'));
   $('app').classList.add('hidden');
+  if ($('modalClave')) $('modalClave').remove();
   $('login').classList.remove('hidden');
   $('lClave').value = '';
   $('loginError').textContent = msg || '';
@@ -541,12 +584,7 @@ async function cargarProductos() {
   if (!sesion) return;
   $('estado').textContent = 'Cargando productos...';
   try {
-    const res = await fetch(API_URL + '?todos=1&token=' + encodeURIComponent(sesion.token));
-    const data = await res.json();
-    if (!data.ok) {
-      if (data.error === 'SESION_INVALIDA') return cerrarSesion('Tu sesión expiró. Ingresa de nuevo.');
-      throw new Error(data.error || 'Error desconocido');
-    }
+    const data = await apiPost({ accion: 'listar_productos', todos: '1' });
     productos = data.productos;
     // Ajusta el carrito si el stock o el producto cambiaron
     Object.keys(carrito).forEach(k => {
@@ -558,6 +596,7 @@ async function cargarProductos() {
     renderTodo();
   } catch (err) {
     $('estado').textContent = '';
+    if (err.message === 'Sesión expirada' || err.message === 'Debes cambiar tu contraseña') return;
     toast('No se pudieron cargar los productos: ' + err.message, false);
   }
 }
