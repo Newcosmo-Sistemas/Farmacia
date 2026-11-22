@@ -463,10 +463,16 @@ async function call(action,data={},opts={}){
   catch(e){throw new Error('No se pudo conectar con el servidor. Revisa tu conexión a internet.')}
   let j;
   try{j=await r.json()}catch(e){throw new Error('El servidor devolvió una respuesta inesperada.')}
-  if(!j.ok){
-    const m=String(j.error||'');
-    if(!opts.noExpire&&(m==='SESION_INVALIDA'||/sesi[oó]n/i.test(m))){const e=new Error('Tu sesión expiró. Ingresa de nuevo.');e.expired=true;backToLogin(e.message);throw e}
-    throw new Error(m||'No se pudo completar la operación.');
+ if (!j.ok) {
+    const m = String(j.error || '');
+    const esTokenInvalido = m === 'SESION_INVALIDA' || m === 'SESION_SUPERADMIN_INVALIDA';
+    if (!opts.noExpire && esTokenInvalido) {
+      const e = new Error('Tu sesión expiró. Ingresa de nuevo.');
+      e.expired = true;
+      backToLogin(e.message);
+      throw e;
+    }
+    throw new Error(m || 'No se pudo completar la operación.');
   }
   return j;
 }
