@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#11364a">
+<link rel="manifest" href="manifest-admin.webmanifest">
+<link rel="icon" type="image/png" href="icon-admin-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon-admin.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Farmacia Admin">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
 <title>FARMACIA PRO 2.0 | Administración General</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -445,7 +454,7 @@ textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbzCALszyhLaVqWY8Mp-A1SKZkA2WiPdiGOXFW-o1wm_g8rpXbWBhCNWPzcN7k8kpsG7rQ/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbxZLMBSBf_xwD9P4iMHAXSg3DbnecpOEnXsdFcIDysB0iGfmGBdXURNqHFciQiuXxu5gw/exec';
 const $=id=>document.getElementById(id);
 const SK='fpro_sa_token';
 let token='',companies=[],lastCred='';
