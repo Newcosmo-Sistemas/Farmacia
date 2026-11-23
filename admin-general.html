@@ -321,6 +321,7 @@ textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
       <div class="stat" style="--c:#0a8f6a"><span class="k"><i></i>Ingresos del mes</span><strong id="mMes">S/ 0</strong><small>Pagos registrados</small></div>
       <div class="stat" style="--c:#0a8f6a"><span class="k"><i></i>Ingresos del año</span><strong id="mAnio">S/ 0</strong><small>Acumulado anual</small></div>
     </section>
+    <div id="outdatedBox" class="alert hidden" role="alert" style="background:var(--red-bg);border-color:#f3c0c6;color:var(--red)"></div>
     <div id="alertBox" class="alert hidden" role="status"></div>
 
     <section class="panel" id="new-pharmacy">
@@ -331,7 +332,7 @@ textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
           <div class="field"><label for="fCodigo">Código de acceso</label><input id="fCodigo" class="inp" name="codigo" placeholder="SANJOSE" minlength="3" maxlength="20" autocapitalize="characters" autocomplete="off" required><div class="hint">3 a 20 letras o números, sin espacios.</div></div>
           <div class="field"><label for="fCorreo">Correo de contacto <span class="opt">(opcional)</span></label><input id="fCorreo" class="inp" name="correo" type="email" placeholder="correo@dominio.com"></div>
           <div class="field"><label for="fTel">WhatsApp / teléfono <span class="opt">(opcional)</span></label><input id="fTel" class="inp" name="telefono" type="tel" inputmode="numeric" placeholder="51987654321"><div class="hint">Con código de país (51 = Perú).</div></div>
-          <div class="field"><label for="fPlan">Plan</label><select id="fPlan" class="inp" name="plan"><option>Mensual</option><option>Semestral</option><option>Anual</option><option value="Prueba">Prueba gratuita</option></select></div>
+          <div class="field"><label for="fPlan">Plan</label><select id="fPlan" class="inp" name="plan"><option>Mensual</option><option>Trimestral</option><option>Semestral</option><option>Anual</option><option value="Prueba">Prueba gratuita</option></select></div>
           <div class="field" id="gDias"><label for="fDias">Días de prueba</label><select id="fDias" class="inp" name="dias"><option value="7">7 días</option><option value="14" selected>14 días</option><option value="30">30 días</option></select></div>
           <div class="field" id="gMonto"><label for="fMonto">Monto cobrado (S/) <span class="opt">(opcional)</span></label><input id="fMonto" class="inp" name="monto" type="number" min="0" step="0.01" placeholder="0.00"></div>
           <div class="field" id="gMetodo"><label for="fMetodo">Método de pago</label><select id="fMetodo" class="inp" name="metodo"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Otro</option></select></div>
@@ -376,14 +377,15 @@ textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
         <div><h2>Historial de pagos</h2><div class="sub">Todas las renovaciones y altas con pago registrado.</div></div>
         <div class="tools">
           <input id="payQ" class="inp" type="search" placeholder="Buscar farmacia, código o método" aria-label="Buscar pago">
+          <select id="payEstado" class="inp" aria-label="Filtrar pagos por estado"><option value="TODOS">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="CONFIRMADO">Confirmados</option><option value="ANULADO">Anulados</option></select>
           <button class="btn ghost" id="payRefresh" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span class="lbl">Actualizar</span></button>
           <button class="btn ghost" id="payExport" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Exportar Excel</button>
           <span class="count" id="payCount"></span>
         </div>
       </div>
       <div class="tablewrap"><table>
-        <thead><tr><th>Fecha</th><th>Farmacia</th><th>Plan</th><th class="right">Monto</th><th>Método</th><th>Vence hasta</th><th>Nota</th></tr></thead>
-        <tbody id="payRows"><tr><td colspan="7" class="state"><div class="sk"></div></td></tr></tbody>
+        <thead><tr><th>Fecha</th><th>Farmacia</th><th>Plan</th><th class="right">Monto</th><th>Método</th><th>Estado</th><th>Vence hasta</th><th>Acciones</th></tr></thead>
+        <tbody id="payRows"><tr><td colspan="8" class="state"><div class="sk"></div></td></tr></tbody>
       </table></div>
     </section>
 
@@ -431,9 +433,10 @@ textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
     <h3 id="dlgTitle"></h3>
     <p id="dlgText"></p>
     <div id="dlgPlanWrap" class="hidden">
-      <div class="field" style="margin-top:16px"><label for="dlgPlan">Nuevo periodo</label><select id="dlgPlan" class="inp"><option>Mensual</option><option>Semestral</option><option>Anual</option></select></div>
+      <div class="field" style="margin-top:16px"><label for="dlgPlan">Nuevo periodo</label><select id="dlgPlan" class="inp"><option>Mensual</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div>
       <div class="field" style="margin-top:12px"><label for="dlgMonto">Monto cobrado (S/) <span class="opt">(opcional)</span></label><input id="dlgMonto" class="inp" type="number" min="0" step="0.01" placeholder="0.00"></div>
       <div class="field" style="margin-top:12px"><label for="dlgMetodo">Método de pago</label><select id="dlgMetodo" class="inp"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Otro</option></select></div>
+      <div class="field" style="margin-top:12px"><label for="dlgEstado">Estado del pago</label><select id="dlgEstado" class="inp"><option value="CONFIRMADO">Confirmado (pago recibido)</option><option value="PENDIENTE">Pendiente (aún no extiende la licencia)</option></select></div>
       <div class="field" style="margin-top:12px"><label for="dlgNota">Nota <span class="opt">(opcional)</span></label><input id="dlgNota" class="inp" maxlength="120" placeholder="Ej. pago adelantado"></div>
     </div>
     <div class="dlgactions"><button class="btn ghost" id="dlgCancel" type="button">Cancelar</button><button class="btn primary" id="dlgOk" type="button"><span class="lbl">Confirmar</span></button></div>
@@ -463,25 +466,40 @@ async function call(action,data={},opts={}){
   catch(e){throw new Error('No se pudo conectar con el servidor. Revisa tu conexión a internet.')}
   let j;
   try{j=await r.json()}catch(e){throw new Error('El servidor devolvió una respuesta inesperada.')}
- if (!j.ok) {
+  if (!j.ok) {
     const m = String(j.error || '');
-    const esTokenInvalido = m === 'SESION_INVALIDA' || m === 'SESION_SUPERADMIN_INVALIDA';
-    if (!opts.noExpire && esTokenInvalido) {
+    const esAdmin = String(action).indexOf('superadmin_') === 0;
+    // Solo el token del superadmin vencido cierra la sesión del panel
+    if (!opts.noExpire && m === 'SESION_SUPERADMIN_INVALIDA') {
       const e = new Error('Tu sesión expiró. Ingresa de nuevo.');
       e.expired = true;
       backToLogin(e.message);
       throw e;
+    }
+    // SESION_INVALIDA en una acción del panel = el Apps Script publicado no conoce esa acción (despliegue viejo)
+    if (esAdmin && m === 'SESION_INVALIDA') {
+      showOutdated();
+      throw new Error(OUTDATED_MSG);
     }
     throw new Error(m || 'No se pudo completar la operación.');
   }
   return j;
 }
 
+/* ---------- Aviso de script desactualizado ---------- */
+const API_MIN=4;
+const OUTDATED_MSG='El script de Google (Apps Script) está desactualizado. Impleméntalo como nueva versión.';
+function showOutdated(){
+  const b=$('outdatedBox');
+  b.innerHTML='<span>⚠️</span><span><b>El Apps Script publicado está desactualizado.</b> En Apps Script: Implementar → Administrar implementaciones → ✏️ Editar → Versión: <b>Nueva versión</b> → Implementar. Luego recarga esta página.</span>';
+  b.classList.remove('hidden');
+}
+
 /* ---------- Sesión ---------- */
 function showApp(){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
 function showLoginMsg(t){const m=$('loginMsg');m.textContent=t;m.classList.toggle('hidden',!t)}
 function backToLogin(msg){
-  token='';store('');companies=[];pagosLoaded=false;actLoaded=false;pagosData=[];actData=[];
+  token='';store('');companies=[];pagosLoaded=false;actLoaded=false;pagosData=[];actData=[];pendCount=0;$('outdatedBox').classList.add('hidden');
   $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
   $('adminKey').value='';showLoginMsg(msg||'');$('createMsg').innerHTML='';$('adminKey').focus();
 }
@@ -491,6 +509,7 @@ $('loginForm').addEventListener('submit',async e=>{
   try{
     const r=await call('superadmin_login',{clave:$('adminKey').value},{noExpire:true});
     token=r.token;store(token);$('adminKey').value='';
+    if(!r.version||r.version<API_MIN)showOutdated();else $('outdatedBox').classList.add('hidden');
     showApp();await loadCompanies();
   }catch(err){showLoginMsg(err.message)}
   finally{busyBtn(b,false)}
@@ -498,7 +517,7 @@ $('loginForm').addEventListener('submit',async e=>{
 $('logoutBtn').addEventListener('click',async()=>{try{await call('superadmin_logout',{},{noExpire:true})}catch(e){}backToLogin('')});
 
 /* ---------- Estado y utilidades extra ---------- */
-let pagosLoaded=false,actLoaded=false,pagosData=[],actData=[],lastCred2='';
+let pagosLoaded=false,actLoaded=false,pagosData=[],actData=[],lastCred2='',pendCount=0;
 const money=n=>'S/ '+(Number(n)||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
 const money0=n=>'S/ '+(Number(n)||0).toLocaleString('es-PE',{maximumFractionDigits:0});
 const findCo=c=>companies.find(x=>x.codigo===c);
@@ -533,19 +552,23 @@ async function loadCompanies(initial){
     renderAlert();renderRows();loadIngresos();
   }catch(err){
     if(err.expired)return;
-    if(initial){backToLogin('Tu sesión expiró. Ingresa de nuevo.');return}
     $('companyRows').innerHTML=stateRow(err.message,true);toast(err.message,'error');
   }finally{busyBtn(btn,false)}
 }
 function renderAlert(){
   const due=companies.filter(isDue).length,exp=companies.filter(x=>x.vencida).length,box=$('alertBox');
-  if(!due&&!exp){box.classList.add('hidden');box.innerHTML='';return}
+  if(!due&&!exp&&!pendCount){box.classList.add('hidden');box.innerHTML='';return}
   const p=[];
   if(exp)p.push(`<button class="lnk" type="button" data-f="VENCIDA">${exp} ${exp>1?'suscripciones vencidas':'suscripción vencida'}</button>`);
   if(due)p.push(`<button class="lnk" type="button" data-f="PORVENCER">${due} ${due>1?'farmacias vencen':'farmacia vence'} en 7 días o menos</button>`);
+  if(pendCount)p.push(`<button class="lnk" type="button" data-f="PEND">${pendCount} ${pendCount>1?'pagos pendientes':'pago pendiente'} de confirmar</button>`);
   box.innerHTML='<span>⚠️</span><span>Atención: '+p.join(' · ')+'.</span>';box.classList.remove('hidden');
 }
-$('alertBox').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;$('filter').value=b.dataset.f;renderRows();$('pharmacy-list').scrollIntoView({behavior:'smooth',block:'start'})});
+$('alertBox').addEventListener('click',e=>{
+  const b=e.target.closest('[data-f]');if(!b)return;
+  if(b.dataset.f==='PEND'){$('payEstado').value='PENDIENTE';if(!pagosLoaded)loadPagos();else renderPagos();$('payments').scrollIntoView({behavior:'smooth',block:'start'});return}
+  $('filter').value=b.dataset.f;renderRows();$('pharmacy-list').scrollIntoView({behavior:'smooth',block:'start'});
+});
 function matchFilter(x,f){
   if(f==='TODAS')return true;
   if(f==='VENCIDA')return x.vencida;
@@ -609,14 +632,14 @@ function ask(o){return new Promise(res=>{
   const ok=$('dlgOk'),dlg=$('dlg');
   $('dlgTitle').textContent=o.title;$('dlgText').textContent=o.text||'';
   $('dlgPlanWrap').classList.toggle('hidden',!o.plan);
-  if(o.plan){$('dlgPlan').value=o.defPlan||'Mensual';$('dlgMonto').value='';$('dlgNota').value='';$('dlgMetodo').selectedIndex=0}
+  if(o.plan){$('dlgPlan').value=o.defPlan||'Mensual';$('dlgMonto').value='';$('dlgNota').value='';$('dlgMetodo').selectedIndex=0;$('dlgEstado').selectedIndex=0}
   ok.querySelector('.lbl').textContent=o.confirm||'Confirmar';
   ok.className='btn '+(o.danger?'danger':'primary');
   dlg.classList.remove('hidden');ok.focus();
   const key=e=>{if(e.key==='Escape')close(null)};
   const close=v=>{dlg.classList.add('hidden');ok.onclick=null;$('dlgCancel').onclick=null;dlg.onclick=null;document.removeEventListener('keydown',key);res(v)};
   document.addEventListener('keydown',key);
-  ok.onclick=()=>close({plan:$('dlgPlan').value,monto:$('dlgMonto').value,metodo:$('dlgMetodo').value,nota:$('dlgNota').value.trim()});
+  ok.onclick=()=>close({plan:$('dlgPlan').value,monto:$('dlgMonto').value,metodo:$('dlgMetodo').value,estado:$('dlgEstado').value,nota:$('dlgNota').value.trim()});
   $('dlgCancel').onclick=()=>close(null);
   dlg.onclick=e=>{if(e.target===dlg)close(null)};
 })}
@@ -638,12 +661,12 @@ async function renew(codigo){
   const r=await ask({title:'Renovar licencia',text:`Elige el nuevo periodo para ${x.nombre||'la farmacia'} (${codigo}). Si indicas el monto, quedará en el historial de pagos.`,plan:true,confirm:'Renovar',defPlan:PLANES_PAGO.includes(x.plan)?x.plan:'Mensual'});
   if(!r)return;
   try{
-    const d=await call('superadmin_renovar',{codigo,plan:r.plan,monto:r.monto,metodo:r.metodo,nota:r.nota});
-    toast(`${d.mensaje||'Licencia renovada'}. Nuevo vencimiento: ${d.vencimiento||'—'}`);
+    const d=await call('superadmin_renovar',{codigo,plan:r.plan,monto:r.monto,metodo:r.metodo,nota:r.nota,estado_pago:r.estado});
+    toast(d.pendiente?`${d.mensaje}.`:`${d.mensaje||'Licencia renovada'}. Nuevo vencimiento: ${d.vencimiento||'—'}`);
     await loadCompanies();if(pagosLoaded)loadPagos();if(actLoaded)loadActividad();
   }catch(err){if(!err.expired)toast(err.message,'error')}
 }
-const PLANES_PAGO=['Mensual','Semestral','Anual'];
+const PLANES_PAGO=['Mensual','Trimestral','Semestral','Anual'];
 function whatsapp(code){
   const x=findCo(code);if(!x)return;
   const tel=String(x.telefono||'').replace(/\D/g,'');
@@ -697,7 +720,7 @@ function renderDetail(d){
   const st=e.estado!=='ACTIVA'?'<span class="pill off">Suspendida</span>':e.vencida?'<span class="pill warn">Vencida</span>':isDue(e)?'<span class="pill warn">Por vencer</span>':'<span class="pill ok">Activa</span>';
   const url=String(e.hojaUrl||'');
   const users=(d.usuarios||[]).map(u=>`<tr><td data-label="Usuario"><b>${esc(u.Usuario)}</b></td><td data-label="Nombre">${esc(u.Nombre)}</td><td data-label="Rol">${esc(u.Rol)}</td><td data-label="Estado">${u.Activo==='SI'?'Activo':'Inactivo'}${u.DebeCambiar?' · clave temporal':''}</td><td data-label="" class="right"><button class="btn ghost sm" data-reset="${esc(u.Usuario)}" data-code="${esc(e.codigo)}" type="button">Restablecer clave</button></td></tr>`).join('');
-  const pays=(d.pagos||[]).map(p=>`<tr><td data-label="Fecha">${esc(p.fecha)}</td><td data-label="Plan">${esc(p.plan)}</td><td data-label="Monto" class="right">${money(p.monto)}</td><td data-label="Método">${esc(p.metodo)}</td><td data-label="Vence hasta">${esc(p.venceNuevo||'—')}</td></tr>`).join('');
+  const pays=(d.pagos||[]).map(p=>`<tr><td data-label="Fecha">${esc(p.fecha)}</td><td data-label="Plan">${esc(p.plan)}</td><td data-label="Monto" class="right">${money(p.monto)}</td><td data-label="Método">${esc(p.metodo)}${p.estado==='PENDIENTE'?' · <b>pendiente</b>':p.estado==='ANULADO'?' · anulado':''}</td><td data-label="Vence hasta">${esc(p.venceNuevo||'—')}</td></tr>`).join('');
   $('detBox').innerHTML=`<div class="phead" style="margin-bottom:4px"><div><h3 style="margin:0">${esc(e.nombre)}</h3><div class="sub">Código <b>${esc(e.codigo)}</b> · ${st}</div></div><button class="btn ghost sm" data-close="1" type="button">Cerrar</button></div>
   ${d.aviso?`<div class="errbox">${esc(d.aviso)}</div>`:''}
   <dl class="dgrid">
@@ -740,30 +763,47 @@ async function loadIngresos(){
   try{
     const r=await call('superadmin_ingresos');
     $('mMes').textContent=money0(r.mes);$('mAnio').textContent=money0(r.anio);
+    pendCount=(r.pendientes&&r.pendientes.n)||0;renderAlert();
     $('incPlan').innerHTML=bars(r.porPlan||[],i=>`${i.plan} (${i.pagos})`);
     $('incMes').innerHTML=bars(r.porMes||[],i=>{const [y,m]=i.mes.split('-');return new Date(+y,+m-1,1).toLocaleDateString('es-PE',{month:'short',year:'numeric'})});
   }catch(err){if(!err.expired){$('incPlan').innerHTML=`<div class="hint">${esc(err.message)}</div>`;$('incMes').innerHTML=''}}
 }
 
 /* ---------- Pagos ---------- */
+const estPill=e=>e==='PENDIENTE'?'<span class="pill warn">Pendiente</span>':e==='ANULADO'?'<span class="pill off">Anulado</span>':'<span class="pill ok">Confirmado</span>';
 async function loadPagos(){
   pagosLoaded=true;const b=$('payRefresh');busyBtn(b,true,'Actualizando…');
   try{const r=await call('superadmin_pagos');pagosData=r.pagos||[];renderPagos()}
-  catch(err){pagosLoaded=false;if(!err.expired)$('payRows').innerHTML=`<tr><td colspan="7" class="state err">${esc(err.message)}</td></tr>`}
+  catch(err){pagosLoaded=false;if(!err.expired)$('payRows').innerHTML=`<tr><td colspan="8" class="state err">${esc(err.message)}</td></tr>`}
   finally{busyBtn(b,false)}
 }
-function getPagos(){const q=$('payQ').value.trim().toLowerCase();return pagosData.filter(p=>`${p.farmacia} ${p.codigo} ${p.metodo} ${p.plan}`.toLowerCase().includes(q))}
+function getPagos(){const q=$('payQ').value.trim().toLowerCase(),f=$('payEstado').value;return pagosData.filter(p=>(f==='TODOS'||p.estado===f)&&`${p.farmacia} ${p.codigo} ${p.metodo} ${p.plan}`.toLowerCase().includes(q))}
 function renderPagos(){
-  const l=getPagos(),tot=l.reduce((s,p)=>s+p.monto,0);
-  $('payCount').textContent=pagosData.length?`${l.length} · ${money(tot)}`:'';
-  if(!l.length){$('payRows').innerHTML=`<tr><td colspan="7" class="state">${pagosData.length?'Ningún pago coincide con la búsqueda.':'Aún no hay pagos registrados. Se guardan al renovar (o crear) una farmacia indicando el monto.'}</td></tr>`;return}
-  $('payRows').innerHTML=l.map(p=>`<tr><td data-label="Fecha">${esc(p.fecha)}</td><td data-label="Farmacia"><b>${esc(p.farmacia)}</b><div class="dtx">${esc(p.codigo)}</div></td><td data-label="Plan">${esc(p.plan)}</td><td data-label="Monto" class="right"><b>${money(p.monto)}</b></td><td data-label="Método">${esc(p.metodo)}</td><td data-label="Vence hasta">${esc(p.venceNuevo||'—')}</td><td data-label="Nota">${esc(p.nota||'—')}</td></tr>`).join('');
+  const l=getPagos(),tot=l.filter(p=>p.estado==='CONFIRMADO').reduce((s,p)=>s+p.monto,0);
+  $('payCount').textContent=pagosData.length?`${l.length} · ${money(tot)} confirmado`:'';
+  if(!l.length){$('payRows').innerHTML=`<tr><td colspan="8" class="state">${pagosData.length?'Ningún pago coincide con la búsqueda o el filtro.':'Aún no hay pagos registrados. Se guardan al renovar (o crear) una farmacia indicando el monto.'}</td></tr>`;return}
+  $('payRows').innerHTML=l.map(p=>{
+    const acc=p.estado==='PENDIENTE'?`<button class="btn soft sm" data-pay="ok" data-id="${esc(p.id)}" type="button">Confirmar</button><button class="btn danger sm" data-pay="no" data-id="${esc(p.id)}" type="button">Anular</button>`:'—';
+    return `<tr><td data-label="Fecha">${esc(p.fecha)}</td><td data-label="Farmacia"><b>${esc(p.farmacia)}</b><div class="dtx">${esc(p.codigo)}${p.nota?' · '+esc(p.nota):''}</div></td><td data-label="Plan">${esc(p.plan)}</td><td data-label="Monto" class="right"><b>${money(p.monto)}</b></td><td data-label="Método">${esc(p.metodo)}</td><td data-label="Estado">${estPill(p.estado)}</td><td data-label="Vence hasta">${esc(p.venceNuevo||'—')}</td><td data-label="Acciones"><div class="actions">${acc}</div></td></tr>`}).join('');
 }
 $('payQ').addEventListener('input',renderPagos);
+$('payEstado').addEventListener('change',renderPagos);
 $('payRefresh').addEventListener('click',loadPagos);
+$('payRows').addEventListener('click',e=>{const b=e.target.closest('[data-pay]');if(b)payAction(b.dataset.pay,b.dataset.id)});
+async function payAction(kind,id){
+  const p=pagosData.find(x=>x.id===id);if(!p)return;
+  const ok=kind==='ok';
+  const r=await ask({title:ok?'Confirmar pago':'Anular pago pendiente',text:ok?`¿Recibiste los ${money(p.monto)} de ${p.farmacia}? Al confirmar, su licencia se extenderá (${p.plan}).`:`Se anulará el pago pendiente de ${money(p.monto)} de ${p.farmacia}. La licencia no cambia.`,confirm:ok?'Confirmar pago':'Anular pago',danger:!ok});
+  if(!r)return;
+  try{
+    const d=await call(ok?'superadmin_confirmar_pago':'superadmin_anular_pago',{id});
+    toast(ok?`Pago confirmado. Nuevo vencimiento: ${d.vencimiento||'—'}`:'Pago anulado.');
+    await loadCompanies();loadPagos();if(actLoaded)loadActividad();
+  }catch(err){if(!err.expired)toast(err.message,'error')}
+}
 $('payExport').addEventListener('click',()=>{
   const l=getPagos();if(!l.length){toast('No hay pagos para exportar.','error');return}
-  downloadCSV('pagos',['ID','Fecha','Código','Farmacia','Plan','Meses','Monto (S/)','Método','Vence anterior','Vence nuevo','Nota'],l.map(p=>[p.id,p.fecha,p.codigo,p.farmacia,p.plan,p.meses,p.monto.toFixed(2),p.metodo,p.venceAnterior,p.venceNuevo,p.nota]));
+  downloadCSV('pagos',['ID','Fecha','Código','Farmacia','Plan','Meses','Monto (S/)','Método','Estado','Vence anterior','Vence nuevo','Nota'],l.map(p=>[p.id,p.fecha,p.codigo,p.farmacia,p.plan,p.meses,p.monto.toFixed(2),p.metodo,p.estado,p.venceAnterior,p.venceNuevo,p.nota]));
 });
 
 /* ---------- Actividad ---------- */
