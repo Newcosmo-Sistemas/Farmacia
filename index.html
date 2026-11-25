@@ -22,6 +22,10 @@
   .btn-h { @apply bg-emerald-900 hover:bg-emerald-800 rounded-lg px-3 py-2 text-sm text-white; }
   .btn-w { @apply bg-white text-emerald-800 hover:bg-emerald-50 rounded-lg px-4 py-2 text-sm font-semibold; }
 }
+
+.login-field-group{display:flex;flex-direction:column;gap:8px}
+.login-mode{display:block;margin:2px auto 0;background:none;border:0;color:#078b68;font-size:12px;font-weight:700;cursor:pointer;padding:4px 8px;border-radius:8px}
+.login-mode:hover{background:#078b6812}
 </style>
 
 <style>
@@ -139,14 +143,17 @@ body{background:#f3f7f9;color:var(--ink)}
       <p>Control inteligente para tu farmacia</p>
     </div>
     <div class="login-divider"><span>INICIA SESIÓN</span></div>
-    <label class="login-label" for="lEmpresa">Código de farmacia</label>
-    <div class="login-input-wrap"><span>⌂</span><input id="lEmpresa" required autocomplete="organization" placeholder="Ej. FARMACIA01" style="text-transform:uppercase"></div>
+    <div id="boxEmpresa" class="login-field-group">
+      <label class="login-label" for="lEmpresa">Código de farmacia</label>
+      <div class="login-input-wrap"><span>⌂</span><input id="lEmpresa" required autocomplete="organization" placeholder="Ej. FARMACIA01" style="text-transform:uppercase"></div>
+    </div>
     <label class="login-label" for="lUsuario">Usuario</label>
     <div class="login-input-wrap"><span>♙</span><input id="lUsuario" required autocomplete="username" placeholder="Ingresa tu usuario"></div>
     <label class="login-label" for="lClave">Contraseña</label>
     <div class="login-input-wrap"><span>◈</span><input id="lClave" type="password" required autocomplete="current-password" placeholder="Ingresa tu contraseña"></div>
     <p id="loginError" class="text-sm text-red-600 min-h-[1.25rem]" role="alert"></p>
     <button id="btnLogin" class="login-submit w-full" type="submit"><span>Ingresar al sistema</span><b>→</b></button>
+    <button id="btnModo" class="login-mode" type="button">Soy administrador general</button>
     <p class="login-foot">Acceso seguro · Personal autorizado</p>
   </form>
 </div>
@@ -568,10 +575,20 @@ $('formLogin').addEventListener('submit', async e => {
   try {
     const res = await fetch(API_URL, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ accion: 'login', codigo_farmacia: $('lEmpresa').value.trim().toUpperCase(), usuario: $('lUsuario').value, clave: $('lClave').value })
+      body: JSON.stringify({ accion: 'login', codigo_farmacia: modoAdmin ? '' : $('lEmpresa').value.trim().toUpperCase(), usuario: $('lUsuario').value, clave: $('lClave').value })
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Error desconocido');
+    if (data.superadmin) {   // administrador general: pasa al panel con su propia sesión
+      try {
+        sessionStorage.setItem('fpro_sa_token', data.token);
+        sessionStorage.setItem('fpro_sa_api', API_URL);
+        sessionStorage.setItem('fpro_sa_ver', String(data.version || 0));
+        sessionStorage.removeItem('sesion');
+      } catch (e) { throw new Error('Tu navegador bloquea el almacenamiento de sesión. Actívalo para continuar.'); }
+      location.href = 'admin-general.html';
+      return;
+    }
     sesion = { token: data.token, usuario: data.usuario };
     try { sessionStorage.setItem('sesion', JSON.stringify(sesion)); } catch (e) {}
     mostrarApp();
@@ -581,6 +598,23 @@ $('formLogin').addEventListener('submit', async e => {
     btn.disabled = false; btn.textContent = 'Ingresar'; $('lClave').value = '';
   }
 });
+
+// ===== Modo de acceso: farmacia o administrador general =====
+let modoAdmin = false;
+function fijarModo(admin) {
+  modoAdmin = admin;
+  $('boxEmpresa').classList.toggle('hidden', admin);
+  $('lEmpresa').required = !admin;
+  $('lUsuario').placeholder = admin ? 'Usuario de administrador general' : 'Ingresa tu usuario';
+  $('btnModo').textContent = admin ? 'Soy de una farmacia' : 'Soy administrador general';
+  $('loginError').textContent = '';
+  (admin ? $('lUsuario') : $('lEmpresa')).focus();
+}
+$('btnModo').addEventListener('click', () => fijarModo(!modoAdmin));
+try {   // mensaje dejado por el panel (p. ej. sesión vencida)
+  const m = sessionStorage.getItem('fpro_login_msg');
+  if (m) { sessionStorage.removeItem('fpro_login_msg'); $('loginError').textContent = m; }
+} catch (e) {}
 
 $('btnSalir').addEventListener('click', () => {
   if (sesion) fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
