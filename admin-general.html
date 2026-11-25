@@ -274,26 +274,7 @@ textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
 </head>
 <body>
 
-<!-- ===== Acceso ===== -->
-<section id="loginView" class="login">
-  <div class="loginbox">
-    <div class="lmark">💊</div>
-    <h1>Administración general</h1>
-    <p class="lsub">Ingresa tu clave de superadministrador para gestionar farmacias y licencias.</p>
-    <form id="loginForm">
-      <div class="field">
-        <label for="adminKey">Clave de acceso</label>
-        <div class="pwwrap">
-          <input id="adminKey" class="inp" type="password" autocomplete="current-password" placeholder="Tu clave de superadministrador" required>
-          <button type="button" class="eye" id="eyeBtn" aria-label="Mostrar u ocultar la clave"><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        </div>
-      </div>
-      <button id="loginBtn" class="btn primary" type="submit"><span class="lbl">Ingresar al panel</span></button>
-    </form>
-    <div id="loginMsg" class="errbox hidden" role="alert"></div>
-    <p class="lfoot">Acceso restringido. La sesión se mantiene mientras esta pestaña esté abierta.</p>
-  </div>
-</section>
+
 
 <!-- ===== Panel ===== -->
 <div id="appView" class="shell hidden">
@@ -454,7 +435,8 @@ textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
 <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbxH5ZHXx6un8nEs4YcMhmGmyAnNKsfWtByYM0AbGgiompgxRxCs8pVaBsuExaeY66-F-A/exec';
+// La URL de la API la fija el login único (index.html); este valor solo se usa como respaldo.
+const API_URL=(function(){try{return sessionStorage.getItem('fpro_sa_api')}catch(e){return null}})()||'https://script.google.com/macros/s/AKfycbxH5ZHXx6un8nEs4YcMhmGmyAnNKsfWtByYM0AbGgiompgxRxCs8pVaBsuExaeY66-F-A/exec';
 const $=id=>document.getElementById(id);
 const SK='fpro_sa_token';
 let token='',companies=[],lastCred='';
@@ -496,7 +478,7 @@ async function call(action,data={},opts={}){
 }
 
 /* ---------- Aviso de script desactualizado ---------- */
-const API_MIN=4;
+const API_MIN=5;
 const OUTDATED_MSG='El script de Google (Apps Script) está desactualizado. Impleméntalo como nueva versión.';
 function showOutdated(){
   const b=$('outdatedBox');
@@ -505,24 +487,13 @@ function showOutdated(){
 }
 
 /* ---------- Sesión ---------- */
-function showApp(){$('loginView').classList.add('hidden');$('appView').classList.remove('hidden')}
-function showLoginMsg(t){const m=$('loginMsg');m.textContent=t;m.classList.toggle('hidden',!t)}
+function showApp(){$('appView').classList.remove('hidden')}
+// Sin sesión válida se vuelve al login único (index.html)
 function backToLogin(msg){
-  token='';store('');companies=[];pagosLoaded=false;actLoaded=false;pagosData=[];actData=[];pendCount=0;$('outdatedBox').classList.add('hidden');
-  $('appView').classList.add('hidden');$('loginView').classList.remove('hidden');
-  $('adminKey').value='';showLoginMsg(msg||'');$('createMsg').innerHTML='';$('adminKey').focus();
+  token='';store('');companies=[];pagosLoaded=false;actLoaded=false;pagosData=[];actData=[];pendCount=0;
+  try{sessionStorage.removeItem('fpro_sa_api');sessionStorage.removeItem('fpro_sa_ver');if(msg)sessionStorage.setItem('fpro_login_msg',msg)}catch(e){}
+  location.replace('index.html');
 }
-$('eyeBtn').addEventListener('click',()=>{const i=$('adminKey');i.type=i.type==='password'?'text':'password';i.focus()});
-$('loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();const b=$('loginBtn');busyBtn(b,true,'Verificando…');showLoginMsg('');
-  try{
-    const r=await call('superadmin_login',{clave:$('adminKey').value},{noExpire:true});
-    token=r.token;store(token);$('adminKey').value='';
-    if(!r.version||r.version<API_MIN)showOutdated();else $('outdatedBox').classList.add('hidden');
-    showApp();await loadCompanies();
-  }catch(err){showLoginMsg(err.message)}
-  finally{busyBtn(b,false)}
-});
 $('logoutBtn').addEventListener('click',async()=>{try{await call('superadmin_logout',{},{noExpire:true})}catch(e){}backToLogin('')});
 
 /* ---------- Estado y utilidades extra ---------- */
@@ -868,7 +839,14 @@ $('createForm').addEventListener('submit',async e=>{
 });
 
 /* ---------- Inicio ---------- */
-(function(){const t=stored();if(t){token=t;showApp();loadCompanies(true)}else $('adminKey').focus()})();
+(function(){
+  const t=stored();
+  if(!t){location.replace('index.html');return}
+  token=t;showApp();
+  let v=0;try{v=Number(sessionStorage.getItem('fpro_sa_ver'))||0}catch(e){}
+  if(v<API_MIN)showOutdated();
+  loadCompanies(true);
+})();
 </script>
 </body>
 </html>
