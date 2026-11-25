@@ -1,0 +1,840 @@
+/* FARMACIA PRO 2.0 · Panel del superadministrador
+ * Se carga bajo demanda desde index.html cuando ingresa el administrador general.
+ * Vive dentro de un Shadow DOM: sus estilos no afectan al resto del sistema (ni al revés). */
+(function () {
+const CSS = String.raw`:host{--ink:#0f2a37;--muted:#667d8b;--line:#e1e9ec;--bg:#f4f7f8;--brand:#0a8f6a;--brand-d:#07775a;--mint:#e3f6ee;--red:#cf3f4e;--red-bg:#fdecee;--amber:#a86a08;--amber-bg:#fff4dc}
+*{box-sizing:border-box}
+/*host*/:host{display:block;min-height:100%;background:var(--bg);color:var(--ink);font:14px/1.5 "Plus Jakarta Sans",Inter,"Segoe UI",system-ui,sans-serif}
+button,input,select{font:inherit;color:inherit}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hidden{display:none!important}
+:focus-visible{outline:3px solid #0a8f6a55;outline-offset:2px}
+
+/* ---------- Botones y campos ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;padding:0 16px;height:42px;font-weight:700;cursor:pointer;transition:background .15s,transform .05s;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.65;cursor:not-allowed}
+.btn.primary{background:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand-d)}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:#34505f}.btn.ghost:hover{background:#f1f6f7}
+.btn.soft{background:var(--mint);color:var(--brand-d)}.btn.soft:hover{background:#d2efe3}
+.btn.danger{background:var(--red-bg);color:var(--red)}.btn.danger:hover{background:#fad9de}
+.btn.sm{height:34px;padding:0 12px;font-size:12.5px;border-radius:9px}
+.btn.loading:before{content:"";width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.inp{width:100%;height:44px;border:1px solid var(--line);border-radius:11px;padding:0 13px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.inp:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 4px #0a8f6a1f}
+.inp::placeholder{color:#a3b3bc}
+select.inp{appearance:none;-webkit-appearance:none;padding-right:36px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667d8b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center/16px}
+.field label{display:block;margin:0 0 6px;font-size:12.5px;font-weight:700;color:#3f5967}
+.field .opt{font-weight:500;color:var(--muted)}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}
+
+/* ---------- Acceso ---------- */
+.login{position:fixed;inset:0;z-index:50;overflow-y:auto;display:flex;padding:20px;background:radial-gradient(circle at 15% 18%,#1a9b7a 0,transparent 34%),radial-gradient(circle at 88% 82%,#1b5270 0,transparent 38%),linear-gradient(135deg,#071c2b,#0c3544 52%,#092538)}
+.login:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:42px 42px;-webkit-mask-image:linear-gradient(to bottom,#000,transparent 92%);mask-image:linear-gradient(to bottom,#000,transparent 92%)}
+.loginbox{position:relative;margin:auto;flex:none;width:min(410px,100%);background:#fff;border-radius:24px;padding:36px 34px 28px;box-shadow:0 30px 90px #020d18a6}
+.lmark{width:60px;height:60px;border-radius:19px;display:grid;place-items:center;font-size:29px;background:linear-gradient(145deg,#d7faec,#a8efd5);border:1px solid #b8ead8;margin-bottom:18px}
+.loginbox h1{margin:0 0 6px;font-size:24px;font-weight:800;letter-spacing:-.025em}
+.lsub{margin:0 0 22px;color:var(--muted)}
+.pwwrap{position:relative}
+.pwwrap .inp{padding-right:48px}
+.eye{position:absolute;right:4px;top:4px;width:36px;height:36px;border:0;border-radius:9px;background:transparent;color:#7b909c;cursor:pointer;display:grid;place-items:center}
+.eye:hover{background:#eef3f5;color:var(--ink)}
+.loginbox .btn{width:100%;height:48px;margin-top:16px;font-size:14px}
+.errbox{margin-top:14px;padding:11px 14px;border-radius:11px;background:var(--red-bg);color:var(--red);font-weight:600}
+.lfoot{margin:18px 0 0;text-align:center;color:#8a9ca7;font-size:12px}
+@media(max-height:640px){.lmark{display:none}.loginbox{padding:26px 28px 22px}.lfoot{display:none}}
+
+/* ---------- Estructura ---------- */
+.shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
+.side{position:sticky;top:0;height:100vh;background:linear-gradient(185deg,#11364a,#0a1f2c);color:#fff;padding:22px 16px 18px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px 24px}
+.mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#12ad80,#087a5d);display:grid;place-items:center;font-size:21px;box-shadow:0 8px 20px #02101a55;flex:none}
+.brand b{display:block;font-size:15px;line-height:1.2;letter-spacing:-.01em}
+.brand small{color:#8fb0bf;font-size:12px}
+.nav{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;color:#b7cdd7;font-weight:600;font-size:13.5px}
+.nav.active{background:#ffffff17;color:#fff;box-shadow:inset 3px 0 0 #3fd9a8}
+.sidefoot{margin-top:auto;padding:14px 10px 0;border-top:1px solid #ffffff17;color:#8fb0bf;font-size:12px;display:flex;align-items:center;gap:9px}
+.dot{width:7px;height:7px;border-radius:50%;background:#3fd9a8;box-shadow:0 0 0 4px #3fd9a826}
+.main{min-width:0;width:100%;max-width:1400px;margin:0 auto;padding:30px 34px 44px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.top h1{margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
+.sub{color:var(--muted);font-size:13.5px}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---------- Resumen ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#fff;border:1px solid var(--line);border-radius:18px;margin-bottom:20px;overflow:hidden}
+.stat{padding:18px 22px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.stat:last-child{border-right:0}
+.stat .k{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:600}
+.stat .k i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.stat strong{font-size:34px;line-height:1.15;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px}
+
+/* ---------- Paneles ---------- */
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:20px}
+.phead{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.phead h2{margin:0 0 2px;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.formgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.formfoot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px}
+.cred{margin-top:18px;border:1px solid #bfe8d6;background:#f1fbf6;border-radius:14px;padding:18px}
+.cred h3{margin:0 0 14px;font-size:15px;color:var(--brand-d);display:flex;align-items:center;gap:8px}
+.cred dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px;margin:0 0 16px}
+.cred dt{font-size:12px;color:var(--muted);font-weight:600}
+.cred dd{margin:2px 0 0;font-weight:800;font-size:15px;word-break:break-all;font-variant-numeric:tabular-nums}
+.cred .note{margin:12px 0 0;font-size:12.5px;color:#4d6a5d}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tools .inp{width:240px}.tools select.inp{width:150px}
+.count{color:var(--muted);font-size:12.5px;font-weight:600;min-width:52px;text-align:right}
+
+/* ---------- Tabla ---------- */
+.tablewrap{overflow-x:auto;margin:0 -22px;padding:0 22px}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{text-align:left;font-size:12.5px;font-weight:700;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:14px 12px;border-bottom:1px solid #edf2f4;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#fafcfc}
+.who{display:flex;align-items:center;gap:11px;min-width:190px}
+.av{width:36px;height:36px;border-radius:11px;background:var(--mint);color:var(--brand-d);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.who b{font-weight:700}
+.code{font-weight:800;letter-spacing:.02em;color:#2e4b5b}
+.mail{color:var(--muted);word-break:break-all}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:30px;padding:4px 11px;font-size:12px;font-weight:700;white-space:nowrap}
+.pill:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--mint);color:var(--brand-d)}.pill.off{background:var(--red-bg);color:var(--red)}.pill.warn{background:var(--amber-bg);color:var(--amber)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+td.state{text-align:center;color:var(--muted);padding:38px 12px}
+td.state.err{color:var(--red);font-weight:600}
+.sk{height:16px;border-radius:8px;background:linear-gradient(90deg,#edf2f4 25%,#f7fafb 50%,#edf2f4 75%);background-size:200% 100%;animation:sh 1.3s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* ---------- Diálogo y aviso ---------- */
+.overlay{position:fixed;inset:0;background:#071a26a8;display:grid;place-items:center;padding:20px;z-index:100;backdrop-filter:blur(3px)}
+.dialog{background:#fff;border-radius:20px;padding:26px;width:min(420px,100%);box-shadow:0 30px 80px #02101a55}
+.dialog h3{margin:0 0 6px;font-size:18px;font-weight:800}
+.dialog p{margin:0;color:var(--muted)}
+.dlgactions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(560px,92vw);padding:12px 18px;border-radius:12px;color:#fff;font-weight:600;box-shadow:0 14px 40px #0a1f2c40;z-index:120}
+.toast.ok{background:#0a7a5a}.toast.error{background:#b7323f}
+
+/* ---------- Pantallas medianas y pequeñas ---------- */
+@media(max-width:1100px){.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:950px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:relative;height:auto;flex-direction:row;align-items:center;padding:12px 18px}
+  .brand{padding:0}.side .nav,.sidefoot{display:none}
+  .main{padding:20px 16px 36px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat{border-right:0;border-bottom:1px solid var(--line)}
+  .stat:nth-child(odd){border-right:1px solid var(--line)}
+  .stat:nth-last-child(-n+2){border-bottom:0}
+}
+@media(max-width:760px){
+  .tablewrap{margin:0;padding:0;overflow:visible}
+  table,thead,tbody,tr,td{display:block;width:100%;min-width:0}
+  thead{display:none}
+  tr{border:1px solid var(--line);border-radius:14px;padding:8px 14px;margin-bottom:12px}
+  tbody tr:hover td{background:transparent}
+  td{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid #f0f4f5;text-align:right}
+  td:last-child{border-bottom:0}
+  td:before{content:attr(data-label);color:var(--muted);font-size:12.5px;font-weight:600;text-align:left;flex:none}
+  td.state{display:block;text-align:center;border:0}td.state:before{display:none}
+  .who{min-width:0}
+  .actions{justify-content:flex-end}
+}
+@media(max-width:560px){
+  .top h1{font-size:23px}
+  .acts,.acts .btn{width:100%}
+  .stat{padding:14px 16px}.stat strong{font-size:27px}.stat small{display:none}
+  .panel{padding:16px;border-radius:16px}
+  .formgrid,.cred dl{grid-template-columns:1fr}
+  .tools{width:100%}.tools .inp,.tools select.inp{flex:1 1 100%;width:100%}
+  .count{text-align:left}
+  .loginbox{padding:28px 22px 22px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+
+/* ===== Rediseño compacto y responsive del acceso y panel general ===== */
+.login{padding:12px;overflow-y:auto;align-items:center}
+.loginbox{width:min(370px,100%);padding:24px 25px 19px;border-radius:20px}
+.lmark{width:46px;height:46px;border-radius:14px;font-size:23px;margin:0 auto 12px}
+.loginbox h1{font-size:21px;line-height:1.2;text-align:center}
+.lsub{text-align:center;font-size:12px;line-height:1.5;margin:0 0 16px}
+.loginbox .btn{height:43px;margin-top:12px}
+.loginbox .inp{height:42px}
+.lfoot{font-size:10px;line-height:1.45;margin-top:12px}
+.errbox{font-size:12px;padding:9px 11px}
+.shell{grid-template-columns:235px minmax(0,1fr)}
+.side{padding:20px 14px}
+.brand{padding:0 7px 22px}
+.brand b{font-size:14px}
+.brand small{font-size:11px}
+.side .nav{margin:3px 0;text-decoration:none;transition:background .15s,color .15s}
+.side .nav:not(.active):hover{background:#ffffff12;color:#fff}
+.main{padding:26px 30px 38px}
+.top{align-items:center;padding:18px 21px;margin-bottom:18px;border:1px solid #e3ecee;border-radius:17px;background:linear-gradient(110deg,#fff,#f5fbf8);box-shadow:0 5px 18px #173b4b08;position:relative}
+.top h1{font-size:24px}
+.top:before{content:"CENTRO DE CONTROL · SUPERADMINISTRADOR";position:absolute;top:8px;left:21px;font-size:9px;letter-spacing:1.35px;font-weight:800;color:var(--brand)}
+.top>div:first-child{padding-top:10px}
+.stats{border-radius:16px;box-shadow:0 5px 18px #173b4b08}
+.stat{padding:16px 19px}
+.stat strong{font-size:30px}
+.panel{border-radius:16px;padding:20px;box-shadow:0 5px 20px #173b4b07}
+.phead{margin-bottom:15px}
+.phead h2{font-size:16px}
+.formgrid{gap:12px}
+.tablewrap{border:1px solid #edf2f4;border-radius:12px;overflow-x:auto}
+.tablewrap table{min-width:820px}
+th{background:#f8fbfb}
+tbody tr:last-child td{border-bottom:0}
+.btn{transition:transform .15s,box-shadow .15s,background .15s}
+.btn:not([disabled]):hover{box-shadow:0 4px 12px #0f2a3714}
+#companyRows .actions .btn{font-size:11.5px}
+@media(max-width:950px){
+  .shell{display:block}
+  .side{position:relative;height:auto;flex-direction:row;align-items:center;padding:12px 16px}
+  .side .nav{display:inline-flex;margin-left:auto;padding:9px 11px;font-size:12px}
+  .sidefoot{display:none}
+  .main{padding:18px 16px 30px}
+}
+@media(max-width:760px){
+  .top{padding:17px 15px;margin-top:12px}
+  .top:before{left:15px;top:7px}
+  .stats{margin-bottom:14px}
+  .panel{margin-bottom:14px;padding:16px}
+  .tablewrap{border:0;overflow:visible}
+  .tablewrap table{min-width:0}
+}
+@media(max-width:560px){
+  .login{padding:10px}
+  .loginbox{width:min(350px,100%);padding:21px 19px 16px}
+  .lmark{width:40px;height:40px;font-size:20px;margin-bottom:9px}
+  .loginbox h1{font-size:19px}
+  .lsub{font-size:11px;margin-bottom:13px}
+  .loginbox .btn{height:41px;margin-top:10px}
+  .lfoot{font-size:9px}
+  .main{padding:15px 11px 25px}
+  .top h1{font-size:20px}
+  .top .sub{font-size:11.5px}
+  .stat{padding:12px 13px}
+  .stat strong{font-size:25px}
+}
+@media(max-height:700px){
+  .loginbox{padding:17px 23px 14px}
+  .lmark{width:38px;height:38px;font-size:19px;margin-bottom:8px}
+  .loginbox h1{font-size:19px}
+  .lsub{margin-bottom:11px}
+  .loginbox .btn{height:40px;margin-top:9px}
+  .lfoot{margin-top:9px}
+}
+
+/* ===== Ampliación: alertas, detalle, ingresos, pagos y actividad ===== */
+.alert{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 17px;margin-bottom:18px;border-radius:14px;background:var(--amber-bg);border:1px solid #f1d9a0;color:#7a4b05;font-weight:600}
+.alert .lnk{border:0;background:transparent;color:inherit;font-weight:800;text-decoration:underline;cursor:pointer;padding:0}
+.stats.s2{margin-top:-4px}
+.pill.info{background:#e6f0fb;color:#2563a8}
+.dtx{font-size:11.5px;color:var(--muted)}.dtx.warn{color:var(--amber);font-weight:700}.dtx.bad{color:var(--red);font-weight:700}
+.contact{display:flex;flex-direction:column;gap:2px;word-break:break-all}.contact small{color:var(--muted)}
+.dialog.wide{width:min(780px,100%);max-height:calc(100vh - 40px);overflow-y:auto}
+.dgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 18px;margin:16px 0}
+.dgrid dt{font-size:12px;color:var(--muted);font-weight:600}.dgrid dd{margin:2px 0 0;font-weight:700;word-break:break-word}
+.mini{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.mini div{background:#f6f9fa;border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.mini b{display:block;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}.mini small{color:var(--muted);font-size:11.5px}
+.sect{margin:20px 0 8px;font-size:13.5px;font-weight:800}
+table.mt{min-width:0}.mt th,.mt td{padding:8px 10px;font-size:13px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.bar{display:grid;grid-template-columns:92px 1fr auto;align-items:center;gap:10px;margin:9px 0;font-size:12.5px}
+.bt{height:10px;border-radius:6px;background:#edf2f4;overflow:hidden}.bf{height:100%;border-radius:6px;background:linear-gradient(90deg,#12ad80,#0a8f6a)}
+.bv{font-weight:700;font-variant-numeric:tabular-nums}.bl{color:var(--muted);font-weight:600}
+textarea.inp{height:auto;min-height:74px;padding:10px 13px;resize:vertical}
+.formgrid.fg2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.right{text-align:right}
+@media(max-width:950px){.side{flex-wrap:wrap;gap:4px 6px}.brand{width:100%;padding-bottom:6px}.side .nav{margin:0;padding:7px 10px;font-size:11.5px}}
+@media(max-width:760px){.dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.mini{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.mt td.right{text-align:right}}
+@media(max-width:560px){.formgrid.fg2{grid-template-columns:1fr}.dgrid{grid-template-columns:1fr}.dialog.wide{padding:20px 16px}}`;
+const HTML = String.raw`
+
+
+<!-- ===== Panel ===== -->
+<div id="appView" class="shell hidden">
+  <aside class="side">
+    <div class="brand"><div class="mark">💊</div><div><b>FARMACIA PRO 2.0</b><small>Administración general</small></div></div>
+    <a class="nav active" href="#overview"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Resumen</a>
+    <a class="nav" href="#new-pharmacy"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Registrar farmacia</a>
+    <a class="nav" href="#pharmacy-list"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Farmacias registradas</a>
+    <a class="nav" href="#income"><svg class="ic" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>Ingresos</a>
+    <a class="nav" href="#payments"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pagos</a>
+    <a class="nav" href="#activity"><svg class="ic" viewBox="0 0 24 24"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>Actividad</a>
+    <div class="sidefoot"><span class="dot"></span>Panel privado · v2.0</div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div>
+        <h1>Panel de administración</h1>
+        <div class="sub">Gestiona clientes, licencias y suscripciones desde un solo lugar.</div>
+      </div>
+      <div class="acts"><button class="btn ghost" id="logoutBtn" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Cerrar sesión</button></div>
+    </header>
+
+    <section class="stats" id="overview" aria-label="Resumen">
+      <div class="stat" style="--c:#3b82c4"><span class="k"><i></i>Total de farmacias</span><strong id="mTotal">0</strong><small>Registradas en el sistema</small></div>
+      <div class="stat" style="--c:#0a8f6a"><span class="k"><i></i>Activas y vigentes</span><strong id="mActive">0</strong><small>Con licencia al día</small></div>
+      <div class="stat" style="--c:#cf3f4e"><span class="k"><i></i>Suspendidas</span><strong id="mSuspended">0</strong><small>Sin acceso al sistema</small></div>
+      <div class="stat" style="--c:#d9961a"><span class="k"><i></i>Suscripciones vencidas</span><strong id="mExpired">0</strong><small>Pendientes de renovar</small></div>
+    </section>
+
+    <section class="stats s2" aria-label="Alertas e ingresos">
+      <div class="stat" style="--c:#d9961a"><span class="k"><i></i>Por vencer (7 días)</span><strong id="mDue">0</strong><small>Conviene contactarlas</small></div>
+      <div class="stat" style="--c:#3b82c4"><span class="k"><i></i>En periodo de prueba</span><strong id="mTrial">0</strong><small>Aún sin plan de pago</small></div>
+      <div class="stat" style="--c:#0a8f6a"><span class="k"><i></i>Ingresos del mes</span><strong id="mMes">S/ 0</strong><small>Pagos registrados</small></div>
+      <div class="stat" style="--c:#0a8f6a"><span class="k"><i></i>Ingresos del año</span><strong id="mAnio">S/ 0</strong><small>Acumulado anual</small></div>
+    </section>
+    <div id="outdatedBox" class="alert hidden" role="alert" style="background:var(--red-bg);border-color:#f3c0c6;color:var(--red)"></div>
+    <div id="alertBox" class="alert hidden" role="status"></div>
+
+    <section class="panel" id="new-pharmacy">
+      <div class="phead"><div><h2>Registrar nueva farmacia</h2><div class="sub">Se creará una base de datos independiente y un usuario administrador inicial.</div></div></div>
+      <form id="createForm">
+        <div class="formgrid">
+          <div class="field"><label for="fNombre">Nombre de la farmacia</label><input id="fNombre" class="inp" name="nombre" placeholder="Farmacia San José" required></div>
+          <div class="field"><label for="fCodigo">Código de acceso</label><input id="fCodigo" class="inp" name="codigo" placeholder="SANJOSE" minlength="3" maxlength="20" autocapitalize="characters" autocomplete="off" required><div class="hint">3 a 20 letras o números, sin espacios.</div></div>
+          <div class="field"><label for="fCorreo">Correo de contacto <span class="opt">(opcional)</span></label><input id="fCorreo" class="inp" name="correo" type="email" placeholder="correo@dominio.com"></div>
+          <div class="field"><label for="fTel">WhatsApp / teléfono <span class="opt">(opcional)</span></label><input id="fTel" class="inp" name="telefono" type="tel" inputmode="numeric" placeholder="51987654321"><div class="hint">Con código de país (51 = Perú).</div></div>
+          <div class="field"><label for="fPlan">Plan</label><select id="fPlan" class="inp" name="plan"><option>Mensual</option><option>Trimestral</option><option>Semestral</option><option>Anual</option><option value="Prueba">Prueba gratuita</option></select></div>
+          <div class="field" id="gDias"><label for="fDias">Días de prueba</label><select id="fDias" class="inp" name="dias"><option value="7">7 días</option><option value="14" selected>14 días</option><option value="30">30 días</option></select></div>
+          <div class="field" id="gMonto"><label for="fMonto">Monto cobrado (S/) <span class="opt">(opcional)</span></label><input id="fMonto" class="inp" name="monto" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="field" id="gMetodo"><label for="fMetodo">Método de pago</label><select id="fMetodo" class="inp" name="metodo"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Otro</option></select></div>
+        </div>
+        <div class="formfoot">
+          <button id="createBtn" class="btn primary" type="submit"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Crear farmacia</span></button>
+          <span class="hint" style="margin:0">Crear la base de datos puede tardar unos segundos.</span>
+        </div>
+      </form>
+      <div id="createMsg"></div>
+    </section>
+
+    <section class="panel" id="pharmacy-list">
+      <div class="phead">
+        <div><h2>Farmacias registradas</h2><div class="sub">Consulta su estado y administra las licencias.</div></div>
+        <div class="tools">
+          <input id="search" class="inp" type="search" placeholder="Buscar por nombre o código" aria-label="Buscar farmacia">
+          <select id="filter" class="inp" aria-label="Filtrar por estado"><option value="TODAS">Todas</option><option value="ACTIVA">Activas</option><option value="SUSPENDIDA">Suspendidas</option><option value="VENCIDA">Vencidas</option><option value="PORVENCER">Por vencer (7 días)</option><option value="PRUEBA">En prueba</option></select>
+          <button class="btn ghost" id="refreshBtn" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span class="lbl">Actualizar</span></button>
+          <button class="btn ghost" id="exportBtn" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Exportar Excel</button>
+          <span class="count" id="countLabel"></span>
+        </div>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Farmacia</th><th>Código</th><th>Plan</th><th>Estado</th><th>Vencimiento</th><th>Contacto</th><th>Acciones</th></tr></thead>
+          <tbody id="companyRows"><tr><td colspan="7" class="state"><div class="sk"></div></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="income">
+      <div class="phead"><div><h2>Ingresos por suscripciones</h2><div class="sub">Calculado con los pagos registrados al crear o renovar farmacias.</div></div></div>
+      <div class="two">
+        <div><div class="sect" style="margin-top:0">Por plan · este año</div><div id="incPlan"><div class="sk"></div></div></div>
+        <div><div class="sect" style="margin-top:0">Últimos 6 meses</div><div id="incMes"><div class="sk"></div></div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="payments">
+      <div class="phead">
+        <div><h2>Historial de pagos</h2><div class="sub">Todas las renovaciones y altas con pago registrado.</div></div>
+        <div class="tools">
+          <input id="payQ" class="inp" type="search" placeholder="Buscar farmacia, código o método" aria-label="Buscar pago">
+          <select id="payEstado" class="inp" aria-label="Filtrar pagos por estado"><option value="TODOS">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="CONFIRMADO">Confirmados</option><option value="ANULADO">Anulados</option></select>
+          <button class="btn ghost" id="payRefresh" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span class="lbl">Actualizar</span></button>
+          <button class="btn ghost" id="payExport" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Exportar Excel</button>
+          <span class="count" id="payCount"></span>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Fecha</th><th>Farmacia</th><th>Plan</th><th class="right">Monto</th><th>Método</th><th>Estado</th><th>Vence hasta</th><th>Acciones</th></tr></thead>
+        <tbody id="payRows"><tr><td colspan="8" class="state"><div class="sk"></div></td></tr></tbody>
+      </table></div>
+    </section>
+
+    <section class="panel" id="activity">
+      <div class="phead">
+        <div><h2>Registro de actividad</h2><div class="sub">Últimas 300 acciones realizadas en este panel.</div></div>
+        <div class="tools">
+          <button class="btn ghost" id="actRefresh" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span class="lbl">Actualizar</span></button>
+          <button class="btn ghost" id="actExport" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Exportar Excel</button>
+        </div>
+      </div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Fecha</th><th>Acción</th><th>Farmacia</th><th>Detalle</th></tr></thead>
+        <tbody id="actRows"><tr><td colspan="4" class="state"><div class="sk"></div></td></tr></tbody>
+      </table></div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== Detalle de farmacia ===== -->
+<div id="detDlg" class="overlay hidden"><div class="dialog wide" id="detBox" role="dialog" aria-modal="true"></div></div>
+
+<!-- ===== Editar farmacia ===== -->
+<div id="editDlg" class="overlay hidden">
+  <div class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <h3 id="editTitle">Editar farmacia</h3><p id="editSub"></p>
+    <form id="editForm" style="margin-top:16px">
+      <input type="hidden" id="editCode">
+      <div class="formgrid fg2">
+        <div class="field"><label for="eNombre">Nombre</label><input id="eNombre" class="inp" required maxlength="80"></div>
+        <div class="field"><label for="eCorreo">Correo <span class="opt">(opcional)</span></label><input id="eCorreo" class="inp" type="email"></div>
+        <div class="field"><label for="eTel">WhatsApp / teléfono <span class="opt">(opcional)</span></label><input id="eTel" class="inp" type="tel" inputmode="numeric" placeholder="51987654321"></div>
+        <div class="field"><label for="eVence">Fecha de vencimiento</label><input id="eVence" class="inp" type="date"><div class="hint">Cámbiala solo para dar o quitar días a mano.</div></div>
+      </div>
+      <div class="field" style="margin-top:12px"><label for="eNotas">Notas internas <span class="opt">(opcional)</span></label><textarea id="eNotas" class="inp" maxlength="300"></textarea></div>
+      <div id="editMsg"></div>
+      <div class="dlgactions"><button class="btn ghost" id="editCancel" type="button">Cancelar</button><button class="btn primary" id="editSave" type="submit"><span class="lbl">Guardar cambios</span></button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Diálogo de confirmación (siempre al final para quedar por encima) ===== -->
+<div id="dlg" class="overlay hidden">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <h3 id="dlgTitle"></h3>
+    <p id="dlgText"></p>
+    <div id="dlgPlanWrap" class="hidden">
+      <div class="field" style="margin-top:16px"><label for="dlgPlan">Nuevo periodo</label><select id="dlgPlan" class="inp"><option>Mensual</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div>
+      <div class="field" style="margin-top:12px"><label for="dlgMonto">Monto cobrado (S/) <span class="opt">(opcional)</span></label><input id="dlgMonto" class="inp" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="margin-top:12px"><label for="dlgMetodo">Método de pago</label><select id="dlgMetodo" class="inp"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Transferencia</option><option>Otro</option></select></div>
+      <div class="field" style="margin-top:12px"><label for="dlgEstado">Estado del pago</label><select id="dlgEstado" class="inp"><option value="CONFIRMADO">Confirmado (pago recibido)</option><option value="PENDIENTE">Pendiente (aún no extiende la licencia)</option></select></div>
+      <div class="field" style="margin-top:12px"><label for="dlgNota">Nota <span class="opt">(opcional)</span></label><input id="dlgNota" class="inp" maxlength="120" placeholder="Ej. pago adelantado"></div>
+    </div>
+    <div class="dlgactions"><button class="btn ghost" id="dlgCancel" type="button">Cancelar</button><button class="btn primary" id="dlgOk" type="button"><span class="lbl">Confirmar</span></button></div>
+  </div>
+</div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+`;
+
+window.FPRO_SA = {
+  /* opts: { host, apiUrl, token, version, onSalir(msg) } */
+  montar(opts) {
+    const host = opts.host;
+    const root = host.shadowRoot || host.attachShadow({ mode: 'open' });
+    root.innerHTML = '<style>' + CSS + '</style>' + HTML;
+    const API_URL=opts.apiUrl;
+    const $=id=>root.getElementById(id);
+    let alive=true;
+    let token=opts.token,companies=[],lastCred='';
+
+    /* ---------- Utilidades ---------- */
+    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const store=()=>{};
+    const stored=()=>token;
+    const fmtDate=v=>{const d=new Date(v);return isNaN(d)?String(v||'—'):d.toLocaleDateString('es-PE')};
+    function busyBtn(b,on,text){const l=b.querySelector('.lbl');if(on){if(l){b.dataset.t=l.textContent;if(text)l.textContent=text}b.disabled=true;b.classList.add('loading')}else{if(l&&b.dataset.t)l.textContent=b.dataset.t;b.disabled=false;b.classList.remove('loading')}}
+    let toastT;
+    function toast(text,type='ok'){const t=$('toast');t.textContent=text;t.className='toast '+type;clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hidden'),type==='error'?7000:4000)}
+
+    /* ---------- Conexión con el Apps Script ---------- */
+    async function call(action,data={},opts={}){
+      let r;
+      try{r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({accion:action,token,...data})})}
+      catch(e){throw new Error('No se pudo conectar con el servidor. Revisa tu conexión a internet.')}
+      let j;
+      try{j=await r.json()}catch(e){throw new Error('El servidor devolvió una respuesta inesperada.')}
+      if (!j.ok) {
+        const m = String(j.error || '');
+        const esAdmin = String(action).indexOf('superadmin_') === 0;
+        // Solo el token del superadmin vencido cierra la sesión del panel
+        if (!opts.noExpire && m === 'SESION_SUPERADMIN_INVALIDA') {
+          const e = new Error('Tu sesión expiró. Ingresa de nuevo.');
+          e.expired = true;
+          backToLogin(e.message);
+          throw e;
+        }
+        // SESION_INVALIDA en una acción del panel = el Apps Script publicado no conoce esa acción (despliegue viejo)
+        if (esAdmin && m === 'SESION_INVALIDA') {
+          showOutdated();
+          throw new Error(OUTDATED_MSG);
+        }
+        throw new Error(m || 'No se pudo completar la operación.');
+      }
+      return j;
+    }
+
+    /* ---------- Aviso de script desactualizado ---------- */
+    const API_MIN=5;
+    const OUTDATED_MSG='El script de Google (Apps Script) está desactualizado. Impleméntalo como nueva versión.';
+    function showOutdated(){
+      const b=$('outdatedBox');
+      b.innerHTML='<span>⚠️</span><span><b>El Apps Script publicado está desactualizado.</b> En Apps Script: Implementar → Administrar implementaciones → ✏️ Editar → Versión: <b>Nueva versión</b> → Implementar. Luego recarga esta página.</span>';
+      b.classList.remove('hidden');
+    }
+
+    /* ---------- Sesión ---------- */
+    function showApp(){$('appView').classList.remove('hidden')}
+    // Sin sesión válida se vuelve al login único
+    function backToLogin(msg){
+      alive=false;token='';companies=[];pagosLoaded=false;actLoaded=false;pagosData=[];actData=[];pendCount=0;
+      opts.onSalir(msg||'');
+    }
+    $('logoutBtn').addEventListener('click',async()=>{try{await call('superadmin_logout',{},{noExpire:true})}catch(e){}backToLogin('')});
+
+    /* ---------- Estado y utilidades extra ---------- */
+    let pagosLoaded=false,actLoaded=false,pagosData=[],actData=[],lastCred2='',pendCount=0;
+    const money=n=>'S/ '+(Number(n)||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const money0=n=>'S/ '+(Number(n)||0).toLocaleString('es-PE',{maximumFractionDigits:0});
+    const findCo=c=>companies.find(x=>x.codigo===c);
+    const isDue=x=>x.estado==='ACTIVA'&&!x.vencida&&x.dias!=null&&x.dias<=7;
+    const loginLink=()=>location.origin+location.pathname.replace(/index\.html$/,'');
+    const onlyDigits=e=>{e.target.value=e.target.value.replace(/\D/g,'')};
+    function daysText(x){if(x.dias==null)return '';if(x.dias<0)return `venció hace ${-x.dias} d`;if(x.dias===0)return 'vence hoy';return `en ${x.dias} d`}
+    async function copyText(t,msg){
+      let ok=false;
+      try{await navigator.clipboard.writeText(t);ok=true}catch(err){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{ok=document.execCommand('copy')}catch(e2){}a.remove()}
+      toast(ok?(msg||'Copiado.'):'No se pudo copiar. Selecciónalo y cópialo a mano.',ok?'ok':'error');
+    }
+    function downloadCSV(name,headers,rows){
+      const q=v=>{let s=String(v??'');if(/^[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'};
+      const csv='\ufeff'+'sep=,\r\n'+[headers].concat(rows).map(r=>r.map(q).join(',')).join('\r\n');
+      const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+      a.download=name+'_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();
+      setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+    }
+
+    /* ---------- Listado ---------- */
+    const stateRow=(t,err)=>`<tr><td colspan="7" class="state${err?' err':''}">${esc(t)}</td></tr>`;
+    async function loadCompanies(initial){
+      const btn=$('refreshBtn');busyBtn(btn,true,'Actualizando…');
+      if(!companies.length)$('companyRows').innerHTML='<tr><td colspan="7" class="state"><div class="sk"></div></td></tr>';
+      try{
+        const r=await call('superadmin_listar');
+        companies=r.empresas||[];const s=r.resumen||{};
+        $('mTotal').textContent=s.total??companies.length;$('mActive').textContent=s.activas??0;
+        $('mSuspended').textContent=s.suspendidas??0;$('mExpired').textContent=s.vencidas??0;
+        $('mDue').textContent=s.porVencer??0;$('mTrial').textContent=s.enPrueba??0;
+        renderAlert();renderRows();loadIngresos();
+      }catch(err){
+        if(err.expired)return;
+        $('companyRows').innerHTML=stateRow(err.message,true);toast(err.message,'error');
+      }finally{busyBtn(btn,false)}
+    }
+    function renderAlert(){
+      const due=companies.filter(isDue).length,exp=companies.filter(x=>x.vencida).length,box=$('alertBox');
+      if(!due&&!exp&&!pendCount){box.classList.add('hidden');box.innerHTML='';return}
+      const p=[];
+      if(exp)p.push(`<button class="lnk" type="button" data-f="VENCIDA">${exp} ${exp>1?'suscripciones vencidas':'suscripción vencida'}</button>`);
+      if(due)p.push(`<button class="lnk" type="button" data-f="PORVENCER">${due} ${due>1?'farmacias vencen':'farmacia vence'} en 7 días o menos</button>`);
+      if(pendCount)p.push(`<button class="lnk" type="button" data-f="PEND">${pendCount} ${pendCount>1?'pagos pendientes':'pago pendiente'} de confirmar</button>`);
+      box.innerHTML='<span>⚠️</span><span>Atención: '+p.join(' · ')+'.</span>';box.classList.remove('hidden');
+    }
+    $('alertBox').addEventListener('click',e=>{
+      const b=e.target.closest('[data-f]');if(!b)return;
+      if(b.dataset.f==='PEND'){$('payEstado').value='PENDIENTE';if(!pagosLoaded)loadPagos();else renderPagos();$('payments').scrollIntoView({behavior:'smooth',block:'start'});return}
+      $('filter').value=b.dataset.f;renderRows();$('pharmacy-list').scrollIntoView({behavior:'smooth',block:'start'});
+    });
+    function matchFilter(x,f){
+      if(f==='TODAS')return true;
+      if(f==='VENCIDA')return x.vencida;
+      if(f==='PORVENCER')return isDue(x);
+      if(f==='PRUEBA')return x.plan==='Prueba';
+      return x.estado===f;
+    }
+    function getFiltered(){
+      const q=$('search').value.trim().toLowerCase(),f=$('filter').value;
+      return companies.filter(x=>`${x.nombre??''} ${x.codigo??''} ${x.correo??''} ${x.telefono??''}`.toLowerCase().includes(q)&&matchFilter(x,f));
+    }
+    function rowHtml(x){
+      const code=esc(x.codigo);
+      const st=x.estado!=='ACTIVA'?'<span class="pill off">Suspendida</span>':x.vencida?'<span class="pill warn">Vencida</span>':isDue(x)?'<span class="pill warn">Por vencer</span>':'<span class="pill ok">Activa</span>';
+      const toggle=x.estado==='ACTIVA'
+        ?`<button class="btn danger sm" data-act="state" data-code="${code}" data-next="SUSPENDIDA" type="button">Suspender</button>`
+        :`<button class="btn soft sm" data-act="state" data-code="${code}" data-next="ACTIVA" type="button">Activar</button>`;
+      const plan=x.plan==='Prueba'?'<span class="pill info">Prueba</span>':esc(x.plan);
+      const dcls=x.vencida?'bad':isDue(x)?'warn':'';
+      return `<tr>
+        <td data-label="Farmacia"><div class="who"><div class="av">${esc(String(x.nombre||'?').trim().slice(0,2).toUpperCase())}</div><b>${esc(x.nombre)}</b></div></td>
+        <td data-label="Código" class="code">${code}</td>
+        <td data-label="Plan">${plan}</td>
+        <td data-label="Estado">${st}</td>
+        <td data-label="Vencimiento"><div>${esc(x.vencimiento||'—')}</div><div class="dtx ${dcls}">${esc(daysText(x))}</div></td>
+        <td data-label="Contacto"><div class="contact"><span>${esc(x.correo||'—')}</span>${x.telefono?`<small>📱 ${esc(x.telefono)}</small>`:''}</div></td>
+        <td data-label="Acciones"><div class="actions">
+          <button class="btn ghost sm" data-act="detail" data-code="${code}" type="button">Detalle</button>
+          <button class="btn ghost sm" data-act="edit" data-code="${code}" type="button">Editar</button>
+          <button class="btn soft sm" data-act="renew" data-code="${code}" type="button">Renovar</button>
+          <button class="btn ghost sm" data-act="wa" data-code="${code}" type="button" title="Enviar recordatorio por WhatsApp" aria-label="WhatsApp">💬</button>
+          ${toggle}</div></td>
+      </tr>`;
+    }
+    function renderRows(){
+      const list=getFiltered();
+      $('countLabel').textContent=companies.length?`${list.length} de ${companies.length}`:'';
+      if(!companies.length){$('companyRows').innerHTML=stateRow('Aún no hay farmacias registradas. Crea la primera con el formulario de arriba.');return}
+      if(!list.length){$('companyRows').innerHTML=stateRow('Ninguna farmacia coincide con la búsqueda o el filtro.');return}
+      $('companyRows').innerHTML=list.map(rowHtml).join('');
+    }
+    $('search').addEventListener('input',renderRows);
+    $('filter').addEventListener('change',renderRows);
+    $('refreshBtn').addEventListener('click',()=>loadCompanies());
+    $('companyRows').addEventListener('click',e=>{
+      const b=e.target.closest('[data-act]');if(!b)return;const c=b.dataset.code;
+      if(b.dataset.act==='state')changeState(c,b.dataset.next);
+      else if(b.dataset.act==='renew')renew(c);
+      else if(b.dataset.act==='detail')openDetail(c);
+      else if(b.dataset.act==='edit')openEdit(c);
+      else if(b.dataset.act==='wa')whatsapp(c);
+    });
+    $('exportBtn').addEventListener('click',()=>{
+      const l=getFiltered();if(!l.length){toast('No hay farmacias para exportar.','error');return}
+      downloadCSV('farmacias',['Farmacia','Código','Plan','Estado','Vencimiento','Días restantes','Correo','Teléfono','Último acceso','Notas'],
+        l.map(x=>[x.nombre,x.codigo,x.plan,x.vencida?'VENCIDA':x.estado,x.vencimiento,x.dias??'',x.correo,x.telefono,x.ultimoAcceso,x.notas]));
+    });
+
+    /* ---------- Diálogo de confirmación ---------- */
+    function ask(o){return new Promise(res=>{
+      const ok=$('dlgOk'),dlg=$('dlg');
+      $('dlgTitle').textContent=o.title;$('dlgText').textContent=o.text||'';
+      $('dlgPlanWrap').classList.toggle('hidden',!o.plan);
+      if(o.plan){$('dlgPlan').value=o.defPlan||'Mensual';$('dlgMonto').value='';$('dlgNota').value='';$('dlgMetodo').selectedIndex=0;$('dlgEstado').selectedIndex=0}
+      ok.querySelector('.lbl').textContent=o.confirm||'Confirmar';
+      ok.className='btn '+(o.danger?'danger':'primary');
+      dlg.classList.remove('hidden');ok.focus();
+      const key=e=>{if(e.key==='Escape')close(null)};
+      const close=v=>{dlg.classList.add('hidden');ok.onclick=null;$('dlgCancel').onclick=null;dlg.onclick=null;document.removeEventListener('keydown',key);res(v)};
+      document.addEventListener('keydown',key);
+      ok.onclick=()=>close({plan:$('dlgPlan').value,monto:$('dlgMonto').value,metodo:$('dlgMetodo').value,estado:$('dlgEstado').value,nota:$('dlgNota').value.trim()});
+      $('dlgCancel').onclick=()=>close(null);
+      dlg.onclick=e=>{if(e.target===dlg)close(null)};
+    })}
+    document.addEventListener('keydown',e=>{
+      if(e.key!=='Escape'||!$('dlg').classList.contains('hidden'))return;
+      $('editDlg').classList.add('hidden');$('detDlg').classList.add('hidden');
+    });
+
+    /* ---------- Acciones ---------- */
+    async function changeState(codigo,estado){
+      const act=estado==='ACTIVA';
+      const r=await ask({title:act?'Activar farmacia':'Suspender farmacia',text:act?`La farmacia ${codigo} volverá a tener acceso al sistema.`:`Se suspenderá la farmacia ${codigo}. Podrás activarla de nuevo cuando quieras.`,confirm:act?'Activar':'Suspender',danger:!act});
+      if(!r)return;
+      try{await call('superadmin_estado',{codigo,estado});toast(act?'Farmacia activada.':'Farmacia suspendida.');await loadCompanies();if(actLoaded)loadActividad()}
+      catch(err){if(!err.expired)toast(err.message,'error')}
+    }
+    async function renew(codigo){
+      const x=findCo(codigo)||{};
+      const r=await ask({title:'Renovar licencia',text:`Elige el nuevo periodo para ${x.nombre||'la farmacia'} (${codigo}). Si indicas el monto, quedará en el historial de pagos.`,plan:true,confirm:'Renovar',defPlan:PLANES_PAGO.includes(x.plan)?x.plan:'Mensual'});
+      if(!r)return;
+      try{
+        const d=await call('superadmin_renovar',{codigo,plan:r.plan,monto:r.monto,metodo:r.metodo,nota:r.nota,estado_pago:r.estado});
+        toast(d.pendiente?`${d.mensaje}.`:`${d.mensaje||'Licencia renovada'}. Nuevo vencimiento: ${d.vencimiento||'—'}`);
+        await loadCompanies();if(pagosLoaded)loadPagos();if(actLoaded)loadActividad();
+      }catch(err){if(!err.expired)toast(err.message,'error')}
+    }
+    const PLANES_PAGO=['Mensual','Trimestral','Semestral','Anual'];
+    function whatsapp(code){
+      const x=findCo(code);if(!x)return;
+      const tel=String(x.telefono||'').replace(/\D/g,'');
+      if(!tel){toast('Esta farmacia no tiene teléfono. Agrégalo en "Editar".','error');return}
+      const num=tel.length===9?'51'+tel:tel;
+      const que=x.plan==='Prueba'?'El periodo de prueba':'La suscripción';
+      let est;
+      if(x.vencida)est=`venció el ${x.vencimiento}`;
+      else if(x.dias===0)est='vence hoy';
+      else if(x.dias!=null&&x.dias<=7)est=`vence el ${x.vencimiento} (en ${x.dias} día${x.dias===1?'':'s'})`;
+      else est=`vence el ${x.vencimiento||'—'}`;
+      const msg=`Hola, le saludamos de FARMACIA PRO 2.0. ${que} de ${x.nombre} ${est}. ¿Desea renovarla? Quedamos atentos. ¡Gracias!`;
+      window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank','noopener');
+    }
+
+    /* ---------- Editar farmacia ---------- */
+    function openEdit(code){
+      const x=findCo(code);if(!x)return;
+      $('editCode').value=code;$('eNombre').value=x.nombre||'';$('eCorreo').value=x.correo||'';$('eTel').value=x.telefono||'';
+      $('eVence').value=x.vencimiento||'';$('eNotas').value=x.notas||'';
+      $('editSub').textContent=`Código ${code} (no se puede cambiar).`;$('editMsg').innerHTML='';
+      $('editDlg').classList.remove('hidden');$('eNombre').focus();
+    }
+    $('eTel').addEventListener('input',onlyDigits);
+    $('editCancel').addEventListener('click',()=>$('editDlg').classList.add('hidden'));
+    $('editDlg').addEventListener('click',e=>{if(e.target===$('editDlg'))$('editDlg').classList.add('hidden')});
+    $('editForm').addEventListener('submit',async e=>{
+      e.preventDefault();const b=$('editSave');busyBtn(b,true,'Guardando…');$('editMsg').innerHTML='';
+      try{
+        await call('superadmin_editar',{codigo:$('editCode').value,nombre:$('eNombre').value.trim(),correo:$('eCorreo').value.trim(),telefono:$('eTel').value,vencimiento:$('eVence').value,notas:$('eNotas').value.trim()});
+        $('editDlg').classList.add('hidden');toast('Datos guardados.');await loadCompanies();if(actLoaded)loadActividad();
+      }catch(err){if(!err.expired)$('editMsg').innerHTML=`<div class="errbox">${esc(err.message)}</div>`}
+      finally{busyBtn(b,false)}
+    });
+
+    /* ---------- Detalle de farmacia ---------- */
+    $('detDlg').addEventListener('click',e=>{
+      if(e.target===$('detDlg')||e.target.closest('[data-close]')){$('detDlg').classList.add('hidden');return}
+      const r=e.target.closest('[data-reset]');if(r)resetClave(r.dataset.code,r.dataset.reset);
+      if(e.target.closest('#copyBtn2'))copyText(lastCred2,'Credenciales copiadas.');
+    });
+    async function openDetail(code){
+      const box=$('detBox'),ov=$('detDlg');
+      box.innerHTML='<div class="sk" style="height:22px;margin:6px 0 14px"></div><div class="sk" style="height:96px"></div>';
+      ov.classList.remove('hidden');
+      try{const d=await call('superadmin_detalle',{codigo:code});if(ov.classList.contains('hidden'))return;renderDetail(d)}
+      catch(err){if(err.expired)return;box.innerHTML=`<h3>Detalle de farmacia</h3><div class="errbox">${esc(err.message)}</div><div class="dlgactions"><button class="btn ghost" data-close="1" type="button">Cerrar</button></div>`}
+    }
+    function renderDetail(d){
+      const e=d.empresa,m=d.metricas;
+      const st=e.estado!=='ACTIVA'?'<span class="pill off">Suspendida</span>':e.vencida?'<span class="pill warn">Vencida</span>':isDue(e)?'<span class="pill warn">Por vencer</span>':'<span class="pill ok">Activa</span>';
+      const url=String(e.hojaUrl||'');
+      const users=(d.usuarios||[]).map(u=>`<tr><td data-label="Usuario"><b>${esc(u.Usuario)}</b></td><td data-label="Nombre">${esc(u.Nombre)}</td><td data-label="Rol">${esc(u.Rol)}</td><td data-label="Estado">${u.Activo==='SI'?'Activo':'Inactivo'}${u.DebeCambiar?' · clave temporal':''}</td><td data-label="" class="right"><button class="btn ghost sm" data-reset="${esc(u.Usuario)}" data-code="${esc(e.codigo)}" type="button">Restablecer clave</button></td></tr>`).join('');
+      const pays=(d.pagos||[]).map(p=>`<tr><td data-label="Fecha">${esc(p.fecha)}</td><td data-label="Plan">${esc(p.plan)}</td><td data-label="Monto" class="right">${money(p.monto)}</td><td data-label="Método">${esc(p.metodo)}${p.estado==='PENDIENTE'?' · <b>pendiente</b>':p.estado==='ANULADO'?' · anulado':''}</td><td data-label="Vence hasta">${esc(p.venceNuevo||'—')}</td></tr>`).join('');
+      $('detBox').innerHTML=`<div class="phead" style="margin-bottom:4px"><div><h3 style="margin:0">${esc(e.nombre)}</h3><div class="sub">Código <b>${esc(e.codigo)}</b> · ${st}</div></div><button class="btn ghost sm" data-close="1" type="button">Cerrar</button></div>
+      ${d.aviso?`<div class="errbox">${esc(d.aviso)}</div>`:''}
+      <dl class="dgrid">
+        <div><dt>Plan</dt><dd>${esc(e.plan||'—')}</dd></div>
+        <div><dt>Inicio</dt><dd>${esc(e.inicio||'—')}</dd></div>
+        <div><dt>Vence</dt><dd>${esc(e.vencimiento||'—')} <span class="dtx ${e.vencida?'bad':isDue(e)?'warn':''}">${esc(daysText(e))}</span></dd></div>
+        <div><dt>Correo</dt><dd>${esc(e.correo||'—')}</dd></div>
+        <div><dt>Teléfono</dt><dd>${esc(e.telefono||'—')}</dd></div>
+        <div><dt>Último acceso</dt><dd>${esc(e.ultimoAcceso||'Nunca')}</dd></div>
+        ${e.notas?`<div style="grid-column:1/-1"><dt>Notas</dt><dd>${esc(e.notas)}</dd></div>`:''}
+      </dl>
+      ${m?`<div class="mini"><div><b>${m.productos}</b><small>Productos</small></div><div><b>${m.ventasMes}</b><small>Ventas del mes</small></div><div><b>${money(m.totalMes)}</b><small>Vendido en el mes</small></div><div><b>${m.ventasTotal}</b><small>Ventas totales${m.ultimaVenta?' · última '+esc(m.ultimaVenta.slice(0,10)):''}</small></div></div>`:''}
+      ${/^https:\/\/docs\.google\.com\//.test(url)?`<a class="btn ghost sm" href="${esc(url)}" target="_blank" rel="noopener">Abrir hoja de datos ↗</a>`:''}
+      <div class="sect">Usuarios de la farmacia</div>
+      ${users?`<div class="tablewrap" style="margin:0"><table class="mt"><thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody>${users}</tbody></table></div>`:'<div class="hint">No se pudieron leer los usuarios.</div>'}
+      <div id="detCred"></div>
+      <div class="sect">Últimos pagos</div>
+      ${pays?`<div class="tablewrap" style="margin:0"><table class="mt"><thead><tr><th>Fecha</th><th>Plan</th><th class="right">Monto</th><th>Método</th><th>Vence hasta</th></tr></thead><tbody>${pays}</tbody></table></div>`:'<div class="hint">Aún no hay pagos registrados para esta farmacia.</div>'}
+      <div class="dlgactions"><button class="btn ghost" data-close="1" type="button">Cerrar</button></div>`;
+    }
+    async function resetClave(code,user){
+      const r=await ask({title:'Restablecer contraseña',text:`Se generará una contraseña temporal para "${user}" de la farmacia ${code}. La anterior dejará de funcionar y deberá cambiarla al ingresar.`,confirm:'Restablecer'});
+      if(!r)return;
+      try{
+        const d=await call('superadmin_reset_clave',{codigo:code,usuario:user});
+        const co=findCo(code)||{nombre:code};
+        lastCred2=`Farmacia: ${co.nombre}\nUsuario: ${d.usuario}\nContraseña temporal: ${d.claveTemporal}\nDebe cambiarla al ingresar.\nIngreso: ${loginLink()}`;
+        $('detCred').innerHTML=`<div class="cred"><h3>✅ Contraseña restablecida</h3><dl><div><dt>Usuario</dt><dd>${esc(d.usuario)}</dd></div><div><dt>Contraseña temporal</dt><dd>${esc(d.claveTemporal)}</dd></div></dl><button class="btn soft sm" id="copyBtn2" type="button">Copiar credenciales</button><p class="note">Entrégala por un canal seguro: no se volverá a mostrar.</p></div>`;
+        $('detCred').scrollIntoView({behavior:'smooth',block:'nearest'});
+        if(actLoaded)loadActividad();
+      }catch(err){if(!err.expired)toast(err.message,'error')}
+    }
+
+    /* ---------- Ingresos ---------- */
+    function bars(items,label){
+      const max=Math.max(1,...items.map(i=>i.total));
+      return items.map(i=>`<div class="bar"><span class="bl">${esc(label(i))}</span><div class="bt"><div class="bf" style="width:${Math.round(i.total/max*100)}%"></div></div><span class="bv">${money(i.total)}</span></div>`).join('')||'<div class="hint">Aún no hay pagos registrados.</div>';
+    }
+    async function loadIngresos(){
+      try{
+        const r=await call('superadmin_ingresos');
+        $('mMes').textContent=money0(r.mes);$('mAnio').textContent=money0(r.anio);
+        pendCount=(r.pendientes&&r.pendientes.n)||0;renderAlert();
+        $('incPlan').innerHTML=bars(r.porPlan||[],i=>`${i.plan} (${i.pagos})`);
+        $('incMes').innerHTML=bars(r.porMes||[],i=>{const [y,m]=i.mes.split('-');return new Date(+y,+m-1,1).toLocaleDateString('es-PE',{month:'short',year:'numeric'})});
+      }catch(err){if(!err.expired){$('incPlan').innerHTML=`<div class="hint">${esc(err.message)}</div>`;$('incMes').innerHTML=''}}
+    }
+
+    /* ---------- Pagos ---------- */
+    const estPill=e=>e==='PENDIENTE'?'<span class="pill warn">Pendiente</span>':e==='ANULADO'?'<span class="pill off">Anulado</span>':'<span class="pill ok">Confirmado</span>';
+    async function loadPagos(){
+      pagosLoaded=true;const b=$('payRefresh');busyBtn(b,true,'Actualizando…');
+      try{const r=await call('superadmin_pagos');pagosData=r.pagos||[];renderPagos()}
+      catch(err){pagosLoaded=false;if(!err.expired)$('payRows').innerHTML=`<tr><td colspan="8" class="state err">${esc(err.message)}</td></tr>`}
+      finally{busyBtn(b,false)}
+    }
+    function getPagos(){const q=$('payQ').value.trim().toLowerCase(),f=$('payEstado').value;return pagosData.filter(p=>(f==='TODOS'||p.estado===f)&&`${p.farmacia} ${p.codigo} ${p.metodo} ${p.plan}`.toLowerCase().includes(q))}
+    function renderPagos(){
+      const l=getPagos(),tot=l.filter(p=>p.estado==='CONFIRMADO').reduce((s,p)=>s+p.monto,0);
+      $('payCount').textContent=pagosData.length?`${l.length} · ${money(tot)} confirmado`:'';
+      if(!l.length){$('payRows').innerHTML=`<tr><td colspan="8" class="state">${pagosData.length?'Ningún pago coincide con la búsqueda o el filtro.':'Aún no hay pagos registrados. Se guardan al renovar (o crear) una farmacia indicando el monto.'}</td></tr>`;return}
+      $('payRows').innerHTML=l.map(p=>{
+        const acc=p.estado==='PENDIENTE'?`<button class="btn soft sm" data-pay="ok" data-id="${esc(p.id)}" type="button">Confirmar</button><button class="btn danger sm" data-pay="no" data-id="${esc(p.id)}" type="button">Anular</button>`:'—';
+        return `<tr><td data-label="Fecha">${esc(p.fecha)}</td><td data-label="Farmacia"><b>${esc(p.farmacia)}</b><div class="dtx">${esc(p.codigo)}${p.nota?' · '+esc(p.nota):''}</div></td><td data-label="Plan">${esc(p.plan)}</td><td data-label="Monto" class="right"><b>${money(p.monto)}</b></td><td data-label="Método">${esc(p.metodo)}</td><td data-label="Estado">${estPill(p.estado)}</td><td data-label="Vence hasta">${esc(p.venceNuevo||'—')}</td><td data-label="Acciones"><div class="actions">${acc}</div></td></tr>`}).join('');
+    }
+    $('payQ').addEventListener('input',renderPagos);
+    $('payEstado').addEventListener('change',renderPagos);
+    $('payRefresh').addEventListener('click',loadPagos);
+    $('payRows').addEventListener('click',e=>{const b=e.target.closest('[data-pay]');if(b)payAction(b.dataset.pay,b.dataset.id)});
+    async function payAction(kind,id){
+      const p=pagosData.find(x=>x.id===id);if(!p)return;
+      const ok=kind==='ok';
+      const r=await ask({title:ok?'Confirmar pago':'Anular pago pendiente',text:ok?`¿Recibiste los ${money(p.monto)} de ${p.farmacia}? Al confirmar, su licencia se extenderá (${p.plan}).`:`Se anulará el pago pendiente de ${money(p.monto)} de ${p.farmacia}. La licencia no cambia.`,confirm:ok?'Confirmar pago':'Anular pago',danger:!ok});
+      if(!r)return;
+      try{
+        const d=await call(ok?'superadmin_confirmar_pago':'superadmin_anular_pago',{id});
+        toast(ok?`Pago confirmado. Nuevo vencimiento: ${d.vencimiento||'—'}`:'Pago anulado.');
+        await loadCompanies();loadPagos();if(actLoaded)loadActividad();
+      }catch(err){if(!err.expired)toast(err.message,'error')}
+    }
+    $('payExport').addEventListener('click',()=>{
+      const l=getPagos();if(!l.length){toast('No hay pagos para exportar.','error');return}
+      downloadCSV('pagos',['ID','Fecha','Código','Farmacia','Plan','Meses','Monto (S/)','Método','Estado','Vence anterior','Vence nuevo','Nota'],l.map(p=>[p.id,p.fecha,p.codigo,p.farmacia,p.plan,p.meses,p.monto.toFixed(2),p.metodo,p.estado,p.venceAnterior,p.venceNuevo,p.nota]));
+    });
+
+    /* ---------- Actividad ---------- */
+    async function loadActividad(){
+      actLoaded=true;const b=$('actRefresh');busyBtn(b,true,'Actualizando…');
+      try{const r=await call('superadmin_actividad');actData=r.actividad||[];renderActividad()}
+      catch(err){actLoaded=false;if(!err.expired)$('actRows').innerHTML=`<tr><td colspan="4" class="state err">${esc(err.message)}</td></tr>`}
+      finally{busyBtn(b,false)}
+    }
+    function renderActividad(){
+      if(!actData.length){$('actRows').innerHTML='<tr><td colspan="4" class="state">Aún no hay actividad registrada.</td></tr>';return}
+      $('actRows').innerHTML=actData.map(a=>`<tr><td data-label="Fecha">${esc(a.fecha)}</td><td data-label="Acción"><b>${esc(a.accion)}</b></td><td data-label="Farmacia" class="code">${esc(a.codigo||'—')}</td><td data-label="Detalle">${esc(a.detalle||'—')}</td></tr>`).join('');
+    }
+    $('actRefresh').addEventListener('click',loadActividad);
+    $('actExport').addEventListener('click',()=>{
+      if(!actData.length){toast('No hay actividad para exportar.','error');return}
+      downloadCSV('actividad',['Fecha','Acción','Farmacia','Detalle'],actData.map(a=>[a.fecha,a.accion,a.codigo,a.detalle]));
+    });
+    if('IntersectionObserver' in window){
+      const io=new IntersectionObserver(es=>es.forEach(en=>{
+        if(!en.isIntersecting||!token)return;
+        if(en.target.id==='payments'&&!pagosLoaded)loadPagos();
+        if(en.target.id==='activity'&&!actLoaded)loadActividad();
+      }),{rootMargin:'200px'});
+      io.observe($('payments'));io.observe($('activity'));
+    }
+
+    /* ---------- Crear farmacia ---------- */
+    $('fCodigo').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'')});
+    $('fTel').addEventListener('input',onlyDigits);
+    function syncPlanFields(){const p=$('fPlan').value==='Prueba';$('gDias').classList.toggle('hidden',!p);$('gMonto').classList.toggle('hidden',p);$('gMetodo').classList.toggle('hidden',p)}
+    $('fPlan').addEventListener('change',syncPlanFields);syncPlanFields();
+    function showCreated(x,d){
+      const code=x.codigo||d.codigo,venc=fmtDate(x.fechaVencimiento);
+      lastCred=`Farmacia: ${d.nombre}\nUsuario: ${x.usuarioInicial}\nContraseña temporal: ${x.claveInicial}\nVence: ${venc}\nIngreso: ${loginLink()}`;
+      $('createMsg').innerHTML=`<div class="cred"><h3><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>Farmacia creada: ${esc(d.nombre)}</h3>
+        <dl><div><dt>Código de farmacia</dt><dd>${esc(code)}</dd></div><div><dt>Vence</dt><dd>${esc(venc)}</dd></div><div><dt>Usuario inicial</dt><dd>${esc(x.usuarioInicial)}</dd></div><div><dt>Contraseña temporal</dt><dd>${esc(x.claveInicial)}</dd></div></dl>
+        <button class="btn soft sm" id="copyBtn" type="button">Copiar credenciales</button>
+        <p class="note">Guárdalas ahora y entrégalas por un canal seguro: no se volverán a mostrar. Al ingresar, deberá cambiar la contraseña.</p></div>`;
+      $('createMsg').scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    $('createMsg').addEventListener('click',e=>{if(e.target.closest('#copyBtn'))copyText(lastCred,'Credenciales copiadas.')});
+    $('createForm').addEventListener('submit',async e=>{
+      e.preventDefault();const b=$('createBtn');busyBtn(b,true,'Creando…');$('createMsg').innerHTML='';
+      const d=Object.fromEntries(new FormData(e.target));d.nombre=String(d.nombre||'').trim();d.codigo=String(d.codigo||'').trim().toUpperCase();
+      try{
+        const r=await call('superadmin_crear',d);
+        showCreated(r.empresa||{},d);e.target.reset();syncPlanFields();
+        await loadCompanies();if(pagosLoaded)loadPagos();if(actLoaded)loadActividad();
+      }catch(err){
+        if(!err.expired)$('createMsg').innerHTML=`<div class="errbox">${esc(err.message)}</div>`;
+      }finally{busyBtn(b,false)}
+    });
+
+    /* ---------- Inicio ---------- */
+    /* ---------- Menú lateral (las anclas #id no cruzan el Shadow DOM) ---------- */
+    root.querySelectorAll('.side .nav').forEach(a=>a.addEventListener('click',e=>{
+      e.preventDefault();const t=root.getElementById(a.getAttribute('href').slice(1));
+      if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+      root.querySelectorAll('.side .nav').forEach(x=>x.classList.toggle('active',x===a));
+    }));
+
+    /* ---------- Inicio ---------- */
+    showApp();
+    if((Number(opts.version)||0)<API_MIN)showOutdated();
+    loadCompanies(true);
+
+  }
+};
+})();
