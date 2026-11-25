@@ -2,7 +2,7 @@
  * Solo guarda en caché la "carcasa" de la app (páginas, iconos y manifiestos de ESTE sitio).
  * Nunca toca las llamadas al Apps Script ni a otros dominios: los datos siempre vienen en vivo.
  * Las páginas se piden primero a la red, así una actualización en GitHub se ve de inmediato. */
-const CACHE = 'fpro-shell-v1';
+const CACHE = 'fpro-shell-v2';
 const SHELL = ['./index.html', './admin-general.html', './manifest.webmanifest', './manifest-admin.webmanifest',
   './icon-192.png', './icon-512.png', './icon-admin-192.png', './icon-admin-512.png'];
 
