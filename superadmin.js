@@ -815,7 +815,7 @@ window.FPRO_SA = {
       const d=Object.fromEntries(new FormData(e.target));d.nombre=String(d.nombre||'').trim();d.codigo=String(d.codigo||'').trim().toUpperCase();
       try{
         const r=await call('superadmin_crear',d);
-        showCreated(r.empresa||{},d);e.target.reset();syncPlanFields();
+        showCreated(r.empresa||{},d);$('createForm').reset();syncPlanFields();   // (e.target vale null tras un await dentro de un Shadow DOM)
         await loadCompanies();if(pagosLoaded)loadPagos();if(actLoaded)loadActividad();
       }catch(err){
         if(!err.expired)$('createMsg').innerHTML=`<div class="errbox">${esc(err.message)}</div>`;
