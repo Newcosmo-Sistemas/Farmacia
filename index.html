@@ -514,7 +514,7 @@ let saCargando = null;
 function cargarPanelSA() {
   if (window.FPRO_SA) return Promise.resolve();
   if (!saCargando) saCargando = new Promise((ok, ko) => {
-    const s = document.createElement('script'); s.src = 'superadmin.js?v=3';
+    const s = document.createElement('script'); s.src = 'superadmin.js?v=4';
     s.onload = ok; s.onerror = () => { saCargando = null; ko(new Error('No se pudo cargar el panel de administración. Revisa tu conexión.')); };
     document.head.appendChild(s);
   });
@@ -596,7 +596,9 @@ $('formLogin').addEventListener('submit', async e => {
     try { sessionStorage.setItem('sesion', JSON.stringify(sesion)); } catch (e) {}
     mostrarApp();
   } catch (err) {
-    $('loginError').textContent = err.message === 'Failed to fetch' ? 'No se pudo conectar con el servidor' : err.message;
+    $('loginError').textContent = err.message === 'Failed to fetch' ? 'No se pudo conectar con el servidor'
+      : /Código de farmacia no válido/i.test(err.message) ? 'El servidor tiene una versión antigua del Apps Script. Publica la versión nueva e inténtalo de nuevo.'
+      : err.message;
   } finally {
     btn.disabled = false; btn.textContent = 'Ingresar'; $('lClave').value = '';
   }
