@@ -464,7 +464,7 @@ window.FPRO_SA = {
 
     /* ---------- Aviso de script desactualizado ---------- */
     const API_MIN=5;
-    const OUTDATED_MSG='El script de Google (Apps Script) está desactualizado. Impleméntalo como nueva versión.';
+    const OUTDATED_MSG='https://script.google.com/macros/s/AKfycbwM0GBXFi9jPQPROeUGR_oslxAJQ1xW90n5NoYHNmsjvaH6JuHh-Lt1UTOq1emX4zqxqg/exec';
     function showOutdated(){
       const b=$('outdatedBox');
       b.innerHTML='<span>⚠️</span><span><b>El Apps Script publicado está desactualizado.</b> En Apps Script: Implementar → Administrar implementaciones → ✏️ Editar → Versión: <b>Nueva versión</b> → Implementar. Luego recarga esta página.</span>';
