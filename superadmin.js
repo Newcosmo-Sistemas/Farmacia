@@ -379,6 +379,19 @@ const HTML = String.raw`
 <div id="detDlg" class="overlay hidden"><div class="dialog wide" id="detBox" role="dialog" aria-modal="true"></div></div>
 
 <!-- ===== Editar farmacia ===== -->
+<div id="uDlg" class="overlay hidden">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="uTitle">
+    <h3 id="uTitle">Editar usuario</h3><p id="uSub"></p>
+    <form id="uForm" style="margin-top:16px">
+      <input type="hidden" id="uCode"><input type="hidden" id="uOld">
+      <div class="field"><label for="uUser">Usuario de acceso</label><input id="uUser" class="inp" required maxlength="30" autocomplete="off"><div class="hint">3 a 30 caracteres: letras, números, punto, guion o guion bajo. Debe ser distinto al de cualquier otra farmacia.</div></div>
+      <div class="field" style="margin-top:12px"><label for="uNombre">Nombre</label><input id="uNombre" class="inp" required maxlength="80"></div>
+      <div class="field" style="margin-top:12px"><label for="uActivo">Estado</label><select id="uActivo" class="inp"><option value="SI">Activo</option><option value="NO">Desactivado (no puede ingresar)</option></select></div>
+      <div id="uMsg"></div>
+      <div class="dlgactions"><button class="btn ghost" id="uCancel" type="button">Cancelar</button><button class="btn primary" id="uSave" type="submit"><span class="lbl">Guardar cambios</span></button></div>
+    </form>
+  </div>
+</div>
 <div id="editDlg" class="overlay hidden">
   <div class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="editTitle">
     <h3 id="editTitle">Editar farmacia</h3><p id="editSub"></p>
@@ -464,7 +477,7 @@ window.FPRO_SA = {
 
     /* ---------- Aviso de script desactualizado ---------- */
     const API_MIN=5;
-    const OUTDATED_MSG='https://script.google.com/macros/s/AKfycbwM0GBXFi9jPQPROeUGR_oslxAJQ1xW90n5NoYHNmsjvaH6JuHh-Lt1UTOq1emX4zqxqg/exec';
+    const OUTDATED_MSG='El script de Google (Apps Script) está desactualizado. Impleméntalo como nueva versión.';
     function showOutdated(){
       const b=$('outdatedBox');
       b.innerHTML='<span>⚠️</span><span><b>El Apps Script publicado está desactualizado.</b> En Apps Script: Implementar → Administrar implementaciones → ✏️ Editar → Versión: <b>Nueva versión</b> → Implementar. Luego recarga esta página.</span>';
@@ -609,7 +622,7 @@ window.FPRO_SA = {
     })}
     document.addEventListener('keydown',e=>{
       if(e.key!=='Escape'||!$('dlg').classList.contains('hidden'))return;
-      $('editDlg').classList.add('hidden');$('detDlg').classList.add('hidden');
+      $('uDlg').classList.add('hidden');$('editDlg').classList.add('hidden');$('detDlg').classList.add('hidden');
     });
 
     /* ---------- Acciones ---------- */
@@ -670,6 +683,7 @@ window.FPRO_SA = {
     $('detDlg').addEventListener('click',e=>{
       if(e.target===$('detDlg')||e.target.closest('[data-close]')){$('detDlg').classList.add('hidden');return}
       const r=e.target.closest('[data-reset]');if(r)resetClave(r.dataset.code,r.dataset.reset);
+      const ed=e.target.closest('[data-uedit]');if(ed)openUserEdit(ed.dataset.code,ed.dataset.uedit);
       if(e.target.closest('#copyBtn2'))copyText(lastCred2,'Credenciales copiadas.');
     });
     async function openDetail(code){
@@ -679,11 +693,13 @@ window.FPRO_SA = {
       try{const d=await call('superadmin_detalle',{codigo:code});if(ov.classList.contains('hidden'))return;renderDetail(d)}
       catch(err){if(err.expired)return;box.innerHTML=`<h3>Detalle de farmacia</h3><div class="errbox">${esc(err.message)}</div><div class="dlgactions"><button class="btn ghost" data-close="1" type="button">Cerrar</button></div>`}
     }
+    let lastDetail=null;
     function renderDetail(d){
+      lastDetail=d;
       const e=d.empresa,m=d.metricas;
       const st=e.estado!=='ACTIVA'?'<span class="pill off">Suspendida</span>':e.vencida?'<span class="pill warn">Vencida</span>':isDue(e)?'<span class="pill warn">Por vencer</span>':'<span class="pill ok">Activa</span>';
       const url=String(e.hojaUrl||'');
-      const users=(d.usuarios||[]).map(u=>`<tr><td data-label="Usuario"><b>${esc(u.Usuario)}</b></td><td data-label="Nombre">${esc(u.Nombre)}</td><td data-label="Rol">${esc(u.Rol)}</td><td data-label="Estado">${u.Activo==='SI'?'Activo':'Inactivo'}${u.DebeCambiar?' · clave temporal':''}</td><td data-label="" class="right"><button class="btn ghost sm" data-reset="${esc(u.Usuario)}" data-code="${esc(e.codigo)}" type="button">Restablecer clave</button></td></tr>`).join('');
+      const users=(d.usuarios||[]).map(u=>`<tr><td data-label="Usuario"><b>${esc(u.Usuario)}</b></td><td data-label="Nombre">${esc(u.Nombre)}</td><td data-label="Rol">${esc(u.Rol)}</td><td data-label="Estado">${u.Activo==='SI'?'Activo':'Inactivo'}${u.DebeCambiar?' · clave temporal':''}</td><td data-label="" class="right"><button class="btn ghost sm" data-uedit="${esc(u.Usuario)}" data-code="${esc(e.codigo)}" type="button">Editar</button> <button class="btn ghost sm" data-reset="${esc(u.Usuario)}" data-code="${esc(e.codigo)}" type="button">Restablecer clave</button></td></tr>`).join('');
       const pays=(d.pagos||[]).map(p=>`<tr><td data-label="Fecha">${esc(p.fecha)}</td><td data-label="Plan">${esc(p.plan)}</td><td data-label="Monto" class="right">${money(p.monto)}</td><td data-label="Método">${esc(p.metodo)}${p.estado==='PENDIENTE'?' · <b>pendiente</b>':p.estado==='ANULADO'?' · anulado':''}</td><td data-label="Vence hasta">${esc(p.venceNuevo||'—')}</td></tr>`).join('');
       $('detBox').innerHTML=`<div class="phead" style="margin-bottom:4px"><div><h3 style="margin:0">${esc(e.nombre)}</h3><div class="sub">Código <b>${esc(e.codigo)}</b> · ${st}</div></div><button class="btn ghost sm" data-close="1" type="button">Cerrar</button></div>
       ${d.aviso?`<div class="errbox">${esc(d.aviso)}</div>`:''}
@@ -705,6 +721,26 @@ window.FPRO_SA = {
       ${pays?`<div class="tablewrap" style="margin:0"><table class="mt"><thead><tr><th>Fecha</th><th>Plan</th><th class="right">Monto</th><th>Método</th><th>Vence hasta</th></tr></thead><tbody>${pays}</tbody></table></div>`:'<div class="hint">Aún no hay pagos registrados para esta farmacia.</div>'}
       <div class="dlgactions"><button class="btn ghost" data-close="1" type="button">Cerrar</button></div>`;
     }
+    /* ---------- Editar usuario de una farmacia ---------- */
+    function openUserEdit(code,user){
+      const u=((lastDetail&&lastDetail.usuarios)||[]).find(x=>x.Usuario===user);if(!u)return;
+      $('uCode').value=code;$('uOld').value=user;$('uUser').value=user;$('uNombre').value=u.Nombre||'';$('uActivo').value=u.Activo==='NO'?'NO':'SI';
+      $('uSub').textContent=`Farmacia ${code}. Si cambias el usuario, deberá ingresar con el nuevo nombre; su contraseña no cambia.`;$('uMsg').innerHTML='';
+      $('uDlg').classList.remove('hidden');$('uUser').focus();
+    }
+    $('uCancel').addEventListener('click',()=>$('uDlg').classList.add('hidden'));
+    $('uDlg').addEventListener('click',e=>{if(e.target===$('uDlg'))$('uDlg').classList.add('hidden')});
+    $('uForm').addEventListener('submit',async e=>{
+      e.preventDefault();const b=$('uSave'),code=$('uCode').value,old=$('uOld').value;busyBtn(b,true,'Guardando…');$('uMsg').innerHTML='';
+      try{
+        const d=await call('superadmin_editar_usuario',{codigo:code,usuario:old,nuevoUsuario:$('uUser').value.trim().toLowerCase(),nombre:$('uNombre').value.trim(),activo:$('uActivo').value});
+        $('uDlg').classList.add('hidden');
+        toast(d.usuario!==old?`Usuario actualizado. Ahora ingresa como "${d.usuario}".`:'Usuario actualizado.');
+        if(actLoaded)loadActividad();
+        openDetail(code);
+      }catch(err){if(!err.expired)$('uMsg').innerHTML=`<div class="errbox">${esc(err.message)}</div>`}
+      finally{busyBtn(b,false)}
+    });
     async function resetClave(code,user){
       const r=await ask({title:'Restablecer contraseña',text:`Se generará una contraseña temporal para "${user}" de la farmacia ${code}. La anterior dejará de funcionar y deberá cambiarla al ingresar.`,confirm:'Restablecer'});
       if(!r)return;
