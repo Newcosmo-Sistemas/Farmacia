@@ -436,7 +436,7 @@ body{background:#f3f7f9;color:var(--ink)}
 
 <script>
 // ===== Configuración =====
-const API_URL = 'https://script.google.com/macros/s/AKfycbzGInk5x_kQvz-wMam7xSe1orLz82oTGfL6__FGiKCBFDFLBiOgeXM4Mi3F5o6kywQNhg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwXQM--FE09ar5sfNIztOpZ7kswk-Nm9OFhFe9RAH65DRolEwM2VamkEE0AQ2z2UMqITw/exec';
 const STOCK_BAJO = 5;          // se usa cuando el producto no tiene Stock_Minimo
 const DIAS_POR_VENCER = 90;
 
@@ -514,7 +514,7 @@ let saCargando = null;
 function cargarPanelSA() {
   if (window.FPRO_SA) return Promise.resolve();
   if (!saCargando) saCargando = new Promise((ok, ko) => {
-    const s = document.createElement('script'); s.src = 'superadmin.js?v=1';
+    const s = document.createElement('script'); s.src = 'superadmin.js?v=2';
     s.onload = ok; s.onerror = () => { saCargando = null; ko(new Error('No se pudo cargar el panel de administración. Revisa tu conexión.')); };
     document.head.appendChild(s);
   });
