@@ -476,7 +476,7 @@ window.FPRO_SA = {
     }
 
     /* ---------- Aviso de script desactualizado ---------- */
-    const API_MIN=5;
+    const API_MIN=6;
     const OUTDATED_MSG='El script de Google (Apps Script) está desactualizado. Impleméntalo como nueva versión.';
     function showOutdated(){
       const b=$('outdatedBox');
