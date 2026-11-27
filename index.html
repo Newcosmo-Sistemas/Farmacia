@@ -165,14 +165,19 @@ body{background:#f3f7f9;color:var(--ink)}
         <button id="navPuntoVenta" class="nav-link active" type="button"><span class="nav-ico">▦</span> Punto de venta</button>
         <button id="btnVentas" class="nav-link" type="button"><span class="nav-ico">▤</span> Historial de ventas</button>
         <button id="btnCaja" class="nav-link" type="button"><span class="nav-ico">▣</span> Apertura / cierre de caja</button>
+        <button id="btnCreditos" class="nav-link" type="button"><span class="nav-ico">◔</span> Créditos por cobrar</button>
         <button id="btnClientes" class="nav-link" type="button"><span class="nav-ico">♙</span> Clientes</button>
         <div class="nav-section">INVENTARIO</div>
         <button id="btnNuevo" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">＋</span> Nuevo producto</button>
         <button id="btnInventario" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">▣</span> Inventario / Kardex</button>
+        <button id="btnAlertas" class="nav-link" type="button"><span class="nav-ico">◷</span> Alertas de vencimiento <span id="badgeAlertas" class="hidden ml-auto text-[10px] font-bold bg-red-500 text-white rounded-full px-2 py-0.5">0</span></button>
         <div class="nav-section">INFORMES</div>
         <button id="btnReportes" class="nav-link" type="button"><span class="nav-ico">▤</span> Reportes</button>
         <div class="nav-section">CONFIGURACIÓN</div>
         <button id="btnUsuarios" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">♧</span> Usuarios</button>
+        <button id="btnTurnos" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">◴</span> Turnos de venta</button>
+        <button id="btnConfig" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">⚙</span> Datos del negocio</button>
+        <button id="btnMant" class="nav-link solo-admin hidden" type="button"><span class="nav-ico">⛁</span> Respaldo y archivo</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="sidebar-status"><span class="status-dot"></span><span>Sistema conectado</span></div>
@@ -192,6 +197,7 @@ body{background:#f3f7f9;color:var(--ink)}
       </header>
 
       <main class="dashboard-content">
+        <div id="avisoVersion" class="hidden mb-4 rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-800"></div>
         <section class="dashboard-welcome">
           <div><span class="welcome-kicker">PANEL DE CONTROL</span><h2>Bienvenido a <span>FARMACIA PRO 2.0</span></h2><p>Administra tus ventas, inventario y operaciones desde un solo lugar.</p></div>
           <div class="welcome-status"><i></i> Sistema operativo</div>
@@ -219,9 +225,19 @@ body{background:#f3f7f9;color:var(--ink)}
                 </div>
               </details>
               <div><div class="lbl mb-1">Descuento</div><div class="flex gap-2"><select id="dTipo" class="inp !w-28"><option value="monto">S/ monto</option><option value="porcentaje">% porc.</option></select><input id="dValor" type="number" min="0" step="0.01" placeholder="0" class="inp"></div></div>
-              <label class="lbl">Método de pago<select id="metodoPago" class="inp mt-1"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option></select></label>
+              <label class="lbl">Método de pago<select id="metodoPago" class="inp mt-1"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option><option>Crédito</option></select></label>
               <div id="filaEfectivo" class="space-y-1"><label class="lbl">Monto recibido (S/)<input id="recibido" type="number" min="0" step="0.01" placeholder="0.00" class="inp mt-1"></label><div class="flex justify-between text-sm"><span>Vuelto</span><b id="vuelto">S/ 0.00</b></div></div>
+              <div id="filaCredito" class="hidden space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-2">
+                <div class="text-xs font-bold text-amber-800">Venta a crédito · requiere DNI/RUC y nombre del cliente</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <label class="lbl">Pago inicial (S/)<input id="crInicial" type="number" min="0" step="0.01" placeholder="0.00" class="inp mt-1"></label>
+                  <label class="lbl">Método del inicial<select id="crMetodo" class="inp mt-1"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option></select></label>
+                  <label class="lbl">Vence en (días)<input id="crDias" type="number" min="1" max="365" step="1" class="inp mt-1"></label>
+                  <div class="text-sm self-end">Saldo a crédito: <b id="crSaldo">S/ 0.00</b></div>
+                </div>
+              </div>
               <div class="text-sm space-y-2 border-t pt-3"><div class="flex justify-between"><span>Subtotal</span><span id="subtotal">S/ 0.00</span></div><div class="flex justify-between text-red-600"><span>Descuento</span><span id="descMonto">- S/ 0.00</span></div><div class="flex justify-between text-xl font-extrabold text-slate-900 pt-1"><span>Total</span><span id="total">S/ 0.00</span></div></div>
+              <label class="flex items-center gap-2 text-xs text-slate-600"><input id="chkBoleta" type="checkbox" checked class="w-4 h-4"> Imprimir boleta interna al cobrar</label>
               <button id="btnCobrar" disabled class="btn w-full py-3 text-lg">Cobrar venta</button>
               <button id="btnVaciar" class="w-full text-sm text-slate-500 hover:text-red-600 py-1">Vaciar carrito</button>
             </div>
@@ -288,6 +304,7 @@ body{background:#f3f7f9;color:var(--ink)}
         <select id="uActivo" class="inp"><option value="SI">Activo</option><option value="NO">Desactivado</option></select>
       </div>
       <input id="uClave" type="password" placeholder="Contraseña (mínimo 6)" autocomplete="new-password" class="inp">
+      <div id="uLabsBox" class="space-y-1"><div class="lbl">Laboratorios asignados <span class="font-normal text-slate-500">(sin marcar = todos)</span></div><div id="uLabs" class="max-h-32 overflow-y-auto border rounded-lg p-2 grid grid-cols-2 gap-1 text-sm"></div></div>
       <p id="uAyuda" class="text-xs text-slate-500"></p>
       <div class="flex gap-2">
         <button type="button" id="btnLimpiarUsuario" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Nuevo</button>
@@ -324,11 +341,12 @@ body{background:#f3f7f9;color:var(--ink)}
         <label class="lbl sm:col-span-5">Motivo *<input id="mMotivo" required placeholder="Ej. Factura F001-123 / rotura en almacén" class="inp mt-1"></label>
         <button id="btnMov" class="btn py-2">Registrar</button>
       </form>
-      <div class="grid sm:grid-cols-4 gap-2 mb-2">
+      <div class="grid sm:grid-cols-5 gap-2 mb-2">
         <select id="fTipo" class="inp"><option value="">Todos los tipos</option><option>Venta</option><option>Compra</option><option>Devolución</option><option>Merma</option><option>Vencido</option><option>Dañado</option><option>Consumo interno</option><option>Ajuste inventario</option></select>
         <input id="fTexto" placeholder="Buscar producto, motivo, usuario, lote" class="inp">
         <input id="fDesde" type="date" class="inp" title="Desde">
         <input id="fHasta" type="date" class="inp" title="Hasta">
+        <label class="flex items-center gap-1 text-xs text-slate-600"><input id="fArchivo" type="checkbox"> Histórico archivado</label>
       </div>
       <div class="overflow-x-auto"><table class="w-full text-sm">
         <thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Fecha</th><th class="pr-2">Tipo</th><th class="pr-2">Producto</th><th class="pr-2 text-right">Cant.</th><th class="pr-2 text-right">Stock</th><th class="pr-2">Lote</th><th class="pr-2">Motivo</th><th>Usuario</th></tr></thead>
@@ -336,6 +354,7 @@ body{background:#f3f7f9;color:var(--ink)}
     </div>
 
     <div id="tab-cuadre" class="hidden">
+      <label class="lbl mb-2 inline-block">Laboratorio<select id="cLab" class="inp mt-1 !w-56"><option value="">Todos los laboratorios</option></select></label>
       <p class="text-sm text-slate-600 mb-2">Ingresa el stock contado (en unidades). Solo se ajustan los productos con conteo. <span class="text-red-600 font-semibold">Faltante</span> en rojo, <span class="text-blue-600 font-semibold">sobrante</span> en azul.</p>
       <div class="overflow-x-auto max-h-[50vh] overflow-y-auto"><table class="w-full text-sm">
         <thead class="text-left text-slate-500 sticky top-0 bg-white"><tr><th class="py-1">Producto</th><th class="text-right pr-2">Sistema</th><th>Físico contado</th><th class="text-right">Diferencia</th></tr></thead>
@@ -360,9 +379,10 @@ body{background:#f3f7f9;color:var(--ink)}
       <label class="lbl">Desde<input id="vDesde" type="date" class="inp mt-1"></label>
       <label class="lbl">Hasta<input id="vHasta" type="date" class="inp mt-1"></label>
       <button id="btnBuscarVentas" class="btn px-4 py-2">Consultar</button>
+      <label class="solo-admin hidden flex items-center gap-1 text-xs text-slate-600 pb-2"><input id="vArchivo" type="checkbox"> Incluir histórico archivado</label>
       <span id="vAviso" class="text-xs text-slate-500"></span>
     </div>
-    <div id="vResumen" class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4"></div>
+    <div id="vResumen" class="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-4"></div>
     <div class="overflow-x-auto"><table class="w-full text-sm">
       <thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Fecha</th><th class="pr-2">Ticket</th><th class="pr-2">Cliente</th><th class="pr-2">Pago</th><th class="pr-2 text-right">Total</th><th class="pr-2">Vendedor</th><th></th></tr></thead>
       <tbody id="vBody"></tbody></table></div>
@@ -373,9 +393,20 @@ body{background:#f3f7f9;color:var(--ink)}
 <div id="modalCaja" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
  <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-5 max-h-[95vh] overflow-y-auto">
   <div class="flex items-center justify-between mb-4"><div><h2 class="text-lg font-bold">💵 Control de caja</h2><p class="text-xs text-slate-500">Apertura, movimientos y cierre por usuario</p></div><button id="btnCerrarCajaModal" class="text-slate-500 text-xl">✕</button></div>
-  <div id="cajaEstado" class="rounded-lg border p-4 mb-4 bg-slate-50 text-sm">Consultando estado...</div>
+  <div id="cajaEstado" class="rounded-lg border p-4 mb-2 bg-slate-50 text-sm">Consultando estado...</div>
+  <div id="cajaTurno" class="text-xs mb-3"></div>
+  <div class="flex gap-2 mb-3"><button id="btnHistCajas" type="button" class="solo-admin hidden border rounded-lg px-3 py-1 text-xs font-semibold hover:bg-slate-50">📋 Historial de cajas</button></div>
   <div id="cajaApertura" class="border rounded-lg p-4 space-y-3"><h3 class="font-semibold">Aperturar caja</h3><label class="lbl">Monto inicial en efectivo (S/)<input id="cajaMontoInicial" type="number" min="0" step="0.01" value="0" class="inp mt-1"></label><button id="btnAperturarCaja" class="btn px-4 py-2">Aperturar caja</button></div>
   <div id="cajaCierre" class="hidden border rounded-lg p-4 space-y-3"><h3 class="font-semibold">Cerrar caja</h3><div id="cajaResumen" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div><label class="lbl">Efectivo contado físicamente (S/)<input id="cajaMontoContado" type="number" min="0" step="0.01" class="inp mt-1"></label><label class="lbl">Observación<textarea id="cajaObservacion" class="inp mt-1" rows="2" placeholder="Observaciones del cierre"></textarea></label><button id="btnCerrarCaja" class="btn px-4 py-2">Confirmar cierre de caja</button></div>
+  <div id="cajaMovs" class="hidden border rounded-lg p-4 space-y-2 mt-4"><h3 class="font-semibold">Ingresos y egresos de caja</h3>
+    <form id="formMovCaja" class="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end">
+      <label class="lbl">Tipo<select id="mcTipo" class="inp mt-1"><option value="EGRESO">Egreso (salida)</option><option value="INGRESO">Ingreso (entrada)</option></select></label>
+      <label class="lbl">Monto (S/)<input id="mcMonto" type="number" min="0.01" step="0.01" required class="inp mt-1"></label>
+      <label class="lbl col-span-2 sm:col-span-3">Motivo<input id="mcMotivo" required minlength="3" placeholder="Ej. Pago de delivery, sencillo, retiro de efectivo" class="inp mt-1"></label>
+      <button class="btn py-2" type="submit">Registrar</button>
+    </form>
+    <div id="cajaMovLista" class="text-sm divide-y"></div></div>
+  <div id="cajaHistorial" class="hidden mt-4"><h3 class="font-semibold mb-2">Historial de cajas (últimas 300)</h3><div class="overflow-x-auto"><table class="w-full text-xs"><thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Caja</th><th class="pr-2">Usuario</th><th class="pr-2">Turno</th><th class="pr-2">Apertura</th><th class="pr-2">Cierre</th><th class="pr-2 text-right">Inicial</th><th class="pr-2 text-right">Esperado</th><th class="pr-2 text-right">Contado</th><th class="pr-2 text-right">Diferencia</th><th>Estado</th></tr></thead><tbody id="cajaHistBody"></tbody></table></div></div>
   <p class="text-xs text-slate-500 mt-3">Las ventas se registran en la caja abierta del usuario. El cierre calcula efectivo esperado, otros pagos y diferencias.</p>
  </div>
 </div>
@@ -415,10 +446,18 @@ body{background:#f3f7f9;color:var(--ink)}
           <option value="bajo_stock">Productos con bajo stock (lista para imprimir)</option>
           <option value="alertas">Vencimientos y stock bajo</option>
           <option value="kardex">Movimientos Kardex</option>
+          <option value="reposicion">Reposición sugerida de medicamentos (por laboratorio)</option>
+          <option value="recetas">Libro de recetas (ventas con receta)</option>
+          <option value="creditos">Créditos por cobrar</option>
         </select>
       </label>
       <label class="lbl">Desde<input id="rDesde" type="date" class="inp mt-1"></label>
       <label class="lbl">Hasta<input id="rHasta" type="date" class="inp mt-1"></label>
+    </div>
+    <div id="rParamsRepo" class="hidden grid sm:grid-cols-3 gap-3 mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+      <label class="lbl">Analizar ventas de los últimos (días)<input id="rpDias" type="number" min="1" max="365" value="30" class="inp mt-1"></label>
+      <label class="lbl">Cobertura deseada (días de venta)<input id="rpCob" type="number" min="1" max="180" value="30" class="inp mt-1"></label>
+      <label class="lbl">Laboratorio<select id="rpLab" class="inp mt-1"><option value="">Todos</option></select></label>
     </div>
     <div class="flex flex-wrap gap-2 mb-4">
       <button id="btnGenerarReporte" class="btn px-5 py-2" type="button">Consultar reporte</button>
@@ -432,13 +471,125 @@ body{background:#f3f7f9;color:var(--ink)}
   </div>
 </div>
 
+<!-- ===== Modal Alertas de vencimiento ===== -->
+<div id="modalAlertas" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-3"><div><h2 class="text-lg font-bold">⏰ Alertas de vencimiento</h2><p id="alSub" class="text-xs text-slate-500"></p></div><button id="btnCerrarAlertas" class="text-slate-500 hover:text-slate-800 text-xl">✕</button></div>
+    <div id="alResumen" class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4"></div>
+    <div class="flex flex-wrap gap-2 mb-3 items-center">
+      <select id="alFiltro" class="inp !w-auto"><option value="todos">Todas las alertas</option><option value="vencido">Solo vencidos</option><option value="critico">Vencen en 30 días o menos</option><option value="alto">Vencen en 31–60 días</option><option value="aviso">Vencen en 61 días o más (aviso)</option><option value="stock">Solo stock bajo</option></select>
+      <button id="alImprimir" class="border rounded-lg px-3 py-2 text-sm font-semibold hover:bg-slate-50" type="button">🖨 Imprimir lista</button>
+    </div>
+    <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Producto</th><th class="pr-2">Laboratorio</th><th class="pr-2">Lote</th><th class="pr-2 text-right">Stock</th><th class="pr-2">Vence</th><th class="pr-2 text-right">Días</th><th class="pr-2">Alerta</th><th></th></tr></thead><tbody id="alBody"></tbody></table></div>
+    <p class="text-xs text-slate-500 mt-3">Los productos vencidos no se pueden vender. El administrador puede darlos de baja: queda registrado en el Kardex como «Vencido».</p>
+  </div>
+</div>
+
+<!-- ===== Modal Equivalentes ===== -->
+<div id="modalEquiv" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-3"><h2 class="text-lg font-bold">⇄ Medicamentos equivalentes</h2><button id="btnCerrarEquiv" class="text-slate-500 hover:text-slate-800 text-xl">✕</button></div>
+    <div id="eqBase" class="rounded-lg bg-slate-50 border p-3 mb-3 text-sm"></div>
+    <div id="eqLista"></div>
+    <p class="text-xs text-slate-500 mt-3">Equivalente = mismo principio activo y misma concentración. Verifica siempre la forma farmacéutica y la indicación antes de sustituir; con receta, el cambio debe respetar lo prescrito.</p>
+  </div>
+</div>
+
+<!-- ===== Modal Créditos por cobrar ===== -->
+<div id="modalCreditos" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-3"><div><h2 class="text-lg font-bold">💳 Créditos por cobrar</h2><p class="text-xs text-slate-500">Ventas a crédito, saldos y abonos. Los abonos entran a tu caja abierta.</p></div><button id="btnCerrarCreditos" class="text-slate-500 hover:text-slate-800 text-xl">✕</button></div>
+    <div id="cdResumen" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4"></div>
+    <form id="formAbono" class="hidden rounded-lg border border-emerald-300 bg-emerald-50 p-3 mb-4 space-y-2">
+      <div id="abInfo" class="text-sm font-semibold"></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
+        <label class="lbl">Monto del abono (S/)<input id="abMonto" type="number" min="0.01" step="0.01" required class="inp mt-1"></label>
+        <label class="lbl">Método<select id="abMetodo" class="inp mt-1"><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta</option><option>Transferencia</option></select></label>
+        <button type="submit" class="btn py-2" id="btnAbonar">Registrar abono</button>
+        <button type="button" id="btnAbCancelar" class="border rounded-lg py-2 hover:bg-white">Cancelar</button>
+      </div>
+    </form>
+    <div class="flex flex-wrap gap-2 mb-3"><select id="cdFiltro" class="inp !w-auto"><option value="PENDIENTE">Pendientes</option><option value="PAGADO">Pagados</option><option value="TODOS">Todos</option></select><input id="cdBuscar" class="inp !w-64" placeholder="Buscar cliente, DNI o boleta"></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Cliente</th><th class="pr-2">Boleta</th><th class="pr-2">Fecha</th><th class="pr-2 text-right">Total</th><th class="pr-2 text-right">Saldo</th><th class="pr-2">Vence</th><th class="pr-2">Estado</th><th></th></tr></thead><tbody id="cdBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ===== Modal Turnos de venta (Admin) ===== -->
+<div id="modalTurnos" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-2"><div><h2 class="text-lg font-bold">🕒 Turnos de venta</h2><p class="text-xs text-slate-500">Un cajero con turnos asignados solo puede aperturar caja y vender dentro de ellos. Sin turnos = sin restricción. Los administradores no tienen límite.</p></div><button id="btnCerrarTurnos" class="text-slate-500 hover:text-slate-800 text-xl">✕</button></div>
+    <div class="overflow-x-auto mb-4"><table class="w-full text-sm"><thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Usuario</th><th class="pr-2">Turno</th><th class="pr-2">Horario</th><th class="pr-2">Días</th><th class="pr-2">Estado</th><th></th></tr></thead><tbody id="tBody"></tbody></table></div>
+    <form id="formTurno" class="space-y-2 border-t pt-3">
+      <h3 id="tTitulo" class="font-semibold">Nuevo turno</h3><input type="hidden" id="tID">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <label class="lbl">Cajero<select id="tUsuario" required class="inp mt-1"></select></label>
+        <label class="lbl">Nombre del turno<input id="tNombre" required maxlength="40" placeholder="Mañana" class="inp mt-1"></label>
+        <label class="lbl">Desde<input id="tInicio" type="time" required class="inp mt-1"></label>
+        <label class="lbl">Hasta<input id="tFin" type="time" required class="inp mt-1"></label>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 text-sm"><span class="lbl !inline">Días:</span>
+        <label><input type="checkbox" class="tdia" value="1"> Lun</label><label><input type="checkbox" class="tdia" value="2"> Mar</label><label><input type="checkbox" class="tdia" value="3"> Mié</label><label><input type="checkbox" class="tdia" value="4"> Jue</label><label><input type="checkbox" class="tdia" value="5"> Vie</label><label><input type="checkbox" class="tdia" value="6"> Sáb</label><label><input type="checkbox" class="tdia" value="7"> Dom</label>
+        <span class="text-xs text-slate-500">(sin marcar = todos los días)</span>
+        <select id="tActivo" class="inp !w-auto ml-auto"><option value="SI">Activo</option><option value="NO">Inactivo</option></select></div>
+      <p class="text-xs text-slate-500">Para turnos de noche que cruzan la medianoche usa, por ejemplo, de 22:00 a 06:00 (los días marcados son los de inicio del turno).</p>
+      <div class="flex gap-2"><button type="button" id="btnLimpiarTurno" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Nuevo</button><button type="submit" id="btnGuardarTurno" class="btn flex-1 py-2">Guardar turno</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Modal Datos del negocio (Admin) ===== -->
+<div id="modalConfig" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <form id="formConfig" class="bg-white rounded-xl shadow-xl w-full max-w-xl p-5 space-y-3 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between"><div><h2 class="text-lg font-bold">⚙ Datos del negocio y boleta</h2><p class="text-xs text-slate-500">Se imprimen en la boleta interna y definen valores por defecto.</p></div><button type="button" id="btnCerrarConfig" class="text-slate-500 hover:text-slate-800 text-xl">✕</button></div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <label class="lbl sm:col-span-2">Nombre del negocio<input id="cfNombre" maxlength="80" class="inp mt-1"></label>
+      <label class="lbl">RUC (opcional)<input id="cfRuc" inputmode="numeric" maxlength="11" class="inp mt-1"></label>
+      <label class="lbl">Teléfono<input id="cfTel" maxlength="30" class="inp mt-1"></label>
+      <label class="lbl sm:col-span-2">Dirección<input id="cfDir" maxlength="120" class="inp mt-1"></label>
+      <label class="lbl">Serie de la boleta interna<input id="cfSerie" maxlength="4" class="inp mt-1" placeholder="B001"></label>
+      <label class="lbl sm:col-span-2">Mensaje al pie de la boleta<input id="cfPie" maxlength="120" class="inp mt-1"></label>
+      <label class="lbl">Días de alerta de vencimiento<input id="cfAlerta" type="number" min="30" max="365" class="inp mt-1"></label>
+      <label class="lbl">Días de crédito por defecto<input id="cfCredito" type="number" min="1" max="365" class="inp mt-1"></label>
+    </div>
+    <p class="text-xs text-slate-500">La boleta interna tiene numeración propia del sistema (serie + correlativo). No es un comprobante electrónico de SUNAT ni reemplaza a uno.</p>
+    <div class="flex gap-2"><button type="button" id="btnCancelarConfig" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Cancelar</button><button type="submit" id="btnGuardarConfig" class="btn flex-1 py-2">Guardar</button></div>
+  </form>
+</div>
+
+<!-- ===== Modal Respaldo y archivo (Admin) ===== -->
+<div id="modalMant" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-5 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-3"><h2 class="text-lg font-bold">⛁ Respaldo y archivo histórico</h2><button id="btnCerrarMant" class="text-slate-500 hover:text-slate-800 text-xl">✕</button></div>
+    <div class="flex gap-2 mb-4"><button id="bm-resp" type="button">Copias de seguridad</button><button id="bm-arch" type="button">Archivado histórico</button></div>
+    <div id="tab-resp">
+      <div class="flex flex-wrap gap-2 mb-3">
+        <button id="btnRespCrear" class="btn px-4 py-2" type="button">Crear copia de seguridad ahora</button>
+        <button id="btnRespDescargar" class="border rounded-lg px-4 py-2 text-sm font-semibold hover:bg-slate-50" type="button">⬇ Descargar copia en mi equipo</button>
+      </div>
+      <p class="text-xs text-slate-500 mb-3">La copia completa de tu base de datos se guarda en el servidor (se conservan las últimas 15) y también se genera una automática cada día. La descarga incluye productos, clientes, ventas, kardex, cajas, créditos y recetas (no incluye usuarios ni contraseñas). Para restaurar una copia contacta a soporte.</p>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Fecha</th><th class="pr-2">Tipo</th><th class="pr-2">Usuario</th><th>Archivo</th></tr></thead><tbody id="rsBody"></tbody></table></div>
+    </div>
+    <div id="tab-arch" class="hidden">
+      <p class="text-sm text-slate-600 mb-3">Mueve ventas, kardex, cajas cerradas, cambios, abonos y recetas antiguos a hojas de archivo para que el sistema trabaje más rápido. <b>No se pierde nada</b>: antes se hace una copia de seguridad y el histórico se puede consultar marcando «histórico archivado» en Ventas y en Kardex. Las ventas a crédito con saldo pendiente nunca se archivan.</p>
+      <div class="flex flex-wrap items-end gap-2 mb-3">
+        <label class="lbl">Archivar lo anterior a (meses)<input id="arMeses" type="number" min="6" max="120" value="12" class="inp mt-1 !w-32"></label>
+        <button id="btnArchPrev" class="border rounded-lg px-4 py-2 text-sm font-semibold hover:bg-slate-50" type="button">Ver qué se archivará</button>
+        <button id="btnArchRun" class="btn px-4 py-2" type="button" disabled>Archivar ahora</button>
+      </div>
+      <div id="arResultado" class="rounded-lg border bg-slate-50 p-3 text-sm mb-4 hidden"></div>
+      <h3 class="font-semibold mb-1">Archivados anteriores</h3>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="text-left text-slate-500"><tr><th class="py-1 pr-2">Fecha</th><th class="pr-2">Hasta</th><th class="pr-2">Usuario</th><th>Detalle</th></tr></thead><tbody id="arBody"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 hidden px-5 py-3 rounded-lg shadow-lg text-white font-medium z-50 max-w-[90vw]"></div>
 
 <script>
 // ===== Configuración =====
 const API_URL = 'https://script.google.com/macros/s/AKfycby1F0fu3pXnUFRyNd0UBpzT1yDuNR-KYphkeHYCqocBXAv0rHMgG-n6D8MenxHRRBiccA/exec';
 const STOCK_BAJO = 5;          // se usa cuando el producto no tiene Stock_Minimo
-const DIAS_POR_VENCER = 90;
+let DIAS_POR_VENCER = 90;   // se actualiza con la configuración del negocio
 
 // ===== Estado =====
 let productos = [], usuarios = [], carrito = {}, cobrando = false, sesion = null;
@@ -528,7 +679,13 @@ async function mostrarSuperAdmin() {
     onSalir: msg => { host.classList.add('hidden'); if (host.shadowRoot) host.shadowRoot.innerHTML = ''; cerrarSesion(msg); } });
 }
 
+let config = { Negocio_Nombre: '', RUC: '', Direccion: '', Telefono: '', Serie_Boleta: 'B001', Pie_Boleta: '', Dias_Alerta_Vencimiento: '90', Dias_Credito: '15' };
+const VERSION_API_REQUERIDA = 7;
 function iniciarDatos() {
+  const av = $('avisoVersion');
+  if (av) { const antigua = (Number(sesion && sesion.version) || 0) < VERSION_API_REQUERIDA; av.classList.toggle('hidden', !antigua);
+    if (antigua) av.innerHTML = '<b>Apps Script desactualizado.</b> Las funciones nuevas (boleta interna, crédito, recetas, turnos, respaldo…) necesitan que publiques la versión nueva del Apps Script (Implementar → Administrar implementaciones → Editar → Nueva versión).'; }
+  apiPost({ accion: 'obtener_config' }).then(d => { config = Object.assign(config, d.config || {}); DIAS_POR_VENCER = Number(config.Dias_Alerta_Vencimiento) || 90; if (productos.length) renderTodo(); }).catch(() => {});
   cargarProductos();
   apiPost({accion:'estado_caja'}).then(d=>{cajaAbierta=!!d.abierta;if(!cajaAbierta) toast('Apertura caja antes de registrar ventas',false);}).catch(()=>{});
 }
@@ -572,7 +729,7 @@ function pedirCambioClave(forzado) {
 function cerrarSesion(msg) {
   sesion = null; carrito = {}; productos = [];
   try { sessionStorage.removeItem('sesion'); } catch (e) {}
-  ['modal', 'modalUsuarios', 'modalInv', 'modalVentas', 'modalCaja', 'modalClientes', 'modalReportes'].forEach(id => $(id).classList.add('hidden'));
+  ['modal', 'modalUsuarios', 'modalInv', 'modalVentas', 'modalCaja', 'modalClientes', 'modalReportes', 'modalAlertas', 'modalEquiv', 'modalCreditos', 'modalTurnos', 'modalConfig', 'modalMant'].forEach(id => $(id).classList.add('hidden'));
   $('app').classList.add('hidden');
   if ($('modalClave')) $('modalClave').remove();
   $('login').classList.remove('hidden');
@@ -635,24 +792,124 @@ async function cargarProductos() {
 // ===== Render =====
 function renderTodo() { renderAlertas(); renderProductos(); renderCarrito(); }
 
+// Niveles de vencimiento (solo productos con stock): vencido · crítico (≤30 d) · alto (31–60 d) · aviso (61 d hasta el límite configurado)
+function nivelVenc(p) {
+  if (Number(p.Stock) <= 0) return null;
+  const d = diasParaVencer(p.Fecha_Vencimiento);
+  if (d === null) return null;
+  if (d < 0) return 'vencido';
+  if (d <= 30) return 'critico';
+  if (d > DIAS_POR_VENCER) return null;
+  return d <= 60 ? 'alto' : 'aviso';
+}
+function calcAlertas() {
+  const g = { vencido: [], critico: [], alto: [], aviso: [], stock: [] };
+  productos.forEach(p => { const n = nivelVenc(p); if (n) g[n].push(p); if (Number(p.Stock) <= stockMin(p)) g.stock.push(p); });
+  Object.keys(g).forEach(k => { if (k !== 'stock') g[k].sort((a, b) => String(a.Fecha_Vencimiento).localeCompare(String(b.Fecha_Vencimiento))); });
+  return g;
+}
 function renderAlertas() {
-  const bajos = productos.filter(p => Number(p.Stock) <= stockMin(p));
-  const porVencer = productos.filter(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return d !== null && d <= DIAS_POR_VENCER; });
-  const box = $('alertas');
-  if (!bajos.length && !porVencer.length) { box.classList.add('hidden'); return; }
-  let html = '';
-  if (bajos.length) html += '<p class="font-bold text-amber-800">⚠️ Stock bajo (' + bajos.length + ')</p><p class="mb-2">' +
-    bajos.map(p => esc(p.Nombre) + ' <b>(' + Number(p.Stock) + ' / mín. ' + stockMin(p) + ')</b>').join(' · ') + '</p>';
-  if (porVencer.length) html += '<p class="font-bold text-red-700">⏰ Vencidos o por vencer (' + porVencer.length + ')</p><p>' +
-    porVencer.map(p => { const d = diasParaVencer(p.Fecha_Vencimiento); return esc(p.Nombre) + ' <b>(' + (d < 0 ? 'vencido' : d + ' d') + ')</b>'; }).join(' · ') + '</p>';
-  box.innerHTML = html;
+  const g = calcAlertas(), box = $('alertas');
+  const urgentes = g.vencido.length + g.critico.length;
+  const b = $('badgeAlertas'); if (b) { b.textContent = urgentes; b.classList.toggle('hidden', !urgentes); }
+  if ($('modalAlertas') && !$('modalAlertas').classList.contains('hidden')) renderAlertasModal();
+  if (!g.vencido.length && !g.critico.length && !g.alto.length && !g.aviso.length && !g.stock.length) { box.classList.add('hidden'); return; }
+  const chip = (n, txt, cls) => n ? '<span class="px-2 py-1 rounded-full text-xs font-semibold ' + cls + '">' + txt + ': ' + n + '</span>' : '';
+  box.innerHTML = '<div class="flex flex-wrap items-center gap-2"><b class="text-amber-800">⚠️ Alertas</b>' +
+    chip(g.vencido.length, 'Vencidos', 'bg-red-600 text-white') + chip(g.critico.length, 'Vencen ≤ 30 d', 'bg-red-100 text-red-700') +
+    chip(g.alto.length, '31–60 d', 'bg-amber-100 text-amber-800') + chip(g.aviso.length, '61–' + DIAS_POR_VENCER + ' d', 'bg-yellow-50 text-yellow-800 border border-yellow-200') +
+    chip(g.stock.length, 'Stock bajo', 'bg-slate-200 text-slate-700') +
+    '<button id="btnVerAlertas" type="button" class="ml-auto text-xs font-semibold text-emerald-700 underline">Ver detalle</button></div>';
   box.classList.remove('hidden');
 }
+const ETIQ_VENC = { vencido: ['VENCIDO', 'bg-red-600 text-white'], critico: ['≤ 30 días', 'bg-red-100 text-red-700'], alto: ['31–60 días', 'bg-amber-100 text-amber-800'], aviso: ['Aviso', 'bg-yellow-50 text-yellow-800'] };
+function filasAlertas() {
+  const f = $('alFiltro').value, g = calcAlertas(), vistos = new Set(), out = [];
+  const add = (p, n) => { const k = p.ID + '|' + n; if (!vistos.has(k)) { vistos.add(k); out.push({ p, n }); } };
+  if (f === 'todos' || f === 'vencido') g.vencido.forEach(p => add(p, 'vencido'));
+  if (f === 'todos' || f === 'critico') g.critico.forEach(p => add(p, 'critico'));
+  if (f === 'todos' || f === 'alto') g.alto.forEach(p => add(p, 'alto'));
+  if (f === 'todos' || f === 'aviso') g.aviso.forEach(p => add(p, 'aviso'));
+  if (f === 'stock') g.stock.forEach(p => add(p, 'stock'));
+  return out;
+}
+function renderAlertasModal() {
+  const g = calcAlertas();
+  $('alSub').textContent = 'Límite de aviso configurado: ' + DIAS_POR_VENCER + ' días';
+  $('alResumen').innerHTML = [['Vencidos', g.vencido.length], ['Vencen ≤ 30 días', g.critico.length], ['31–60 días', g.alto.length], ['61–' + DIAS_POR_VENCER + ' días', g.aviso.length], ['Stock bajo', g.stock.length]].map(x => tarjetaReporte(x[0], x[1])).join('');
+  const filas = filasAlertas();
+  $('alBody').innerHTML = filas.length ? filas.map(({ p, n }) => {
+    const d = diasParaVencer(p.Fecha_Vencimiento), et = ETIQ_VENC[n] || ['STOCK BAJO', 'bg-slate-200 text-slate-700'];
+    const baja = n === 'vencido' && esAdmin() ? '<button data-baja="' + esc(p.ID) + '" class="text-xs text-red-600 hover:underline">Dar de baja</button>' : '';
+    return '<tr class="border-t"><td class="py-1 pr-2">' + esc(p.Nombre) + ' <span class="text-xs text-slate-400">' + esc(p.Concentracion || '') + '</span></td><td class="pr-2">' + esc(p.Laboratorio || '—') + '</td><td class="pr-2">' + esc(p.Lote || '—') +
+      '</td><td class="pr-2 text-right">' + esc(stockTxt(p)) + '</td><td class="pr-2 whitespace-nowrap">' + esc(String(p.Fecha_Vencimiento || '').slice(0, 10) || '—') + '</td><td class="pr-2 text-right">' + (d === null ? '—' : d) +
+      '</td><td class="pr-2"><span class="text-[11px] font-bold px-2 py-0.5 rounded-full ' + et[1] + '">' + et[0] + '</span></td><td>' + baja + '</td></tr>';
+  }).join('') : '<tr><td colspan="8" class="py-4 text-center text-slate-400">Sin alertas en este filtro</td></tr>';
+}
+function abrirAlertas() { $('modalAlertas').classList.remove('hidden'); renderAlertasModal(); }
+async function darDeBaja(id) {
+  const p = porId(id); if (!p || !esAdmin()) return;
+  if (!confirm('Se dará de baja todo el stock de «' + p.Nombre + '» (' + Number(p.Stock) + ' unid.) como VENCIDO y quedará en el Kardex.\n\n¿Continuar?')) return;
+  try {
+    await apiPost({ accion: 'ajustar_stock', id: p.ID, tipo: 'Vencido', modo: 'unidad', cantidad: Number(p.Stock), lote: p.Lote || '', motivo: 'Baja por vencimiento' + (p.Fecha_Vencimiento ? ' (' + String(p.Fecha_Vencimiento).slice(0, 10) + ')' : '') });
+    toast('✅ Producto dado de baja'); await cargarProductos();
+  } catch (err) { toast(err.message, false); }
+}
+function imprimirAlertas() {
+  const filas = filasAlertas(); if (!filas.length) return toast('No hay alertas para imprimir', false);
+  const cuerpo = filas.map(({ p, n }) => { const d = diasParaVencer(p.Fecha_Vencimiento), et = ETIQ_VENC[n] ? ETIQ_VENC[n][0] : 'STOCK BAJO';
+    return '<tr><td>' + esc(p.Nombre + ' ' + (p.Concentracion || '')) + '</td><td>' + esc(p.Laboratorio || '') + '</td><td>' + esc(p.Lote || '') + '</td><td>' + Number(p.Stock) + '</td><td>' + esc(String(p.Fecha_Vencimiento || '').slice(0, 10)) + '</td><td>' + (d === null ? '' : d) + '</td><td>' + et + '</td></tr>'; }).join('');
+  imprimirHTML('<!doctype html><html><head><meta charset="utf-8"><title>Alertas de vencimiento</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#263746}h1{font-size:19px}table{border-collapse:collapse;width:100%;font-size:11px}th,td{border:1px solid #ccc;padding:5px;text-align:left}th{background:#edf2f5}</style></head><body><h1>' +
+    esc(config.Negocio_Nombre || 'FARMACIA') + ' · Alertas de vencimiento</h1><p style="font-size:11px;color:#667">' + hoyISO() + '</p><table><tr><th>Producto</th><th>Laboratorio</th><th>Lote</th><th>Stock (unid.)</th><th>Vence</th><th>Días</th><th>Alerta</th></tr>' + cuerpo + '</table></body></html>');
+}
+
+// ===== Medicamentos equivalentes (mismo principio activo y concentración) =====
+// Claves tolerantes: sin tildes/mayúsculas y sin espacios sobrantes ("500mg" = "500 mg")
+const claveAct = s => norm(s).replace(/\s+/g, ' ').trim();
+const claveConc = s => norm(s).replace(/\s+/g, '');
+function equivalentesDe(p) {
+  const pa = claveAct(p.Principio_Activo), out = { mismos: [], otros: [] };
+  if (!pa) return out;
+  const conc = claveConc(p.Concentracion);
+  productos.forEach(q => {
+    if (String(q.ID) === String(p.ID) || claveAct(q.Principio_Activo) !== pa) return;
+    (claveConc(q.Concentracion) === conc ? out.mismos : out.otros).push(q);
+  });
+  const vendible = q => Number(q.Stock) > 0 && !(diasParaVencer(q.Fecha_Vencimiento) !== null && diasParaVencer(q.Fecha_Vencimiento) < 0);
+  const orden = (a, b) => (vendible(b) - vendible(a)) || (Number(a.Precio) - Number(b.Precio)) || String(a.Nombre).localeCompare(String(b.Nombre));
+  out.mismos.sort(orden); out.otros.sort(orden);
+  return out;
+}
+let equivBase = null;
+function filaEquiv(q, base) {
+  const dias = diasParaVencer(q.Fecha_Vencimiento), vencido = dias !== null && dias < 0, libre = Number(q.Stock) - unidadesEnCarrito(q.ID), u = upc(q);
+  const dif = Number(q.Precio) - Number(base.Precio);
+  const difTxt = Math.abs(dif) < 0.005 ? '' : '<span class="text-xs font-semibold ' + (dif < 0 ? 'text-emerald-700' : 'text-slate-500') + '">' + (dif < 0 ? '−' : '+') + moneda(Math.abs(dif)) + ' vs. original</span>';
+  const bCaja = '<button data-eqadd="' + esc(q.ID) + '" data-modo="caja" ' + (vencido || libre < u ? 'disabled' : '') + ' class="btn px-3 py-1 text-xs">' + (u > 1 ? '+ Caja' : 'Agregar') + '</button>';
+  const bUni = fracc(q) ? '<button data-eqadd="' + esc(q.ID) + '" data-modo="unidad" ' + (vencido || libre < 1 ? 'disabled' : '') + ' class="btn px-3 py-1 text-xs !bg-teal-600">+ Unidad</button>' : '';
+  return '<div class="flex flex-wrap items-center justify-between gap-2 border-b py-2"><div class="min-w-0"><div class="font-medium">' + esc(q.Nombre) + (conReceta(q) ? ' <span class="text-[10px] font-bold text-red-600">RX</span>' : '') +
+    ' <span class="text-xs text-slate-500">' + esc([q.Concentracion, q.Presentacion].filter(Boolean).join(' · ')) + '</span></div><div class="text-xs text-slate-500">' + esc(q.Laboratorio || 'Sin laboratorio') + ' · Stock ' + esc(stockTxt(q)) +
+    (vencido ? ' · <b class="text-red-600">VENCIDO</b>' : '') + '</div></div><div class="flex items-center gap-2"><div class="text-right"><div class="font-bold">' + moneda(q.Precio) + '</div>' + difTxt + '</div>' + bCaja + bUni + '</div></div>';
+}
+function renderEquiv() {
+  const p = equivBase; if (!p) return;
+  const e = equivalentesDe(p);
+  $('eqBase').innerHTML = '<b>' + esc(p.Nombre) + '</b> ' + esc([p.Concentracion, p.Presentacion].filter(Boolean).join(' · ')) + '<br><span class="text-slate-600">Principio activo: <b>' + esc(p.Principio_Activo || '—') + '</b> · ' + esc(p.Laboratorio || 'Sin laboratorio') + ' · ' + moneda(p.Precio) + ' · Stock ' + esc(stockTxt(p)) + '</span>';
+  let html = '';
+  if (!claveAct(p.Principio_Activo)) html = '<p class="text-sm text-slate-500">Este producto no tiene principio activo registrado, por eso no se pueden buscar equivalentes. Edítalo para completarlo.</p>';
+  else {
+    html += '<h3 class="font-semibold text-sm mb-1">Mismo principio activo y concentración (' + e.mismos.length + ')</h3>' + (e.mismos.length ? e.mismos.map(q => filaEquiv(q, p)).join('') : '<p class="text-sm text-slate-400 mb-2">No hay equivalentes registrados.</p>');
+    if (e.otros.length) html += '<h3 class="font-semibold text-sm mt-4 mb-1">Mismo principio activo, otra concentración (' + e.otros.length + ')</h3><p class="text-xs text-amber-700 mb-1">Ojo: no son intercambiables sin criterio profesional; ajusta la dosis.</p>' + e.otros.map(q => filaEquiv(q, p)).join('');
+  }
+  $('eqLista').innerHTML = html;
+}
+function abrirEquiv(id) { const p = porId(id); if (!p) return; equivBase = p; $('modalEquiv').classList.remove('hidden'); renderEquiv(); }
 
 function renderProductos() {
   const q = norm($('buscador').value.trim());
   const lista = productos.filter(p => !q || [p.Nombre, p.Principio_Activo, p.Laboratorio, p.Concentracion, p.Codigo_Barras].some(v => norm(v).includes(q)));
   $('estado').textContent = lista.length + ' producto(s)';
+  const eqPorPA = {}; productos.forEach(x => { const k = claveAct(x.Principio_Activo); if (k) eqPorPA[k] = (eqPorPA[k] || 0) + 1; });
 
   $('productos').innerHTML = lista.map(p => {
     const stock = Number(p.Stock);
@@ -688,7 +945,8 @@ function renderProductos() {
         '<span class="text-xs font-semibold px-2 py-1 rounded-full text-right ' + (bajo ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700') + '">Stock: ' + stockTxt(p) + '</span>' +
       '</div>' +
       '<div class="mt-1 mb-2 flex items-center justify-between gap-2 min-h-[1rem]"><span>' + venc +
-        (bajo ? ' <span class="text-xs font-semibold text-red-600">⚠ Stock bajo (mín. ' + stockMin(p) + ')</span>' : '') + '</span>' +
+        (bajo ? ' <span class="text-xs font-semibold text-red-600">⚠ Stock bajo (mín. ' + stockMin(p) + ')</span>' : '') +
+        (eqPorPA[claveAct(p.Principio_Activo)] > 1 ? ' <button data-equiv="' + esc(p.ID) + '" class="text-xs font-semibold ' + (stock <= 0 || vencido ? 'text-red-600' : 'text-blue-600') + ' hover:underline">⇄ Equivalentes (' + (eqPorPA[claveAct(p.Principio_Activo)] - 1) + ')</button>' : '') + '</span>' +
         (esAdmin() ? '<span class="ml-auto flex gap-2"><button data-ajustar="' + esc(p.ID) + '" class="text-xs text-emerald-700 hover:underline">📦 Ajustar stock</button><button data-edit="' + esc(p.ID) + '" class="text-xs text-blue-600 hover:underline">✏️ Editar</button></span>' : '') + '</div>' +
       '<div class="flex gap-2">' + bCaja + bUni + '</div>' +
     '</div>';
@@ -726,7 +984,10 @@ function renderTotales() {
   const t = calcTotales();
   const efectivo = $('metodoPago').value === 'Efectivo';
   const rec = $('recibido').value === '' ? null : Number($('recibido').value);
+  const credito = $('metodoPago').value === 'Crédito';
   $('filaEfectivo').classList.toggle('hidden', !efectivo);
+  $('filaCredito').classList.toggle('hidden', !credito);
+  if (credito) { if (!$('crDias').value) $('crDias').placeholder = String(config.Dias_Credito || 15); const ini = Math.max(0, Number($('crInicial').value) || 0); $('crSaldo').textContent = moneda(Math.max(0, t.total - ini)); }
   $('subtotal').textContent = moneda(t.sub);
   $('descMonto').textContent = '- ' + moneda(t.d);
   $('total').textContent = moneda(t.total);
@@ -734,7 +995,7 @@ function renderTotales() {
   $('vuelto').textContent = efectivo && rec !== null ? (falta ? 'Falta ' + moneda(t.total - rec) : moneda(rec - t.total)) : moneda(0);
   $('vuelto').className = falta ? 'text-red-600' : '';
   const hay = Object.keys(carrito).length > 0;
-  $('btnCobrar').disabled = !hay || cobrando || falta;
+  $('btnCobrar').disabled = !hay || cobrando || falta || (credito && t.total > 0 && (Number($('crInicial').value) || 0) >= t.total);
   $('btnCobrar').textContent = cobrando ? 'Procesando...' : 'Cobrar ' + (hay ? moneda(t.total) : '');
 }
 
@@ -755,26 +1016,103 @@ function quitarUno(k) {
   renderProductos(); renderCarrito();
 }
 
+// ===== Receta médica (datos obligatorios al vender medicamentos con receta) =====
+function pedirReceta(nombres) {
+  return new Promise(resolve => {
+    const m = document.createElement('div');
+    m.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4';
+    m.innerHTML = '<form class="bg-white rounded-2xl shadow-xl w-full max-w-md p-5 space-y-3 max-h-[95vh] overflow-y-auto">' +
+      '<h2 class="text-lg font-bold text-slate-800">📝 Datos de la receta médica</h2>' +
+      '<div class="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-800"><b>Medicamentos con receta:</b> ' + nombres.map(esc).join(', ') + '</div>' +
+      '<label class="lbl">Médico *<input id="rxMedico" required minlength="3" maxlength="80" class="inp mt-1" placeholder="Nombre del médico"></label>' +
+      '<div class="grid grid-cols-2 gap-3"><label class="lbl">N.º de colegiatura (CMP) *<input id="rxCmp" required maxlength="12" class="inp mt-1"></label>' +
+      '<label class="lbl">N.º de receta<input id="rxNumero" maxlength="30" class="inp mt-1" placeholder="Opcional"></label></div>' +
+      '<label class="lbl">Paciente *<input id="rxPaciente" required minlength="3" maxlength="80" class="inp mt-1" value="' + esc($('cNombre').value) + '"></label>' +
+      '<label class="lbl">Fecha de emisión de la receta *<input id="rxFecha" type="date" required max="' + hoyISO() + '" value="' + hoyISO() + '" class="inp mt-1"></label>' +
+      '<p class="text-xs text-slate-500">Estos datos quedan en el libro de recetas y en la boleta. Verifica que la receta esté vigente y firmada.</p>' +
+      '<div class="flex gap-2"><button type="button" id="rxCancelar" class="flex-1 border rounded-lg py-2 hover:bg-slate-50">Cancelar</button><button type="submit" class="btn flex-1 py-2">Confirmar receta</button></div></form>';
+    document.body.appendChild(m);
+    const cerrar = v => { m.remove(); resolve(v); };
+    m.querySelector('#rxMedico').focus();
+    m.querySelector('#rxCancelar').onclick = () => cerrar(null);
+    m.querySelector('form').onsubmit = ev => {
+      ev.preventDefault();
+      cerrar({ medico: m.querySelector('#rxMedico').value.trim(), cmp: m.querySelector('#rxCmp').value.trim(), numero: m.querySelector('#rxNumero').value.trim(),
+        paciente: m.querySelector('#rxPaciente').value.trim(), fecha: m.querySelector('#rxFecha').value });
+    };
+  });
+}
+
+// ===== Impresión (iframe oculto: no depende de ventanas emergentes) =====
+function imprimirHTML(html) {
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  const d = f.contentWindow.document; d.open(); d.write(html); d.close();
+  setTimeout(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast('No se pudo imprimir', false); } setTimeout(() => f.remove(), 60000); }, 300);
+}
+const ESTILO_TICKET = '@page{size:80mm auto;margin:3mm}body{font:12px "Courier New",monospace;width:72mm;margin:0 auto;color:#000}h2,h3,p{margin:3px 0}.c{text-align:center}.r{text-align:right}.s{font-size:11px;color:#333}.l{border-top:1px dashed #000;margin:6px 0}table{width:100%;border-collapse:collapse}td{padding:1px 0;vertical-align:top}td:last-child{text-align:right;white-space:nowrap}.firma{margin-top:26px;border-top:1px solid #000;text-align:center;font-size:11px}';
+function cabeceraTicket() {
+  const neg = config.Negocio_Nombre || (sesion && sesion.usuario.empresa) || 'FARMACIA';
+  return '<h2 class="c">' + esc(neg) + '</h2>' + (config.RUC ? '<p class="c s">RUC ' + esc(config.RUC) + '</p>' : '') + (config.Direccion ? '<p class="c s">' + esc(config.Direccion) + '</p>' : '') + (config.Telefono ? '<p class="c s">Tel. ' + esc(config.Telefono) + '</p>' : '');
+}
+// Boleta de venta INTERNA (numeración propia del sistema; no es comprobante electrónico SUNAT)
+function imprimirBoleta(b, copia) {
+  const lineas = (b.lineas || []).map(l => '<tr><td colspan="2">' + esc(l.nombre) + '</td></tr><tr><td class="s">' + l.cantidad + ' × ' + moneda(l.precio) + ' (' + (l.modo === 'unidad' ? 'unid.' : 'caja') + ')</td><td>' + moneda(l.subtotal) + '</td></tr>').join('');
+  const c = b.cliente || {}, cr = b.credito, rx = b.receta;
+  const fila = (t, x) => '<tr><td>' + t + '</td><td>' + x + '</td></tr>';
+  const totales = '<table>' + fila('Subtotal', moneda(b.subtotal)) + (Number(b.descuento) ? fila('Descuento', '- ' + moneda(b.descuento)) : '') + '<tr><td><b>TOTAL</b></td><td><b>' + moneda(b.total) + '</b></td></tr>' + fila('Pago', esc(b.metodo)) +
+    (b.recibido !== '' && b.recibido != null && b.metodo === 'Efectivo' ? fila('Recibido', moneda(b.recibido)) + fila('Vuelto', moneda(b.vuelto)) : '') + '</table>';
+  const bloqueCred = cr ? '<div class="l"></div><p><b>VENTA A CRÉDITO</b></p><table>' + (Number(cr.inicial) ? fila('Pago inicial (' + esc(cr.metodo) + ')', moneda(cr.inicial)) : '') + fila('<b>Saldo pendiente</b>', '<b>' + moneda(cr.saldo) + '</b>') + fila('Vence', esc(cr.vence)) + '</table><div class="firma">Firma del cliente</div>' : '';
+  const bloqueRx = rx ? '<div class="l"></div><p class="s"><b>Receta:</b> ' + (rx.numero ? 'N.º ' + esc(rx.numero) + ' · ' : '') + esc(rx.fecha) + '<br>Dr(a). ' + esc(rx.medico) + ' · CMP ' + esc(rx.cmp) + '<br>Paciente: ' + esc(rx.paciente) + '</p>' : '';
+  imprimirHTML('<!doctype html><html><head><meta charset="utf-8"><title>Boleta ' + esc(b.numero) + '</title><style>' + ESTILO_TICKET + '</style></head><body>' + cabeceraTicket() + '<div class="l"></div>' +
+    '<p class="c"><b>BOLETA DE VENTA INTERNA</b></p><p class="c"><b>' + esc(b.numero) + '</b></p>' + (copia ? '<p class="c"><b>*** COPIA / REIMPRESIÓN ***</b></p>' : '') +
+    '<p class="s">Fecha: ' + esc(b.fecha) + '<br>Atendió: ' + esc(b.vendedor) + (b.turno ? ' · Turno ' + esc(b.turno) : '') + '</p>' +
+    '<p class="s">Cliente: ' + esc(c.nombre || 'Público general') + (c.doc ? '<br>Doc.: ' + esc(c.doc) : '') + '</p><div class="l"></div><table>' + lineas + '</table><div class="l"></div>' + totales + bloqueCred + bloqueRx +
+    '<div class="l"></div><p class="c">' + esc(config.Pie_Boleta || 'Gracias por su compra') + '</p><p class="c s">Documento interno sin valor tributario</p></body></html>');
+}
+function boletaDesdeVenta(v) {
+  const ini = Number(v.Credito_Inicial) || 0, tot = Number(v.Total) || 0;
+  return { numero: v.Numero_Boleta || v.ID_Venta, fecha: v.Fecha, lineas: v.Detalle || [{ nombre: v.Productos_Vendidos, cantidad: 1, precio: tot, subtotal: tot, modo: 'caja' }],
+    subtotal: Number(v.Subtotal) || tot, descuento: Number(v.Descuento) || 0, total: tot, metodo: v.Metodo_Pago, recibido: v.Monto_Recibido, vuelto: v.Vuelto, vendedor: v.Vendedor, turno: v.Turno,
+    cliente: { nombre: v.Cliente_Nombre, doc: v.Cliente_Doc }, receta: v.Receta_Medico ? { numero: v.Receta_Numero, medico: v.Receta_Medico, cmp: v.Receta_CMP, paciente: v.Receta_Paciente, fecha: v.Receta_Fecha } : null,
+    credito: v.Credito_Estado ? { inicial: ini, metodo: v.Credito_Inicial_Metodo, saldo: Math.round((tot - ini) * 100) / 100, vence: v.Credito_Vence } : null };
+}
+function imprimirReciboAbono(r) {
+  imprimirHTML('<!doctype html><html><head><meta charset="utf-8"><title>Recibo ' + esc(r.id_abono) + '</title><style>' + ESTILO_TICKET + '</style></head><body>' + cabeceraTicket() + '<div class="l"></div><p class="c"><b>RECIBO DE ABONO</b></p><p class="c"><b>' + esc(r.id_abono) + '</b></p>' +
+    '<p class="s">Fecha: ' + esc(r.fecha) + '<br>Cobró: ' + esc(r.usuario) + '</p><p class="s">Cliente: ' + esc(r.cliente_nombre) + '<br>Doc.: ' + esc(r.cliente_doc) + '<br>Venta: ' + esc(r.numero_boleta || r.id_venta) + '</p><div class="l"></div>' +
+    '<table><tr><td><b>ABONO (' + esc(r.metodo) + ')</b></td><td><b>' + moneda(r.monto) + '</b></td></tr><tr><td>Saldo pendiente</td><td>' + moneda(r.saldo) + '</td></tr></table><div class="firma">Firma del cliente</div><p class="c s">Documento interno sin valor tributario</p></body></html>');
+}
+
 // ===== doPost: cobrar =====
 async function cobrar() {
   const claves = Object.keys(carrito);
   if (cobrando || !claves.length) return;
+  const metodo = $('metodoPago').value;
   const rx = [...new Set(claves.map(k => porId(dividir(k)[0])).filter(p => p && conReceta(p)).map(p => p.Nombre))];
-  if (rx.length && !confirm('⚠️ Esta venta incluye productos que requieren receta médica:\n\n• ' + rx.join('\n• ') + '\n\n¿Confirmas que se verificó la receta?')) return;
-
+  let receta = null;
+  if (rx.length) { receta = await pedirReceta(rx); if (!receta) return; }
+  let credito = null;
+  if (metodo === 'Crédito') {
+    if (!$('cDoc').value.trim() || !$('cNombre').value.trim()) { const d = $('cDoc').closest('details'); if (d) d.open = true; return toast('Para vender a crédito registra el DNI/RUC y el nombre del cliente', false); }
+    const t = calcTotales(), ini = Number($('crInicial').value) || 0, dias = Number($('crDias').value) || Number(config.Dias_Credito) || 15;
+    credito = { inicial: ini, inicial_metodo: $('crMetodo').value, dias };
+    if (!confirm('VENTA A CRÉDITO\n\nCliente: ' + $('cNombre').value + ' (' + $('cDoc').value + ')\nTotal: ' + moneda(t.total) + '\nPago inicial: ' + moneda(ini) + '\nSaldo a crédito: ' + moneda(t.total - ini) + '\nVence en ' + dias + ' día(s)\n\n¿Confirmar?')) return;
+  }
   cobrando = true; renderTotales();
   try {
-    const efectivo = $('metodoPago').value === 'Efectivo';
+    const efectivo = metodo === 'Efectivo';
     const data = await apiPost({
-      metodo_pago: $('metodoPago').value,
+      metodo_pago: metodo,
       productos: claves.map(k => { const [i, m] = dividir(k); return { id: porId(i).ID, modo: m, cantidad: carrito[k] }; }),
       descuento: { tipo: $('dTipo').value, valor: Number($('dValor').value) || 0 },
       cliente: { doc: $('cDoc').value, nombre: $('cNombre').value, telefono: $('cTelefono').value, direccion: $('cDireccion').value },
-      monto_recibido: efectivo ? $('recibido').value : ''
+      monto_recibido: efectivo ? $('recibido').value : '', receta, credito
     });
-    toast('✅ Venta ' + data.id_venta + ' · ' + moneda(data.total) + (data.vuelto !== '' ? ' · Vuelto ' + moneda(data.vuelto) : ''));
+    toast('✅ Venta ' + (data.numero_boleta || data.id_venta) + ' · ' + moneda(data.total) + (data.vuelto !== '' ? ' · Vuelto ' + moneda(data.vuelto) : ''));
+    if ($('chkBoleta').checked && data.boleta) imprimirBoleta(data.boleta);
     carrito = {};
-    ['buscador', 'cDoc', 'cNombre', 'cTelefono', 'cDireccion', 'dValor', 'recibido'].forEach(id => $(id).value = '');
+    ['buscador', 'cDoc', 'cNombre', 'cTelefono', 'cDireccion', 'dValor', 'recibido', 'crInicial', 'crDias'].forEach(id => $(id).value = '');
   } catch (err) {
     toast('No se pudo cobrar: ' + err.message, false);
   } finally {
@@ -840,7 +1178,7 @@ function renderUsuarios() {
   $('listaUsuarios').innerHTML = usuarios.length ? usuarios.map(u =>
     '<div class="flex items-center justify-between py-2"><div>' +
       '<div class="font-medium">' + esc(u.Nombre) + (u.Activo === 'NO' ? ' <span class="text-xs text-red-600">(desactivado)</span>' : '') + '</div>' +
-      '<div class="text-xs text-slate-500">' + esc(u.Usuario) + ' · ' + (u.Rol === 'Admin' ? 'Administrador' : 'Cajero') + '</div></div>' +
+      '<div class="text-xs text-slate-500">' + esc(u.Usuario) + ' · ' + (u.Rol === 'Admin' ? 'Administrador' : 'Cajero') + (u.Laboratorios ? ' · Labs: ' + esc(u.Laboratorios.split(';').join(', ')) : '') + '</div></div>' +
       '<button data-uedit="' + esc(u.Usuario) + '" class="text-xs text-blue-600 hover:underline">✏️ Editar</button></div>'
   ).join('') : '<p class="text-sm text-slate-400 py-2">No hay usuarios.</p>';
 }
@@ -851,6 +1189,7 @@ function limpiarFormUsuario() {
   $('uNombre').value = ''; $('uRol').value = 'Cajero'; $('uActivo').value = 'SI'; $('uClave').value = '';
   $('uClave').required = true;
   $('uAyuda').textContent = 'El usuario no se podrá cambiar después. Usa letras, números, punto, guion.';
+  renderLabsUsuario('');
 }
 
 function editarUsuario(nombreUsuario) {
@@ -860,15 +1199,22 @@ function editarUsuario(nombreUsuario) {
   $('uNombre').value = u.Nombre; $('uRol').value = u.Rol; $('uActivo').value = u.Activo; $('uClave').value = '';
   $('uClave').required = false;
   $('uAyuda').textContent = 'Deja la contraseña vacía para no cambiarla.';
+  renderLabsUsuario(u.Laboratorios || '');
 }
 
+function laboratoriosCatalogo() { return [...new Set(productos.map(p => String(p.Laboratorio || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b)); }
+function renderLabsUsuario(seleccion) {
+  const sel = String(seleccion || '').split(';').filter(Boolean), todos = [...new Set([...laboratoriosCatalogo(), ...sel])].sort((a, b) => a.localeCompare(b));
+  $('uLabs').innerHTML = todos.length ? todos.map(l => '<label class="flex items-center gap-1"><input type="checkbox" class="ulab" value="' + esc(l) + '"' + (sel.some(x => norm(x) === norm(l)) ? ' checked' : '') + '> ' + esc(l) + '</label>').join('') : '<span class="text-xs text-slate-400 col-span-2">Aún no hay laboratorios registrados en los productos.</span>';
+  $('uLabsBox').classList.toggle('hidden', $('uRol').value === 'Admin');
+}
 async function guardarUsuarioWeb(e) {
   e.preventDefault();
   const btn = $('btnGuardarUsuario');
   btn.disabled = true; btn.textContent = 'Guardando...';
   try {
     await apiPost({ accion: 'guardar_usuario',
-      datos: { Usuario: $('uUsuario').value, Nombre: $('uNombre').value, Rol: $('uRol').value, Activo: $('uActivo').value, Clave: $('uClave').value } });
+      datos: { Usuario: $('uUsuario').value, Nombre: $('uNombre').value, Rol: $('uRol').value, Activo: $('uActivo').value, Clave: $('uClave').value, Laboratorios: [...document.querySelectorAll('.ulab:checked')].map(i => i.value) } });
     toast('✅ Usuario guardado');
     limpiarFormUsuario();
     const d = await apiPost({ accion: 'listar_usuarios' }); usuarios = d.usuarios; renderUsuarios();
@@ -899,6 +1245,7 @@ function llenarSelector() {
 
 function abrirInventario(tab, idProducto) {
   ultimoCuadre = null;
+  { const cl = $('cLab'), prev = cl.value; cl.innerHTML = '<option value="">Todos los laboratorios</option>' + laboratoriosCatalogo().map(l => '<option>' + esc(l) + '</option>').join(''); cl.value = prev; }
   $('modalInv').classList.remove('hidden');
   llenarSelector();
   if (idProducto) $('mProd').value = idProducto;
@@ -920,7 +1267,7 @@ async function registrarMovimiento(e) {
 }
 
 async function cargarKardex() {
-  try { const d = await apiPost({ accion: 'listar_kardex' }); kardex = d.movimientos; renderKardex(); }
+  try { const d = await apiPost({ accion: 'listar_kardex', archivo: $('fArchivo').checked }); kardex = d.movimientos; renderKardex(); }
   catch (err) { toast(err.message, false); }
 }
 
@@ -938,7 +1285,8 @@ function renderKardex() {
 
 // --- Cuadre / inventario físico ---
 function renderCuadre() {
-  $('cBody').innerHTML = ordenados().map(p => '<tr class="border-t"><td class="py-1 pr-2">' + esc(p.Nombre) + ' <span class="text-xs text-slate-400">' + esc(p.Concentracion || '') +
+  const labSel = $('cLab').value;
+  $('cBody').innerHTML = ordenados().filter(p => !labSel || norm(p.Laboratorio) === norm(labSel)).map(p => '<tr class="border-t"><td class="py-1 pr-2">' + esc(p.Nombre) + ' <span class="text-xs text-slate-400">' + esc(p.Concentracion || '') +
     '</span></td><td class="text-right pr-2">' + Number(p.Stock) + '</td><td><input type="number" min="0" step="1" data-fis="' + esc(p.ID) +
     '" class="inp !py-1 w-28"></td><td class="text-right font-semibold">—</td></tr>').join('');
 }
@@ -986,17 +1334,74 @@ function exportarCuadre() {
 
 // ===== Control de caja =====
 let cajaAbierta = false;
-async function cargarEstadoCaja() {
-  const d=await apiPost({accion:'estado_caja'}); cajaAbierta=!!d.abierta;
-  $('cajaEstado').innerHTML = d.abierta ? '<b class="text-emerald-700">● Caja ABIERTA</b><div class="mt-1">Código: '+esc(d.caja.ID_Caja)+' · Apertura: '+esc(String(d.caja.Fecha_Apertura))+' · Fondo inicial: '+moneda(d.caja.Monto_Inicial)+'</div>' : '<b class="text-amber-700">● No tienes una caja abierta</b><div class="mt-1">Apertura una caja para poder registrar ventas.</div>';
-  $('cajaApertura').classList.toggle('hidden',cajaAbierta); $('cajaCierre').classList.toggle('hidden',!cajaAbierta);
-  if(d.abierta){const r=d.resumen||{};$('cajaResumen').innerHTML=[['Ventas',r.ventas||0],['Efectivo',moneda(r.efectivo)],['Otros pagos',moneda(r.otros)],['Total',moneda(r.total)]].map(x=>'<div class="rounded-lg bg-slate-50 p-2"><div class="text-xs text-slate-500">'+x[0]+'</div><b>'+x[1]+'</b></div>').join('');}
+function turnoTxt(t) {
+  if (!t) return '';
+  if (!t.restringido) return '<span class="text-slate-500">Sin restricción de turno.</span>';
+  return t.actual ? '🕒 Turno actual: <b>' + esc(t.actual.nombre) + '</b> (' + esc(t.actual.inicio) + '–' + esc(t.actual.fin) + ')'
+    : '<span class="text-red-600 font-semibold">⛔ Estás fuera de tu turno.</span> Tus turnos: ' + esc(t.asignados.join(' · '));
 }
-async function abrirModalCaja(){ $('modalCaja').classList.remove('hidden'); try{await cargarEstadoCaja();}catch(e){toast(e.message,false);} }
-$('btnCaja').addEventListener('click',abrirModalCaja);
-$('btnCerrarCajaModal').addEventListener('click',()=>$('modalCaja').classList.add('hidden'));
-$('btnAperturarCaja').addEventListener('click',async()=>{try{const d=await apiPost({accion:'aperturar_caja',monto_inicial:$('cajaMontoInicial').value});toast('Caja aperturada: '+d.caja.ID_Caja);await cargarEstadoCaja();}catch(e){toast(e.message,false);}});
-$('btnCerrarCaja').addEventListener('click',async()=>{const monto=$('cajaMontoContado').value;if(monto==='')return toast('Ingresa el efectivo contado',false);if(!confirm('¿Confirmas el cierre de caja? Esta acción no se puede deshacer.'))return;try{const d=await apiPost({accion:'cerrar_caja',monto_contado:monto,observacion:$('cajaObservacion').value});toast('Caja cerrada. Diferencia: '+moneda(d.diferencia));await cargarEstadoCaja();}catch(e){toast(e.message,false);}});
+async function cargarEstadoCaja() {
+  const d = await apiPost({ accion: 'estado_caja' }); cajaAbierta = !!d.abierta;
+  $('cajaTurno').innerHTML = turnoTxt(d.turno);
+  $('cajaEstado').innerHTML = d.abierta ? '<b class="text-emerald-700">● Caja ABIERTA</b><div class="mt-1">Código: ' + esc(d.caja.ID_Caja) + ' · Apertura: ' + esc(String(d.caja.Fecha_Apertura)) + ' · Fondo inicial: ' + moneda(d.caja.Monto_Inicial) + (d.caja.Turno ? ' · Turno ' + esc(d.caja.Turno) : '') + '</div>'
+    : '<b class="text-amber-700">● No tienes una caja abierta</b><div class="mt-1">Apertura una caja para poder registrar ventas.</div>';
+  $('cajaApertura').classList.toggle('hidden', cajaAbierta); $('cajaCierre').classList.toggle('hidden', !cajaAbierta); $('cajaMovs').classList.toggle('hidden', !cajaAbierta);
+  if (d.abierta) {
+    const r = d.resumen || {};
+    $('cajaResumen').innerHTML = [['Ventas', r.ventas || 0], ['Efectivo (ventas)', moneda(r.efectivo)], ['Otros medios', moneda(r.otros)], ['Vendido a crédito', moneda(r.credito)],
+      ['Cobros de crédito', moneda((r.abonos_efectivo || 0) + (r.abonos_otros || 0))], ['Ingresos', moneda(r.ingresos)], ['Egresos', moneda(r.egresos)], ['Efectivo esperado', moneda(r.esperado)]]
+      .map(x => '<div class="rounded-lg bg-slate-50 p-2"><div class="text-xs text-slate-500">' + x[0] + '</div><b>' + x[1] + '</b></div>').join('');
+    cargarMovsCaja();
+  }
+}
+async function cargarMovsCaja() {
+  try {
+    const d = await apiPost({ accion: 'mov_caja_listar' });
+    $('cajaMovLista').innerHTML = (d.movimientos || []).length ? d.movimientos.map(m => '<div class="flex justify-between gap-2 py-1"><span>' + esc(m.Fecha) + ' · ' + esc(m.Motivo) + '</span><b class="' + (m.Tipo === 'INGRESO' ? 'text-emerald-700' : 'text-red-600') + '">' + (m.Tipo === 'INGRESO' ? '+' : '−') + moneda(m.Monto) + '</b></div>').join('')
+      : '<p class="text-slate-400 py-1">Sin ingresos ni egresos registrados.</p>';
+  } catch (e) {}
+}
+async function abrirModalCaja() { $('modalCaja').classList.remove('hidden'); $('cajaHistorial').classList.add('hidden'); try { await cargarEstadoCaja(); } catch (e) { toast(e.message, false); } }
+$('btnCaja').addEventListener('click', abrirModalCaja);
+$('btnCerrarCajaModal').addEventListener('click', () => $('modalCaja').classList.add('hidden'));
+$('btnAperturarCaja').addEventListener('click', async () => { try { const d = await apiPost({ accion: 'aperturar_caja', monto_inicial: $('cajaMontoInicial').value }); toast('Caja aperturada: ' + d.caja.ID_Caja); await cargarEstadoCaja(); } catch (e) { toast(e.message, false); } });
+$('formMovCaja').addEventListener('submit', async e => {
+  e.preventDefault();
+  try { await apiPost({ accion: 'mov_caja_registrar', tipo: $('mcTipo').value, monto: $('mcMonto').value, motivo: $('mcMotivo').value }); $('mcMonto').value = ''; $('mcMotivo').value = ''; toast('Movimiento registrado'); await cargarEstadoCaja(); }
+  catch (err) { toast(err.message, false); }
+});
+function imprimirCierre(c) {
+  const r = c.resumen || {}, fila = (t, x) => '<tr><td>' + t + '</td><td>' + x + '</td></tr>';
+  imprimirHTML('<!doctype html><html><head><meta charset="utf-8"><title>Cierre ' + esc(c.id_caja) + '</title><style>' + ESTILO_TICKET + '</style></head><body>' + cabeceraTicket() + '<div class="l"></div><p class="c"><b>CIERRE DE CAJA</b></p><p class="c"><b>' + esc(c.id_caja) + '</b></p>' +
+    '<p class="s">Cajero: ' + esc(c.nombre) + (c.turno ? ' · Turno ' + esc(c.turno) : '') + '<br>Apertura: ' + esc(c.apertura) + '<br>Cierre: ' + esc(c.cierre) + '</p><div class="l"></div><table>' +
+    fila('Fondo inicial', moneda(c.monto_inicial)) + fila('Ventas en efectivo', moneda(r.efectivo)) + fila('Cobros de crédito (efectivo)', moneda(r.abonos_efectivo)) + fila('Ingresos', moneda(r.ingresos)) + fila('Egresos', '- ' + moneda(r.egresos)) +
+    '<tr><td><b>Efectivo esperado</b></td><td><b>' + moneda(c.esperado) + '</b></td></tr>' + fila('Efectivo contado', moneda(c.contado)) + '<tr><td><b>DIFERENCIA</b></td><td><b>' + moneda(c.diferencia) + '</b></td></tr></table><div class="l"></div><table>' +
+    fila('Otros medios (Yape, tarjeta…)', moneda(Number(r.otros) + Number(r.abonos_otros))) + fila('Vendido a crédito', moneda(r.credito)) + fila('N.º de ventas', r.ventas) + '</table>' + (c.observacion ? '<p class="s">Obs.: ' + esc(c.observacion) + '</p>' : '') +
+    '<div class="firma">Firma del cajero</div></body></html>');
+}
+$('btnCerrarCaja').addEventListener('click', async () => {
+  const monto = $('cajaMontoContado').value;
+  if (monto === '') return toast('Ingresa el efectivo contado', false);
+  if (!confirm('¿Confirmas el cierre de caja? Esta acción no se puede deshacer.')) return;
+  try {
+    const d = await apiPost({ accion: 'cerrar_caja', monto_contado: monto, observacion: $('cajaObservacion').value });
+    toast('Caja cerrada. Diferencia: ' + moneda(d.diferencia));
+    $('cajaMontoContado').value = ''; $('cajaObservacion').value = '';
+    await cargarEstadoCaja();
+    if (d.cierre && confirm('Caja cerrada. Diferencia: ' + moneda(d.diferencia) + '\n\n¿Imprimir el cierre de caja?')) imprimirCierre(d.cierre);
+  } catch (e) { toast(e.message, false); }
+});
+$('btnHistCajas').addEventListener('click', async () => {
+  const box = $('cajaHistorial'); box.classList.toggle('hidden');
+  if (box.classList.contains('hidden')) return;
+  try {
+    const d = await apiPost({ accion: 'listar_cajas' });
+    $('cajaHistBody').innerHTML = (d.cajas || []).map(c => { const dif = Number(c.Diferencia);
+      return '<tr class="border-t"><td class="py-1 pr-2">' + esc(c.ID_Caja) + '</td><td class="pr-2">' + esc(c.Usuario) + '</td><td class="pr-2">' + esc(c.Turno || '—') + '</td><td class="pr-2 whitespace-nowrap">' + esc(c.Fecha_Apertura) + '</td><td class="pr-2 whitespace-nowrap">' + esc(c.Fecha_Cierre || '—') +
+        '</td><td class="pr-2 text-right">' + moneda(c.Monto_Inicial) + '</td><td class="pr-2 text-right">' + (c.Monto_Esperado === '' ? '—' : moneda(c.Monto_Esperado)) + '</td><td class="pr-2 text-right">' + (c.Monto_Contado === '' ? '—' : moneda(c.Monto_Contado)) +
+        '</td><td class="pr-2 text-right font-semibold ' + (c.Diferencia === '' ? '' : dif < 0 ? 'text-red-600' : dif > 0 ? 'text-blue-600' : 'text-emerald-600') + '">' + (c.Diferencia === '' ? '—' : moneda(dif)) + '</td><td>' + (c.Estado === 'ABIERTA' ? '<b class="text-emerald-700">ABIERTA</b>' : 'Cerrada') + '</td></tr>'; }).join('') || '<tr><td colspan="10" class="py-3 text-center text-slate-400">Sin cajas</td></tr>';
+  } catch (e) { toast(e.message, false); }
+});
 
 // ===== Ventas y reporte diario =====
 function abrirVentas() {
@@ -1009,7 +1414,7 @@ function abrirVentas() {
 }
 
 async function cargarVentas() {
-  try { const d = await apiPost({ accion: 'listar_ventas', desde: $('vDesde').value, hasta: $('vHasta').value }); ventas = d.ventas; verVenta = -1; renderVentas(); }
+  try { const d = await apiPost({ accion: 'listar_ventas', desde: $('vDesde').value, hasta: $('vHasta').value, archivo: esAdmin() && $('vArchivo').checked }); ventas = d.ventas; verVenta = -1; renderVentas(); }
   catch (err) { toast(err.message, false); }
 }
 
@@ -1020,20 +1425,20 @@ function ticketHtml(v) {
     (v.Subtotal !== '' ? fila('Subtotal', moneda(v.Subtotal)) : '') + (Number(v.Descuento) ? fila('Descuento', '- ' + moneda(v.Descuento)) : '') + fila('<b>Total</b>', '<b>' + moneda(v.Total) + '</b>') +
     (v.Monto_Recibido !== '' ? fila('Recibido / Vuelto', moneda(v.Monto_Recibido) + ' / ' + moneda(v.Vuelto)) : '') +
     (v.Cliente_Doc || v.Cliente_Nombre ? fila('Cliente', esc(v.Cliente_Doc + ' ' + v.Cliente_Nombre)) : '') + (v.Cliente_Telefono ? fila('Teléfono', esc(v.Cliente_Telefono)) : '') + (v.Cliente_Direccion ? fila('Dirección', esc(v.Cliente_Direccion)) : '') +
-    '<div class="mt-3 flex justify-end"><button onclick="imprimirComprobante(\'' + esc(v.ID_Venta) + '\')" class="btn px-4 py-2 text-xs">🖨️ Imprimir comprobante</button></div>' + '</div></td></tr>';
+    '<div class="mt-3 flex justify-end"><button onclick="imprimirComprobante(\'' + esc(v.ID_Venta) + '\')" class="btn px-4 py-2 text-xs">🖨️ Imprimir boleta</button></div>' + '</div></td></tr>';
 }
 
 function renderVentas() {
-  const g = { 'Efectivo': 0, 'Yape / Plin': 0, 'Tarjeta': 0, 'Otros': 0 };
+  const g = { 'Efectivo': 0, 'Yape / Plin': 0, 'Tarjeta': 0, 'Crédito': 0, 'Otros': 0 };
   let tot = 0;
   ventas.forEach(v => {
     if (String(v.Estado || 'VIGENTE') === 'ANULADA') return;
     const t = Number(v.Total) || 0, m = v.Metodo_Pago; tot += t;
-    g[m === 'Efectivo' ? 'Efectivo' : (m === 'Yape' || m === 'Plin') ? 'Yape / Plin' : m === 'Tarjeta' ? 'Tarjeta' : 'Otros'] += t;
+    g[m === 'Efectivo' ? 'Efectivo' : (m === 'Yape' || m === 'Plin') ? 'Yape / Plin' : m === 'Tarjeta' ? 'Tarjeta' : m === 'Crédito' ? 'Crédito' : 'Otros'] += t;
   });
   $('vResumen').innerHTML = '<div class="rounded-lg bg-emerald-600 text-white p-3"><div class="text-xs opacity-80">Ingresos (' + ventas.length + ' ventas)</div><div class="text-xl font-bold">' + moneda(tot) + '</div></div>' +
     Object.keys(g).map(k => '<div class="rounded-lg border p-3"><div class="text-xs text-slate-500">' + k + '</div><div class="text-lg font-bold">' + moneda(g[k]) + '</div></div>').join('');
-  $('vBody').innerHTML = ventas.length ? ventas.map((v, i) => '<tr class="border-t"><td class="py-1 pr-2 whitespace-nowrap">' + esc(v.Fecha) + '</td><td class="pr-2">' + esc(v.ID_Venta) +
+  $('vBody').innerHTML = ventas.length ? ventas.map((v, i) => '<tr class="border-t"><td class="py-1 pr-2 whitespace-nowrap">' + esc(v.Fecha) + '</td><td class="pr-2">' + esc(v.Numero_Boleta || v.ID_Venta) + (v.Credito_Estado === 'PENDIENTE' ? ' <span class="text-[10px] font-bold text-amber-700">CRÉDITO</span>' : '') +
     '</td><td class="pr-2">' + esc(v.Cliente_Nombre || v.Cliente_Doc || '—') + '</td><td class="pr-2">' + esc(v.Metodo_Pago) + '</td><td class="pr-2 text-right font-semibold">' + moneda(v.Total) +
     '</td><td class="pr-2">' + esc(v.Vendedor) + '</td><td class="space-x-2 whitespace-nowrap"><button data-vver="' + i + '" class="text-xs text-blue-600 hover:underline">' + (verVenta === i ? 'Ocultar' : 'Ver ticket') + '</button>' + (String(v.Estado||'VIGENTE')==='VIGENTE' ? (esAdmin() ? '<button data-anular="'+esc(v.ID_Venta)+'" class="text-xs text-red-600 hover:underline">Anular</button>' : '') + '<button data-cambio="'+esc(v.ID_Venta)+'" class="text-xs text-emerald-700 hover:underline">Cambiar</button>' : '<span class="text-xs text-red-600 font-semibold">ANULADA</span>') + '</td></tr>' + (verVenta === i ? ticketHtml(v) : '')).join('')
     : '<tr><td colspan="7" class="py-4 text-center text-slate-400">Sin ventas en el rango</td></tr>';
@@ -1073,15 +1478,16 @@ function usarCliente(c) {
 function imprimirComprobante(id) {
   const v = ventas.find(x => String(x.ID_Venta) === String(id));
   if (!v) return toast('No se encontró la venta', false);
-  const lineas = v.Detalle ? v.Detalle.map(l => '<tr><td>' + esc(l.cantidad + ' x ' + l.nombre) + '</td><td>' + moneda(l.subtotal) + '</td></tr>').join('') : '<tr><td colspan="2">' + esc(v.Productos_Vendidos) + '</td></tr>';
-  const htmlTicket = '<!doctype html><html><head><meta charset="utf-8"><title>Comprobante ' + esc(v.ID_Venta) + '</title><style>body{font:12px Arial;max-width:320px;margin:20px auto;color:#111}h2,p{text-align:center;margin:5px 0}.line{border-top:1px dashed #333;margin:8px 0}table{width:100%;font-size:12px}td:last-child{text-align:right}.r{text-align:right}.small{font-size:11px}</style></head><body><h2>COMPROBANTE DE VENTA</h2><p>FARMACIA</p><div class="line"></div><p class="small">' + esc(v.ID_Venta) + '</p><p class="small">' + esc(v.Fecha) + '</p><div class="line"></div><p style="text-align:left">Cliente: ' + esc(v.Cliente_Nombre || 'Público general') + '<br>Documento: ' + esc(v.Cliente_Doc || '—') + '<br>Teléfono: ' + esc(v.Cliente_Telefono || '—') + '<br>Dirección: ' + esc(v.Cliente_Direccion || '—') + '</p><div class="line"></div><table>' + lineas + '</table><div class="line"></div><p class="r">Subtotal: ' + moneda(v.Subtotal) + '</p><p class="r">Descuento: ' + moneda(v.Descuento) + '</p><h3 class="r">TOTAL: ' + moneda(v.Total) + '</h3><p class="r">Pago: ' + esc(v.Metodo_Pago) + '</p>' + (v.Monto_Recibido !== '' ? '<p class="r">Recibido: ' + moneda(v.Monto_Recibido) + '</p><p class="r">Vuelto: ' + moneda(v.Vuelto) + '</p>' : '') + '<div class="line"></div><p>¡Gracias por su compra!</p><script>window.onload=function(){window.print();};<\/script></body></html>';
-  const w = window.open('', '_blank', 'width=420,height=700');
-  if (!w) return toast('Permite las ventanas emergentes para imprimir', false);
-  w.document.open(); w.document.write(htmlTicket); w.document.close();
+  imprimirBoleta(boletaDesdeVenta(v), true);
 }
 
 // ===== Centro de reportes =====
 let reporteActual = { titulo: '', columnas: [], filas: [], resumen: [] };
+const AVISOS_REP = {
+  reposicion: 'Sugerencia = (promedio diario vendido × días de cobertura + stock mínimo) − stock vendible. Un lote vencido cuenta como stock 0. El pedido se redondea hacia arriba a cajas/packs completos y se agrupa por laboratorio para armar la orden de compra. El costo usa el precio de compra por caja registrado en el producto.',
+  recetas: 'Libro de recetas: ventas que incluyeron medicamentos con receta, con los datos del médico, paciente y la boleta interna.',
+  creditos: 'Saldos pendientes de ventas a crédito al día de hoy. Para registrar un cobro usa «Créditos por cobrar».'
+};
 
 function abrirReportes() {
   $('modalReportes').classList.remove('hidden');
@@ -1091,7 +1497,8 @@ function abrirReportes() {
   }
   if (!$('rHasta').value) $('rHasta').value = hoyISO();
   const admin = esAdmin();
-  ['inventario', 'valorizado', 'bajo_stock', 'alertas', 'kardex'].forEach(v => {
+  { const sl = $('rpLab'), prev = sl.value; sl.innerHTML = '<option value="">Todos</option>' + laboratoriosCatalogo().map(l => '<option>' + esc(l) + '</option>').join(''); sl.value = prev; }
+  ['inventario', 'valorizado', 'bajo_stock', 'alertas', 'kardex', 'reposicion', 'recetas', 'creditos'].forEach(v => {
     const op = $('rTipo').querySelector('option[value="' + v + '"]');
     if (op) op.disabled = !admin;
   });
@@ -1121,8 +1528,8 @@ async function generarReporte() {
       const tarjeta = lista.filter(v => v.Metodo_Pago === 'Tarjeta').reduce((s, v) => s + Number(v.Total || 0), 0);
       titulo = 'Reporte de ventas';
       resumen = [['Operaciones', String(lista.length)], ['Total vendido', moneda(total)], ['Efectivo', moneda(efectivo)], ['Otros medios', moneda(digital + tarjeta)]];
-      columnas = ['Fecha', 'Comprobante interno', 'Documento cliente', 'Cliente', 'Método de pago', 'Subtotal (S/)', 'Descuento (S/)', 'Total (S/)', 'Vendedor'];
-      filas = lista.map(v => [v.Fecha, v.ID_Venta, v.Cliente_Doc, v.Cliente_Nombre || 'Público general', v.Metodo_Pago, Number(v.Subtotal || 0).toFixed(2), Number(v.Descuento || 0).toFixed(2), Number(v.Total || 0).toFixed(2), v.Vendedor]);
+      columnas = ['Fecha', 'Boleta interna', 'Documento cliente', 'Cliente', 'Método de pago', 'Subtotal (S/)', 'Descuento (S/)', 'Total (S/)', 'Vendedor', 'Turno'];
+      filas = lista.map(v => [v.Fecha, v.Numero_Boleta || v.ID_Venta, v.Cliente_Doc, v.Cliente_Nombre || 'Público general', v.Metodo_Pago, Number(v.Subtotal || 0).toFixed(2), Number(v.Descuento || 0).toFixed(2), Number(v.Total || 0).toFixed(2), v.Vendedor, v.Turno || '']);
     } else if (tipo === 'inventario') {
       const lista = productos.slice().sort((a,b) => String(a.Nombre).localeCompare(String(b.Nombre)));
       const unidades = lista.reduce((s,p) => s + Number(p.Stock || 0), 0);
@@ -1185,10 +1592,32 @@ async function generarReporte() {
       resumen = [['Movimientos', String(lista.length)], ['Unidades ingresadas', String(entradas)], ['Unidades retiradas', String(salidas)], ['Diferencia', String(entradas - salidas)]];
       columnas = ['Fecha', 'Tipo', 'Producto', 'Cantidad', 'Stock anterior', 'Stock nuevo', 'Lote', 'Motivo', 'Usuario'];
       filas = lista.map(m => [m.Fecha, m.Tipo, m.Producto, m.Cantidad, m.Stock_Antes, m.Stock_Despues, m.Lote, m.Motivo, m.Usuario]);
+    } else if (tipo === 'reposicion') {
+      const d = await apiPost({ accion: 'reporte_reposicion', dias_analisis: $('rpDias').value, dias_cobertura: $('rpCob').value, laboratorio: $('rpLab').value });
+      const q = d.resumen;
+      titulo = 'Reposición sugerida de medicamentos' + ($('rpLab').value ? ' · ' + $('rpLab').value : '');
+      resumen = [['Productos a reponer', String(q.productos)], ['Agotados / urgentes', q.agotados + ' / ' + q.urgentes], ['Cajas/packs a pedir', String(q.cajas)], ['Inversión estimada', moneda(q.inversion) + (q.sin_costo ? ' (' + q.sin_costo + ' sin costo)' : '')]];
+      columnas = ['Laboratorio', 'Producto', 'Concentración', 'Prioridad', 'Stock vendible (unid.)', 'Stock mínimo', 'Vendido (' + d.dias_analisis + ' d)', 'Prom. diario', 'Días de stock', 'Pedir (cajas/packs)', 'Unid. por caja', 'Pedir (unidades)', 'Costo estimado (S/)', 'Ubicación'];
+      filas = (d.filas || []).map(x => [x.Laboratorio || 'Sin laboratorio', x.Producto + (x.Receta === 'SI' ? ' (RX)' : ''), x.Concentracion, x.Prioridad + (x.Vencido === 'SI' ? ' · LOTE VENCIDO' : ''), x.Stock_Vendible, x.Stock_Minimo, x.Vendido, x.Prom_Diario,
+        x.Dias_Stock === null ? '—' : x.Dias_Stock, x.Pedido_Cajas, x.Unid_Caja, x.Pedido_Unid, x.Costo_Estimado === '' ? 'SIN COSTO' : Number(x.Costo_Estimado).toFixed(2), x.Ubicacion]);
+    } else if (tipo === 'recetas') {
+      const d = await apiPost({ accion: 'listar_recetas', desde, hasta });
+      const lista = d.recetas || [], vig = lista.filter(x => x.Estado !== 'ANULADA');
+      titulo = 'Libro de recetas (ventas con receta)';
+      resumen = [['Recetas registradas', String(vig.length)], ['Anuladas', String(lista.length - vig.length)], ['Médicos distintos', String(new Set(vig.map(x => x.CMP)).size)], ['Pacientes distintos', String(new Set(vig.map(x => norm(x.Paciente))).size)]];
+      columnas = ['Fecha venta', 'Boleta interna', 'N.º receta', 'Fecha receta', 'Médico', 'CMP', 'Paciente', 'Medicamentos', 'Vendedor', 'Estado'];
+      filas = lista.map(x => [x.Fecha, x.Numero_Boleta, x.Receta_Numero, x.Fecha_Receta, x.Medico, x.CMP, x.Paciente, x.Productos, x.Vendedor, x.Estado]);
+    } else if (tipo === 'creditos') {
+      const d = await apiPost({ accion: 'listar_creditos', estado: 'PENDIENTE' });
+      const q = d.resumen || {};
+      titulo = 'Créditos por cobrar';
+      resumen = [['Créditos pendientes', String(q.n || 0)], ['Saldo por cobrar', moneda(q.saldo)], ['Créditos vencidos', String(q.vencidos || 0)], ['Saldo vencido', moneda(q.saldo_vencido)]];
+      columnas = ['Cliente', 'Documento', 'Teléfono', 'Boleta interna', 'Fecha venta', 'Total (S/)', 'Pago inicial (S/)', 'Abonado (S/)', 'Saldo (S/)', 'Vence', 'Días de atraso'];
+      filas = (d.creditos || []).map(c => [c.Cliente_Nombre, c.Cliente_Doc, c.Cliente_Telefono, c.Numero_Boleta, c.Fecha, Number(c.Total).toFixed(2), Number(c.Inicial).toFixed(2), c.Abonos.reduce((t, a) => t + a.monto, 0).toFixed(2), Number(c.Saldo).toFixed(2), c.Vence, c.Atraso > 0 ? c.Atraso : 0]);
     }
     reporteActual = { titulo, columnas, filas, resumen };
     renderReporte();
-    $('rAviso').textContent = tipo === 'valorizado' ? 'El costo se calcula por unidad a partir del precio de compra por caja dividido entre unidades por caja. Los productos sin costo registrado no se incluyen en la inversión valorizada.' : (tipo === 'bajo_stock' ? 'Lista lista para imprimir o guardar como PDF. Incluye productos agotados y productos cuyo stock es igual o menor al mínimo configurado.' : 'Consulta generada correctamente. Los datos corresponden a la información disponible en el sistema.');
+    $('rAviso').textContent = tipo === 'valorizado' ? 'El costo se calcula por unidad a partir del precio de compra por caja dividido entre unidades por caja. Los productos sin costo registrado no se incluyen en la inversión valorizada.' : (tipo === 'bajo_stock' ? 'Lista lista para imprimir o guardar como PDF. Incluye productos agotados y productos cuyo stock es igual o menor al mínimo configurado.' : (AVISOS_REP[tipo] || 'Consulta generada correctamente. Los datos corresponden a la información disponible en el sistema.'));
   } catch (err) {
     $('rAviso').textContent = 'No se pudo generar el reporte: ' + err.message;
     toast(err.message, false);
@@ -1226,6 +1655,95 @@ function imprimirReportePDF() {
   w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(r.titulo) + '</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#263746}h1{font-size:21px}p{font-size:11px;color:#667}.resumen{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.res{border:1px solid #ddd;padding:10px;min-width:130px;font-size:12px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #ddd;padding:6px;text-align:left}th{background:#edf2f5}@media print{body{padding:0}tr{break-inside:avoid}}</style></head><body><h1>FARMACIA PRO 2.0</h1><h2>' + esc(r.titulo) + '</h2><p>Fecha de emisión: ' + hoyISO() + ' · Usuario: ' + esc(sesion.usuario.nombre) + '</p><div class="resumen">' + resumen + '</div><table><thead><tr>' + cabecera + '</tr></thead><tbody>' + cuerpo + '</tbody></table><script>window.onload=function(){window.print();};<\/script></body></html>');
   w.document.close();
 }
+
+// ===== Créditos por cobrar =====
+let creditos = [], creditoSel = null, creditoDet = null;
+async function abrirCreditos() { $('modalCreditos').classList.remove('hidden'); $('formAbono').classList.add('hidden'); creditoSel = null; creditoDet = null; await cargarCreditos(); }
+async function cargarCreditos() {
+  try {
+    const d = await apiPost({ accion: 'listar_creditos', estado: $('cdFiltro').value });
+    creditos = d.creditos || []; const r = d.resumen || {};
+    $('cdResumen').innerHTML = [['Créditos pendientes', r.n || 0], ['Saldo por cobrar', moneda(r.saldo)], ['Vencidos', r.vencidos || 0], ['Saldo vencido', moneda(r.saldo_vencido)]].map(x => tarjetaReporte(x[0], x[1])).join('');
+    renderCreditos();
+  } catch (err) { toast(err.message, false); }
+}
+function renderCreditos() {
+  const q = norm($('cdBuscar').value.trim());
+  const lista = creditos.filter(c => !q || norm([c.Cliente_Nombre, c.Cliente_Doc, c.Numero_Boleta].join(' ')).includes(q));
+  $('cdBody').innerHTML = lista.length ? lista.map(c => {
+    const vencido = c.Estado === 'PENDIENTE' && c.Atraso > 0, tel = String(c.Cliente_Telefono || '').replace(/\D/g, '');
+    const wa = vencido && tel.length >= 9 ? ' <a target="_blank" rel="noopener" class="text-xs text-green-700 hover:underline" href="https://wa.me/51' + tel.slice(-9) + '?text=' + encodeURIComponent('Hola ' + c.Cliente_Nombre + ', le recordamos que tiene un saldo pendiente de ' + moneda(c.Saldo) + ' con ' + (config.Negocio_Nombre || 'nuestra farmacia') + ' (boleta ' + c.Numero_Boleta + '). Gracias.') + '">Recordar</a>' : '';
+    const estado = c.Estado === 'PAGADO' ? '<span class="text-xs font-semibold text-emerald-700">Pagado</span>' : vencido ? '<span class="text-xs font-bold text-red-600">Vencido ' + c.Atraso + ' d</span>' : '<span class="text-xs text-amber-700 font-semibold">Pendiente</span>';
+    const det = creditoDet === c.ID_Venta ? '<tr class="bg-slate-50"><td colspan="8" class="p-3 text-xs">' + 'Pago inicial: ' + moneda(c.Inicial) + (c.Notas ? ' · ' + esc(c.Notas) : '') + '<br>' +
+      (c.Abonos.length ? c.Abonos.map(a => esc(a.fecha) + ' · ' + esc(a.metodo) + ' · ' + moneda(a.monto) + ' (' + esc(a.usuario) + ')').join('<br>') : 'Sin abonos registrados.') + '</td></tr>' : '';
+    return '<tr class="border-t"><td class="py-1 pr-2">' + esc(c.Cliente_Nombre) + '<div class="text-xs text-slate-500">' + esc(c.Cliente_Doc) + (tel ? ' · ' + esc(tel) : '') + '</div></td><td class="pr-2">' + esc(c.Numero_Boleta || c.ID_Venta) + '</td><td class="pr-2 whitespace-nowrap">' + esc(c.Fecha.slice(0, 10)) +
+      '</td><td class="pr-2 text-right">' + moneda(c.Total) + '</td><td class="pr-2 text-right font-semibold">' + moneda(c.Saldo) + '</td><td class="pr-2 whitespace-nowrap">' + esc(c.Vence) + '</td><td class="pr-2">' + estado + '</td><td class="whitespace-nowrap space-x-2">' +
+      (c.Estado === 'PENDIENTE' ? '<button data-abonar="' + esc(c.ID_Venta) + '" class="text-xs text-emerald-700 font-semibold hover:underline">Abonar</button>' : '') + '<button data-cddet="' + esc(c.ID_Venta) + '" class="text-xs text-blue-600 hover:underline">' + (creditoDet === c.ID_Venta ? 'Ocultar' : 'Detalle') + '</button>' + wa + '</td></tr>' + det;
+  }).join('') : '<tr><td colspan="8" class="py-4 text-center text-slate-400">Sin créditos en este filtro</td></tr>';
+}
+
+// ===== Turnos de venta (Admin) =====
+let turnos = [];
+const NOMBRE_DIA = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+async function abrirTurnos() {
+  $('modalTurnos').classList.remove('hidden');
+  try {
+    if (!usuarios.length) { const d = await apiPost({ accion: 'listar_usuarios' }); usuarios = d.usuarios; }
+    $('tUsuario').innerHTML = usuarios.filter(u => u.Rol !== 'Admin').map(u => '<option value="' + esc(u.Usuario) + '">' + esc(u.Nombre) + ' (' + esc(u.Usuario) + ')</option>').join('');
+    limpiarFormTurno(); await cargarTurnos();
+  } catch (err) { toast(err.message, false); }
+}
+async function cargarTurnos() {
+  const d = await apiPost({ accion: 'listar_turnos' }); turnos = d.turnos || [];
+  $('tBody').innerHTML = turnos.length ? turnos.map(t => {
+    const u = usuarios.find(x => x.Usuario === t.Usuario), dias = String(t.Dias || '').split(',').filter(Boolean).map(n => NOMBRE_DIA[Number(n)]).join(', ') || 'Todos';
+    return '<tr class="border-t"><td class="py-1 pr-2">' + esc(u ? u.Nombre : t.Usuario) + '</td><td class="pr-2">' + esc(t.Turno) + '</td><td class="pr-2 whitespace-nowrap">' + esc(t.Hora_Inicio) + ' – ' + esc(t.Hora_Fin) + '</td><td class="pr-2">' + esc(dias) + '</td><td class="pr-2">' +
+      (t.Activo === 'SI' ? 'Activo' : '<span class="text-slate-400">Inactivo</span>') + '</td><td class="whitespace-nowrap space-x-2"><button data-tedit="' + esc(t.ID_Turno) + '" class="text-xs text-blue-600 hover:underline">✏️ Editar</button><button data-tdel="' + esc(t.ID_Turno) + '" class="text-xs text-red-600 hover:underline">Eliminar</button></td></tr>';
+  }).join('') : '<tr><td colspan="6" class="py-3 text-center text-slate-400">No hay turnos asignados: todos los cajeros venden sin restricción de horario.</td></tr>';
+}
+function limpiarFormTurno() {
+  $('tTitulo').textContent = 'Nuevo turno'; $('tID').value = ''; $('tNombre').value = ''; $('tInicio').value = ''; $('tFin').value = ''; $('tActivo').value = 'SI';
+  document.querySelectorAll('.tdia').forEach(c => c.checked = false);
+}
+function editarTurno(id) {
+  const t = turnos.find(x => x.ID_Turno === id); if (!t) return;
+  $('tTitulo').textContent = 'Editar turno'; $('tID').value = t.ID_Turno; $('tUsuario').value = t.Usuario; $('tNombre').value = t.Turno; $('tInicio').value = t.Hora_Inicio; $('tFin').value = t.Hora_Fin; $('tActivo').value = t.Activo;
+  const dias = String(t.Dias || '').split(',').filter(Boolean); document.querySelectorAll('.tdia').forEach(c => c.checked = dias.includes(c.value));
+}
+
+// ===== Datos del negocio (Admin) =====
+function abrirConfig() {
+  $('cfNombre').value = config.Negocio_Nombre || ''; $('cfRuc').value = config.RUC || ''; $('cfTel').value = config.Telefono || ''; $('cfDir').value = config.Direccion || '';
+  $('cfSerie').value = config.Serie_Boleta || 'B001'; $('cfPie').value = config.Pie_Boleta || ''; $('cfAlerta').value = config.Dias_Alerta_Vencimiento || 90; $('cfCredito').value = config.Dias_Credito || 15;
+  $('modalConfig').classList.remove('hidden'); $('cfNombre').focus();
+}
+
+// ===== Respaldo y archivo histórico (Admin) =====
+function verTabMant(t) {
+  ['resp', 'arch'].forEach(x => {
+    $('tab-' + x).classList.toggle('hidden', x !== t);
+    $('bm-' + x).className = 'px-4 py-2 rounded-lg text-sm font-semibold ' + (x === t ? 'bg-emerald-600 text-white' : 'bg-slate-100 hover:bg-slate-200');
+  });
+}
+async function abrirMant(tab) {
+  $('modalMant').classList.remove('hidden'); verTabMant(tab || 'resp'); $('arResultado').classList.add('hidden'); $('btnArchRun').disabled = true;
+  cargarRespaldos(); cargarArchivados();
+}
+async function cargarRespaldos() {
+  try {
+    const d = await apiPost({ accion: 'respaldo_listar' });
+    $('rsBody').innerHTML = (d.respaldos || []).length ? d.respaldos.map(r => '<tr class="border-t"><td class="py-1 pr-2 whitespace-nowrap">' + esc(r.Fecha) + '</td><td class="pr-2">' + esc(r.Tipo === 'PRE-ARCHIVADO' ? 'Previo a archivar' : r.Tipo === 'AUTOMATICO' ? 'Automático' : 'Manual') + '</td><td class="pr-2">' + esc(r.Usuario) + '</td><td class="text-xs text-slate-500">' + esc(r.Archivo) + '</td></tr>').join('')
+      : '<tr><td colspan="4" class="py-3 text-center text-slate-400">Aún no hay copias. Crea la primera.</td></tr>';
+  } catch (err) { toast(err.message, false); }
+}
+async function cargarArchivados() {
+  try {
+    const d = await apiPost({ accion: 'listar_archivados' });
+    $('arBody').innerHTML = (d.archivados || []).length ? d.archivados.map(r => '<tr class="border-t"><td class="py-1 pr-2 whitespace-nowrap">' + esc(r.Fecha) + '</td><td class="pr-2">' + esc(r.Hasta) + '</td><td class="pr-2">' + esc(r.Usuario) + '</td><td class="text-xs text-slate-500">' + esc(r.Resumen) + '</td></tr>').join('')
+      : '<tr><td colspan="4" class="py-3 text-center text-slate-400">Todavía no se ha archivado nada.</td></tr>';
+  } catch (err) { toast(err.message, false); }
+}
+function textoResumenArchivo(res) { return Object.keys(res).filter(k => res[k]).map(k => k.replace('_', ' ') + ': ' + res[k]).join(' · ') || 'nada'; }
 
 // ===== Eventos =====
 $('btnReportes').addEventListener('click', abrirReportes);
@@ -1288,6 +1806,7 @@ $('buscador').addEventListener('keydown', e => {
   if (exacto) { agregar(exacto.ID, 'caja'); e.target.value = ''; renderProductos(); }
 });
 $('productos').addEventListener('click', e => {
+  const eq = e.target.closest('[data-equiv]'); if (eq) return abrirEquiv(eq.dataset.equiv);
   const b = e.target.closest('[data-add]'); if (b) return agregar(b.dataset.add, b.dataset.modo);
   const aj = e.target.closest('[data-ajustar]'); if (aj && esAdmin()) return abrirInventario('mov', aj.dataset.ajustar);
   const ed = e.target.closest('[data-edit]'); if (ed && esAdmin()) abrirModal(ed.dataset.edit);
@@ -1298,10 +1817,125 @@ $('carrito').addEventListener('click', e => {
   else if (t.dataset.menos) quitarUno(t.dataset.menos);
   else if (t.dataset.quitar) { delete carrito[t.dataset.quitar]; renderProductos(); renderCarrito(); }
 });
-['dTipo', 'dValor', 'metodoPago', 'recibido'].forEach(id => $(id).addEventListener('input', renderTotales));
+['dTipo', 'dValor', 'metodoPago', 'recibido', 'crInicial', 'crDias'].forEach(id => $(id).addEventListener('input', renderTotales));
 $('btnCobrar').addEventListener('click', cobrar);
 $('btnVaciar').addEventListener('click', () => { carrito = {}; renderProductos(); renderCarrito(); });
 $('btnRecargar').addEventListener('click', cargarProductos);
+
+// ---- Eventos de los módulos nuevos ----
+$('btnAlertas').addEventListener('click', abrirAlertas);
+$('btnCerrarAlertas').addEventListener('click', () => $('modalAlertas').classList.add('hidden'));
+$('alFiltro').addEventListener('change', renderAlertasModal);
+$('alImprimir').addEventListener('click', imprimirAlertas);
+$('alBody').addEventListener('click', e => { const b = e.target.closest('[data-baja]'); if (b) darDeBaja(b.dataset.baja); });
+$('alertas').addEventListener('click', e => { if (e.target.closest('#btnVerAlertas')) abrirAlertas(); });
+
+$('btnCerrarEquiv').addEventListener('click', () => $('modalEquiv').classList.add('hidden'));
+$('eqLista').addEventListener('click', e => { const b = e.target.closest('[data-eqadd]'); if (b) { agregar(b.dataset.eqadd, b.dataset.modo); renderEquiv(); } });
+
+$('btnCreditos').addEventListener('click', abrirCreditos);
+$('btnCerrarCreditos').addEventListener('click', () => $('modalCreditos').classList.add('hidden'));
+$('cdFiltro').addEventListener('change', cargarCreditos);
+$('cdBuscar').addEventListener('input', renderCreditos);
+$('cdBody').addEventListener('click', e => {
+  const a = e.target.closest('[data-abonar]');
+  if (a) { creditoSel = creditos.find(c => c.ID_Venta === a.dataset.abonar); if (!creditoSel) return;
+    $('abInfo').textContent = creditoSel.Cliente_Nombre + ' · ' + (creditoSel.Numero_Boleta || creditoSel.ID_Venta) + ' · Saldo ' + moneda(creditoSel.Saldo);
+    $('abMonto').value = ''; $('abMonto').max = creditoSel.Saldo; $('formAbono').classList.remove('hidden'); $('abMonto').focus(); return; }
+  const d = e.target.closest('[data-cddet]'); if (d) { creditoDet = creditoDet === d.dataset.cddet ? null : d.dataset.cddet; renderCreditos(); }
+});
+$('btnAbCancelar').addEventListener('click', () => { creditoSel = null; $('formAbono').classList.add('hidden'); });
+$('formAbono').addEventListener('submit', async e => {
+  e.preventDefault(); if (!creditoSel) return;
+  const b = $('btnAbonar'); b.disabled = true;
+  try {
+    const d = await apiPost({ accion: 'abonar_credito', id_venta: creditoSel.ID_Venta, monto: Number($('abMonto').value), metodo: $('abMetodo').value });
+    toast('✅ Abono registrado. ' + (d.estado === 'PAGADO' ? 'Crédito cancelado por completo.' : 'Saldo: ' + moneda(d.saldo)));
+    if ($('chkBoleta').checked && d.recibo) imprimirReciboAbono(d.recibo);
+    $('formAbono').classList.add('hidden'); creditoSel = null; await cargarCreditos();
+  } catch (err) { toast(err.message, false); }
+  finally { b.disabled = false; }
+});
+
+$('btnTurnos').addEventListener('click', abrirTurnos);
+$('btnCerrarTurnos').addEventListener('click', () => $('modalTurnos').classList.add('hidden'));
+$('btnLimpiarTurno').addEventListener('click', limpiarFormTurno);
+$('tBody').addEventListener('click', async e => {
+  const ed = e.target.closest('[data-tedit]'); if (ed) return editarTurno(ed.dataset.tedit);
+  const del = e.target.closest('[data-tdel]');
+  if (del && confirm('¿Eliminar este turno?')) { try { await apiPost({ accion: 'eliminar_turno', id: del.dataset.tdel }); toast('Turno eliminado'); limpiarFormTurno(); await cargarTurnos(); } catch (err) { toast(err.message, false); } }
+});
+$('formTurno').addEventListener('submit', async e => {
+  e.preventDefault();
+  const b = $('btnGuardarTurno'); b.disabled = true;
+  try {
+    await apiPost({ accion: 'guardar_turno', datos: { ID_Turno: $('tID').value, Usuario: $('tUsuario').value, Turno: $('tNombre').value, Hora_Inicio: $('tInicio').value, Hora_Fin: $('tFin').value,
+      Dias: [...document.querySelectorAll('.tdia:checked')].map(c => c.value), Activo: $('tActivo').value } });
+    toast('✅ Turno guardado'); limpiarFormTurno(); await cargarTurnos();
+  } catch (err) { toast(err.message, false); }
+  finally { b.disabled = false; }
+});
+
+$('btnConfig').addEventListener('click', abrirConfig);
+$('btnCerrarConfig').addEventListener('click', () => $('modalConfig').classList.add('hidden'));
+$('btnCancelarConfig').addEventListener('click', () => $('modalConfig').classList.add('hidden'));
+$('formConfig').addEventListener('submit', async e => {
+  e.preventDefault();
+  const b = $('btnGuardarConfig'); b.disabled = true;
+  const datos = { Negocio_Nombre: $('cfNombre').value, RUC: $('cfRuc').value, Telefono: $('cfTel').value, Direccion: $('cfDir').value, Serie_Boleta: $('cfSerie').value, Pie_Boleta: $('cfPie').value,
+    Dias_Alerta_Vencimiento: $('cfAlerta').value, Dias_Credito: $('cfCredito').value };
+  try {
+    await apiPost({ accion: 'guardar_config', datos });
+    config = Object.assign(config, datos, { Serie_Boleta: String(datos.Serie_Boleta).trim().toUpperCase() });
+    DIAS_POR_VENCER = Number(config.Dias_Alerta_Vencimiento) || 90;
+    renderTodo(); $('modalConfig').classList.add('hidden'); toast('✅ Datos del negocio guardados');
+  } catch (err) { toast(err.message, false); }
+  finally { b.disabled = false; }
+});
+
+$('btnMant').addEventListener('click', () => abrirMant('resp'));
+$('btnCerrarMant').addEventListener('click', () => $('modalMant').classList.add('hidden'));
+$('bm-resp').addEventListener('click', () => verTabMant('resp'));
+$('bm-arch').addEventListener('click', () => verTabMant('arch'));
+$('btnRespCrear').addEventListener('click', async () => {
+  const b = $('btnRespCrear'); b.disabled = true; b.textContent = 'Creando copia…';
+  try { const d = await apiPost({ accion: 'respaldo_crear', nota: 'Copia manual' }); toast('✅ Copia creada: ' + d.creado); await cargarRespaldos(); }
+  catch (err) { toast(err.message, false); }
+  finally { b.disabled = false; b.textContent = 'Crear copia de seguridad ahora'; }
+});
+$('btnRespDescargar').addEventListener('click', async () => {
+  const b = $('btnRespDescargar'); b.disabled = true;
+  try {
+    const d = await apiPost({ accion: 'respaldo_exportar' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 1)], { type: 'application/json' }));
+    a.download = 'respaldo_' + (d.codigo || 'farmacia') + '_' + hoyISO() + '.json'; document.body.appendChild(a); a.click(); a.remove(); toast('✅ Copia descargada');
+  } catch (err) { toast(err.message, false); }
+  finally { b.disabled = false; }
+});
+$('arMeses').addEventListener('input', () => { $('btnArchRun').disabled = true; });
+$('btnArchPrev').addEventListener('click', async () => {
+  const box = $('arResultado'); box.classList.remove('hidden'); box.textContent = 'Calculando…'; $('btnArchRun').disabled = true;
+  try {
+    const d = await apiPost({ accion: 'archivar_historico', meses: Number($('arMeses').value), confirmar: false });
+    box.innerHTML = d.total ? 'Se archivarán <b>' + d.total + '</b> registros anteriores al <b>' + esc(d.hasta) + '</b>:<br>' + esc(textoResumenArchivo(d.resumen)) : 'No hay registros anteriores al <b>' + esc(d.hasta) + '</b> para archivar.';
+    $('btnArchRun').disabled = !d.total;
+  } catch (err) { box.textContent = err.message; }
+});
+$('btnArchRun').addEventListener('click', async () => {
+  if (!confirm('Se hará una copia de seguridad y luego se moverán los registros antiguos al archivo histórico.\n\nPuede tardar un momento. ¿Continuar?')) return;
+  const b = $('btnArchRun'); b.disabled = true; b.textContent = 'Archivando…';
+  try {
+    const d = await apiPost({ accion: 'archivar_historico', meses: Number($('arMeses').value), confirmar: true });
+    $('arResultado').innerHTML = '✅ Archivado hasta <b>' + esc(d.hasta) + '</b>: ' + esc(textoResumenArchivo(d.resumen)) + (d.respaldo ? '<br><span class="text-xs text-slate-500">Copia previa: ' + esc(d.respaldo) + '</span>' : '');
+    toast('✅ Historial archivado'); cargarArchivados(); cargarRespaldos();
+  } catch (err) { toast(err.message, false); $('arResultado').textContent = err.message; }
+  finally { b.textContent = 'Archivar ahora'; }
+});
+$('uRol').addEventListener('change', () => $('uLabsBox').classList.toggle('hidden', $('uRol').value === 'Admin'));
+$('cLab').addEventListener('change', renderCuadre);
+$('fArchivo').addEventListener('change', cargarKardex);
+$('vArchivo').addEventListener('change', cargarVentas);
+$('rTipo').addEventListener('change', () => $('rParamsRepo').classList.toggle('hidden', $('rTipo').value !== 'reposicion'));
 
 // ===== Inicio =====
 renderTotales();
